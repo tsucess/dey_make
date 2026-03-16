@@ -1,0 +1,18 @@
+echo # deymake  README.md
+git init
+git add README.md
+git commit -m first commit
+git branch -M main
+git remote add origin httpsgithub.comtsucessdeymake.git
+git push -u origin main
+
+
+
+…or create a new repository on the command line
+echo "# dey_make" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/tsucess/dey_make.git
+git push -u origin main
