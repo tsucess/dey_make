@@ -13,9 +13,9 @@ export default function LandingNavbar({ onSignUp }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
-    <nav className="bg-white dark:bg-slate100 sticky top-0 z-50
+    <nav className="bg-white100/20 dark:bg-slate100 
                     border-b-[0.5px] border-slate200 dark:border-slate300">
-      <div className="flex items-center justify-between px-6 py-4">
+      <div className="flex items-center justify-between px-6 py-4 md:px-14 md:py-7">
 
         {/* Logo */}
         <Logo/>
@@ -27,7 +27,7 @@ export default function LandingNavbar({ onSignUp }) {
               key={item.label}
               href={item.href}
               className="text-sm font-medium text-slate100
-                         dark:text-gray-300 md:text-xl hover:text-orange100
+                         dark:text-gray-300 md:text-base hover:text-orange100
                          transition-colors"
               style={{ textDecoration: "none" }}
             >
@@ -38,11 +38,11 @@ export default function LandingNavbar({ onSignUp }) {
 
         {/* Right side */}
         <div className="flex items-center gap-2.5">
-          <ThemeToggle />
+          <ThemeToggle/>
           <button
             onClick={onSignUp}
-            className="bg-orange100 hover:bg-[#e09510] text-white
-                       font-bold text-[13px] px-[18px] py-[9px]
+            className="bg-orange100 hover:bg-[#e09510] text-slate100
+                       font-semibold text-sm px-6 py-4 md:px-8 md:py-3 md:text-base
                        rounded-lg border-none cursor-pointer
                        transition-colors"
           >

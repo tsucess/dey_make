@@ -47,29 +47,29 @@ export default function WaitlistForm() {
   };
 
   const inputClass = (hasError) =>
-    `w-full px-3.5 py-2.5 rounded-lg text-sm outline-none
+    `w-full px-3.5 py-3 rounded-lg text-sm outline-none
      transition-colors
-     text-gray-900 dark:text-gray-200
-     placeholder-gray-300 dark:placeholder-gray-600
+     text-slate200 dark:text-gray-200
+     placeholder-slate200 dark:placeholder-gray-600
      bg-white dark:bg-[#2d2d2d]
      ${hasError
        ? "border border-red-400 dark:border-red-500"
-       : "border border-gray-200 dark:border-gray-700 focus:border-[#f5a623] dark:focus:border-[#f5a623]"
+       : "border border-white200 dark:border-gray-700 focus:border-[#f5a623] dark:focus:border-[#f5a623]"
      }`;
 
   return (
     <section
       id="waitlist"
       className="px-6 md:px-12 py-16 text-center
-                 bg-[#f5f5f0] dark:bg-[#121212]"
+                 bg-white100 dark:bg-[#121212]"
     >
       <h2
-        className="font-extrabold text-gray-900 dark:text-white mb-3"
+        className="font-semibold font-bricolage text-slate100 dark:text-white mb-3"
         style={{ fontSize: "clamp(22px, 4vw, 32px)" }}
       >
         Be the first in line
       </h2>
-      <p className="text-sm text-gray-500 dark:text-gray-400
+      <p className="text-sm text-slate100 font-inter dark:text-gray-400
                     max-w-sm mx-auto mb-8 leading-relaxed">
         Join the DeyMake waitlist. Early creators get invited in batches
         and get a real say in shaping the platform.
@@ -78,18 +78,17 @@ export default function WaitlistForm() {
       {/* Form card */}
       <div
         className="bg-white dark:bg-[#1e1e1e] rounded-2xl
-                   border border-gray-200 dark:border-gray-700
-                   max-w-lg mx-auto text-left"
-        style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}
+                   border-[0.25px] border-gray-200 dark:border-gray-700
+                   max-w-xl mx-auto text-left shadow-waitlist px-16 py-10"
       >
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="p-7 flex flex-col gap-5"
+          className="p-7 flex flex-col gap-5 "
         >
           {/* First Name */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               First Name
             </label>
@@ -108,7 +107,7 @@ export default function WaitlistForm() {
 
           {/* Email */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               Email
             </label>
@@ -127,7 +126,7 @@ export default function WaitlistForm() {
 
           {/* Phone */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               Phone Number (optional)
             </label>
@@ -142,7 +141,7 @@ export default function WaitlistForm() {
 
           {/* Country */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               Country of Residence
             </label>
@@ -169,7 +168,7 @@ export default function WaitlistForm() {
 
           {/* Describes */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               What best describes what you do?
             </label>
@@ -187,7 +186,7 @@ export default function WaitlistForm() {
 
           {/* Love to see */}
           <div>
-            <label className="text-sm font-semibold text-gray-900
+            <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
               What would you love to see in DeyMake
             </label>
@@ -208,17 +207,17 @@ export default function WaitlistForm() {
                 name="agreed"
                 checked={form.agreed}
                 onChange={handleChange}
-                className="w-4 h-4 mt-0.5 flex-shrink-0
+                className="w-4 h-4 mt-0.5 shrink-0
                            accent-[#f5a623] cursor-pointer"
               />
-              <span className="text-xs text-gray-500 dark:text-gray-400
+              <span className="text-xs font-inter text-slate400 dark:text-gray-400
                                leading-relaxed">
                 I agree to be contacted about the beta and understand my
                 data will be handled under the{" "}
                 <a
                   href="#"
-                  className="text-gray-900 dark:text-white underline
-                             hover:text-[#f5a623] transition-colors"
+                  className="text-slate400 dark:text-white underline
+                             hover:text-orange100 transition-colors"
                 >
                   Privacy Notice
                 </a>.
@@ -232,8 +231,8 @@ export default function WaitlistForm() {
           {/* Submit */}
           <button
             type="submit"
-            className="w-full py-4 bg-[#f5a623] hover:bg-[#e09510]
-                       text-white font-bold text-[15px] rounded-xl
+            className="w-full py-4 font-inter bg-orange100 hover:bg-[#e09510]
+                       text-slate100 font-semibold text-[15px] rounded-xl
                        border-none cursor-pointer transition-colors"
           >
             Join the waitlist

@@ -3,7 +3,7 @@ export default function LandingFooter({ onSignUp }) {
     <footer
       className="px-6 md:px-12 py-7 border-t border-gray-200
                  dark:border-gray-800
-                 bg-[#f5f5f0] dark:bg-[#121212]"
+                 bg-white100 dark:bg-[#121212]"
     >
       <div
         className="flex flex-col md:flex-row items-center

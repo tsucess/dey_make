@@ -4,10 +4,11 @@ export default function ThemeToggle() {
   const { isDark, toggleTheme } = useTheme();
 
   return (
+    <>
     <button
       onClick={toggleTheme}
       className="w-9 h-9 flex items-center justify-center rounded-full
-                 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                 hover:bg-black/10 dark:hover:bg-white/10 transition-colors md:hidden"
       aria-label="Toggle dark mode"
     >
       {isDark ? (
@@ -32,5 +33,13 @@ export default function ThemeToggle() {
         </svg>
       )}
     </button>
+    <button
+    onClick={toggleTheme}
+    className=" absolute top-35 right-20 hidden shadow-toggle md:block "
+    >
+      <div className="w-6 h-25 bg-slate100 dark:bg-white"></div>
+      <div className="w-6 h-12.5 bg-white dark:bg-slate100 dark:border dark:border-slate300"></div>
+    </button>
+    </>
   );
 }

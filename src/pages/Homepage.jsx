@@ -163,7 +163,7 @@ function MobileVideoCard({
       >
         {/* Thumbnail */}
         <div
-          className="relative flex-shrink-0 w-[120px] h-[72px]
+          className="relative shrink-0 w-30 h-18
                         rounded-xl overflow-hidden
                         bg-gray-200 dark:bg-[#2d2d2d]"
         >
@@ -198,7 +198,7 @@ function MobileVideoCard({
         <button
           onClick={(e) => e.stopPropagation()}
           className="text-gray-400 dark:text-gray-500
-                     flex-shrink-0 self-start mt-1
+                     shrink-0 self-start mt-1
                      bg-transparent border-none cursor-pointer"
         >
           <svg
@@ -222,7 +222,7 @@ function MobileVideoCard({
   return (
     <div
       onClick={() => navigate(`/video/${id}`)}
-      className="flex flex-col cursor-pointer flex-shrink-0"
+      className="flex flex-col cursor-pointer shrink-0"
       style={{ width: cardWidth || "200px" }}
     >
       {/* Thumbnail */}
@@ -246,7 +246,7 @@ function MobileVideoCard({
         <img
           src={avatar}
           alt={author}
-          className="w-7 h-7 rounded-full object-cover flex-shrink-0 mt-0.5"
+          className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5"
         />
         <div className="min-w-0 flex-1">
           <p
@@ -279,7 +279,7 @@ export default function Homepage() {
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
-    <div className="w-full min-h-screen bg-white dark:bg-[#121212]">
+    <div className="w-full min-h-screen bg-white100 dark:bg-[#121212]">
       {/* ══════════════════════════════
           MOBILE LAYOUT
       ══════════════════════════════ */}
@@ -359,7 +359,7 @@ export default function Homepage() {
             <button
               key={c.id}
               onClick={() => setActiveCategory(i)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm
+              className={`shrink-0 px-4 py-1.5 rounded-full text-sm
                           font-semibold border-[1.5px] cursor-pointer
                           transition-all duration-150
                           ${

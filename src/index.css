@@ -1,3 +1,27 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
+
+
+@theme{
+--font-inter: "Inter", sans-serif;
+--font-bricolage :  "Bricolage Grotesque", sans-serif;
+
+--color-slate100 : #1A1A1A;
+--color-orange100 : #FDB300;
+--color-slate200 : #D9D9D9;
+--color-slate300: #595959;
+--color-white100: #FAFAFA;
+--color-white200: #F2F2F2;
+--color-slate400:#737373;
+--color-orange200: #FFD266;
+
+--shadow-toggle: 0 4px 10px 0 #0000000D;
+--shadow-waitlist: 0 4px 40px 0 #00000005;
+}
+
+.borderImage{
+  border-image: linear-gradient(90deg, #FDB30059, #00000080) 1;
+}

@@ -23,7 +23,7 @@ export default function FAQSection() {
     <section
       id="faq"
       className="px-6 md:px-12 py-16 text-center
-                 bg-[#f5f5f0] dark:bg-[#121212]"
+                 bg-white100 dark:bg-[#121212]"
     >
       <h2
         className="font-extrabold text-gray-900 dark:text-white mb-10"
