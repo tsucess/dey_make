@@ -3,7 +3,7 @@ export default function LandingFooter({ onSignUp }) {
     <footer
       className="px-6 md:px-12 pb-7 pt-12
                  bg-white100 dark:bg-slate100 flex flex-col md:flex-row items-center
-                   justify-between gap-4 max-w-5xl md:mx-auto"
+                   justify-between gap-4 md:mx-auto"
     >
     
         <div className="flex justify-between items-center w-full md:w-auto gap-2 md:gap-10">

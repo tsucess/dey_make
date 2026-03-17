@@ -67,7 +67,7 @@ export default function HeroSection({ onSignUp }) {
                      font-semibold text-sm md:text-base px-6 md:px-9 py-3.5 rounded-xl
                      cursor-pointer transition-colors md:min-w-45
                      border-2 border-slate100 dark:border-white
-                     hover:bg-orange100 hover:text-[#f5a623]
+                     hover:bg-slate100 hover:text-white
                      dark:hover:bg-white  dark:hover:text-slate100"
         >
           Learn more
