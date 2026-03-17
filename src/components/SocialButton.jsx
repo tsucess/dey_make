@@ -22,7 +22,7 @@ function SocialBtn({ provider, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 flex items-center gap-2
+      className="flex-1 flex items-center justify-center gap-2
                  px-4 py-3 rounded-md text-sm font-inter font-medium
                  border cursor-pointer transition-colors
                  bg-white300 dark:bg-black100
@@ -31,14 +31,15 @@ function SocialBtn({ provider, onClick }) {
                  hover:bg-white200 dark:hover:bg-[#3a3a3a]"
     >
       {provider === "google" ? <GoogleIcon /> : <FacebookIcon />}
-      <span className="">Continue with {provider === "google" ? "google" : "facebook"}</span>
+      <span className="hidden md:inline">Continue with {provider === "google" ? "google" : "facebook"}</span>
+      <span className="md:hidden">{provider === "google" ? "Google" : "Facebook"}</span>
     </button>
   );
 }
 
 export default function SocialButtonRow() {
   return (
-    <div className="flex flex-col gap-3 w-full mt-6">
+    <div className="flex md:flex-col gap-3 w-full mt-6">
       <SocialBtn provider="google" />
       <SocialBtn provider="facebook" />
     </div>

@@ -23,11 +23,8 @@ export default function AppLayout() {
 
         {/* Mobile TopBar */}
         <div className="flex md:hidden items-center justify-between
-                        px-4 py-3 bg-white dark:bg-[#1a1a1a]
-                        border-b border-gray-100 dark:border-gray-800">
-          <h1 className="text-[1.6rem] font-bold text-[#f5a623] font-serif">
-            <span className="italic">D</span>eyMake
-          </h1>
+                        px-4 py-3 bg-white dark:bg-[#1a1a1a] dark:border-gray-800">
+          <img src="./logo-footer.png" alt="" className="w-33 h-10"/>
           <div className="flex items-center gap-1">
             {/* <ThemeToggle /> */}
             {/* Search */}

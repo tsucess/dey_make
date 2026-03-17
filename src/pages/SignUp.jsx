@@ -59,10 +59,10 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
       <Logo />
       <NetworkIllustration />
 
-      {/* <h2 className="text-lg font-semibold mb-3
-                     text-gray-800 dark:text-white">
+      <h2 className="text-lg font-semibold mb-3
+                     text-gray-800 dark:text-white md:hidden">
         Sign Up
-      </h2> */}
+      </h2>
 
       <form onSubmit={handleSubmit} noValidate className="pt-8 pb-2">
 
