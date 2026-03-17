@@ -29,7 +29,7 @@ export default function AppLayout() {
             <span className="italic">D</span>eyMake
           </h1>
           <div className="flex items-center gap-1">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             {/* Search */}
             <button className="w-8 h-8 flex items-center justify-center
                                text-gray-500 dark:text-gray-400">

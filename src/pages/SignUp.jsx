@@ -59,12 +59,12 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
       <Logo />
       <NetworkIllustration />
 
-      <h2 className="text-lg font-semibold mb-3
+      {/* <h2 className="text-lg font-semibold mb-3
                      text-gray-800 dark:text-white">
         Sign Up
-      </h2>
+      </h2> */}
 
-      <form onSubmit={handleSubmit} noValidate>
+      <form onSubmit={handleSubmit} noValidate className="pt-8 pb-2">
 
         {/* Full Name */}
         <div className="mb-3">
@@ -76,10 +76,10 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
             onChange={handleChange}
             className={`w-full px-4 py-3 rounded-md text-sm
                         outline-none transition-colors
-                        placeholder-gray-400 dark:placeholder-gray-500
+                        placeholder-slate500 dark:placeholder-slate500
                         ${errors.fullName
-                          ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-gray-700 dark:text-gray-200"
-                          : "bg-[#f5f5f5] dark:bg-[#2d2d2d] text-gray-700 dark:text-gray-200 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
+                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
           {errors.fullName && (
@@ -99,10 +99,10 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
             onChange={handleChange}
             className={`w-full px-4 py-3 rounded-md text-sm
                         outline-none transition-colors
-                        placeholder-gray-400 dark:placeholder-gray-500
+                        placeholder-slate500 dark:placeholder-slate500
                         ${errors.email
-                          ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-gray-700 dark:text-gray-200"
-                          : "bg-[#f5f5f5] dark:bg-[#2d2d2d] text-gray-700 dark:text-gray-200 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
+                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
           {errors.email && (
@@ -123,17 +123,17 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
               onChange={handleChange}
               className={`w-full px-4 py-3 rounded-md text-sm
                           outline-none transition-colors
-                          placeholder-gray-400 dark:placeholder-gray-500
+                          placeholder-slate500 dark:placeholder-slate500
                           ${errors.password
-                            ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-gray-700 dark:text-gray-200"
-                            : "bg-[#f5f5f5] dark:bg-[#2d2d2d] text-gray-700 dark:text-gray-200 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                            ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
+                            : "bg-white300 dark:bg-[#2d2d2d] text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                           }`}
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
               className="absolute right-4 top-1/2 -translate-y-1/2
-                         text-gray-400 dark:text-gray-500
+                         text-slate500 dark:text-slate500
                          bg-transparent border-none cursor-pointer"
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
@@ -156,19 +156,19 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                 setAgreed(e.target.checked);
                 setErrors((prev) => ({ ...prev, agreed: "" }));
               }}
-              className="w-4 h-4 mt-[3px] flex-shrink-0
-                         accent-[#f5a623] cursor-pointer"
+              className="w-4 h-4 mt-0.75 shrink-0
+                         accent-orange100 cursor-pointer"
             />
             <span className="text-[0.78rem] leading-relaxed
-                             text-gray-500 dark:text-gray-400">
+                             text-slate400 dark:text-slate200">
               By clicking on the sign up button, you agree to our{" "}
               <a href="#terms"
-                className="text-[#f5a623] underline hover:opacity-80">
+                className="text-orange100 underline hover:opacity-80">
                 terms and conditions
               </a>
               {" "}and{" "}
               <a href="#privacy"
-                className="text-[#f5a623] underline hover:opacity-80">
+                className="text-orange100 underline hover:opacity-80">
                 privacy policies
               </a>
             </span>
@@ -183,8 +183,8 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
         {/* Submit */}
         <button
           type="submit"
-          className="w-full py-3 bg-[#f5a623] hover:bg-[#e09510]
-                     text-white font-bold text-sm rounded-md
+          className="w-full py-3 bg-orange100 hover:bg-[#e09510]
+                     text-slate100 font-semibold text-sm rounded-md
                      transition-colors cursor-pointer border-none"
         >
           Sign Up
@@ -194,16 +194,16 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
       <OrDivider />
       <SocialButtonRow />
 
-      <p className="text-center mt-4 text-[0.82rem]
-                    text-gray-500 dark:text-gray-400">
+      <p className="text-center mt-4 text-sm
+                    text-black200 dark:text-slate200">
         Already have an account?{" "}
         <button
           type="button"
           onClick={onNavigateToLogin}
-          className="text-gray-800 dark:text-white
-                     underline font-medium cursor-pointer
+          className="text-black200 dark:text-slate200
+                     underline font-semibold cursor-pointer
                      bg-transparent border-none
-                     hover:text-[#f5a623] transition-colors"
+                     hover:text-orange100 transition-colors"
         >
           Log In
         </button>
