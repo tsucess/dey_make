@@ -90,7 +90,7 @@ export default function VideoDetails() {
           </h1>
 
           <div className="flex items-center gap-1">
-            <ThemeToggle />
+            
             <button className="w-8 h-8 flex items-center justify-center"
               style={{ color: textSecond }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -163,7 +163,7 @@ export default function VideoDetails() {
             </div>
             <button
               onClick={() => setSubscribed((s) => !s)}
-              className="flex-shrink-0 px-4 py-2 rounded-full font-semibold
+              className="shrink-0 px-4 py-2 rounded-full font-semibold
                          text-sm transition-colors"
               style={{
                 background: subscribed ? (isDark ? "#374151" : "#e5e7eb") : "#f5a623",
@@ -211,7 +211,7 @@ export default function VideoDetails() {
             style={{ background: bgInput, borderColor: borderMid }}
           >
             <img src={avatar} alt="me"
-              className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+              className="w-6 h-6 rounded-full object-cover shrink-0" />
             <input
               type="text"
               placeholder="Tell the creator what you think!"
@@ -249,7 +249,7 @@ export default function VideoDetails() {
                   style={{ background: bgSecond }}
                 >
                   <img src={avatar} alt={c.user}
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                    className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-semibold"
@@ -317,7 +317,7 @@ export default function VideoDetails() {
                 <div
                   key={v.id}
                   onClick={() => navigate(`/video/${v.id}`)}
-                  className="flex-shrink-0 w-[120px] cursor-pointer"
+                  className="shrink-0 w-30 cursor-pointer"
                 >
                   <div className="relative w-full aspect-video rounded-xl
                                   overflow-hidden"
@@ -379,7 +379,7 @@ export default function VideoDetails() {
 
           {/* Search */}
           <div
-            className="flex items-center gap-2 rounded-full px-4 py-2 w-[280px]"
+            className="flex items-center gap-2 rounded-full px-4 py-2 w-70"
             style={{ background: bgSecond }}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
@@ -458,7 +458,7 @@ export default function VideoDetails() {
             <div className="flex items-start justify-between gap-4 mb-4">
               <div className="flex items-center gap-3">
                 <img src={avatar} alt="author"
-                  className="w-11 h-11 rounded-full object-cover flex-shrink-0" />
+                  className="w-11 h-11 rounded-full object-cover shrink-0" />
                 <div>
                   <h2 className="text-base font-bold" style={{ color: textPrim }}>
                     My life as a creator in Lagos Nigeria
@@ -470,7 +470,7 @@ export default function VideoDetails() {
               </div>
               <button
                 onClick={() => setSubscribed((s) => !s)}
-                className="flex-shrink-0 px-5 py-2 rounded-full font-semibold
+                className="shrink-0 px-5 py-2 rounded-full font-semibold
                            text-sm transition-colors"
                 style={{
                   background: subscribed ? (isDark ? "#374151" : "#e5e7eb") : "#f5a623",
@@ -535,7 +535,7 @@ export default function VideoDetails() {
 
           {/* Right: comments panel */}
           <div
-            className="w-[320px] flex-shrink-0 border-l flex flex-col overflow-hidden"
+            className="w-[320px] shrink-0 border-l flex flex-col overflow-hidden"
             style={{ borderColor: border }}
           >
             {/* Header */}
@@ -563,7 +563,7 @@ export default function VideoDetails() {
               {comments.map((c) => (
                 <div key={c.id} className="flex gap-2.5">
                   <img src={avatar} alt={c.user}
-                    className="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-0.5" />
+                    className="w-8 h-8 rounded-full object-cover shrink-0 mt-0.5" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-semibold"

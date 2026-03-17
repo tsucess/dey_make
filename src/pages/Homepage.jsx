@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import VideoCard from "../components/VideoCard";
 import CategoryCard from "../components/CategoryCard";
+import { FaEye } from "react-icons/fa";
 
 const videos = [
   {
@@ -116,10 +117,10 @@ const categories = [
 function ShowMoreDivider() {
   return (
     <div className="flex items-center gap-3 mt-4 w-full">
-      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      <div className="flex-1 h-[0.88px] bg-slate500 dark:bg-gray-700" />
       <button
         className="flex items-center gap-1 text-sm
-                         text-gray-500 dark:text-gray-400
+                         text-black font-inter font-medium dark:text-gray-400
                          bg-transparent border-none cursor-pointer
                          whitespace-nowrap px-1"
       >
@@ -136,7 +137,7 @@ function ShowMoreDivider() {
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+      <div className="flex-1 h-[0.88px] bg-slate500 dark:bg-gray-700" />
     </div>
   );
 }
@@ -159,45 +160,50 @@ function MobileVideoCard({
     return (
       <div
         onClick={() => navigate(`/video/${id}`)}
-        className="flex gap-3 cursor-pointer w-full"
+        className="flex flex-col gap-3 cursor-pointer w-full"
       >
         {/* Thumbnail */}
         <div
-          className="relative shrink-0 w-30 h-18
+          className="relative shrink-0 w-full h-50
                         rounded-xl overflow-hidden
                         bg-gray-200 dark:bg-[#2d2d2d]"
         >
           <img src={thumb} alt={title} className="w-full h-full object-cover" />
-          {live && (
+          {/* {live && (
             <span
               className="absolute top-1 left-1 bg-red-500 text-white
                              text-[0.55rem] font-bold px-1.5 py-0.5 rounded"
             >
               LIVE
             </span>
-          )}
+          )} */}
         </div>
 
         {/* Info */}
-        <div className="flex-1 min-w-0">
-          <p
+        <div className="flex justify-between items-center">
+        <div className="flex gap-2 items-center ">
+          {/* <p
             className="text-sm font-semibold line-clamp-2 leading-snug
                         text-gray-900 dark:text-white"
           >
             {title}
-          </p>
-          <p className="text-xs mt-1 text-gray-500 dark:text-gray-400">
+          </p> */}
+          <img src={avatar} alt="" className="w-8 h-8 rounded-full"/>
+          <div>
+            <p className="text-xs mt-1 text-black200 font-inter dark:text-gray-400">
             {author}
           </p>
-          <p className="text-xs text-gray-400 dark:text-gray-500">
+          <p className="text-[10px] font-inter text-slate50 dark:text-gray-500">
             22k Subscribers
           </p>
+          </div>
+          
         </div>
 
         {/* More button */}
         <button
           onClick={(e) => e.stopPropagation()}
-          className="text-gray-400 dark:text-gray-500
+          className="text-black dark:text-gray-500
                      shrink-0 self-start mt-1
                      bg-transparent border-none cursor-pointer"
         >
@@ -215,6 +221,7 @@ function MobileVideoCard({
             <circle cx="12" cy="19" r="1" />
           </svg>
         </button>
+        </div>
       </div>
     );
   }
@@ -227,45 +234,71 @@ function MobileVideoCard({
     >
       {/* Thumbnail */}
       <div
-        className="relative w-full aspect-video rounded-xl overflow-hidden
+        className="relative w-35 aspect-video h-38 rounded-xl overflow-hidden
                       bg-gray-200 dark:bg-[#2d2d2d]"
       >
         <img src={thumb} alt={title} className="w-full h-full object-cover" />
         {live && (
           <span
-            className="absolute top-2 left-2 bg-red-500 text-white
-                           text-[0.6rem] font-bold px-2 py-0.5 rounded"
+            className="absolute top-2 right-2 bg-white/40 backdrop-blur-xs backdrop-brightness-50 text-black200
+                           text-[0.6rem] font-bold px-2 py-0.5 rounded flex gap-1 items-center"
           >
-            LIVE
+            <FaEye className="text-black200 text-5 h-5"/> 2.5k
           </span>
         )}
       </div>
 
       {/* Info */}
-      <div className="flex gap-2 mt-2">
-        <img
+      <div className="flex gap-2 mt-2 flex-col">
+         <p
+            className="text-sm font-medium line-clamp-2 leading-snug
+                        text-black font-inter dark:text-white"
+          >
+            {title}
+          </p>
+        <div className="min-w-0 flex-1 flex justify-between items-center">
+         <div className="flex gap-1 items-center">
+          <img
           src={avatar}
           alt={author}
           className="w-7 h-7 rounded-full object-cover shrink-0 mt-0.5"
         />
-        <div className="min-w-0 flex-1">
-          <p
-            className="text-xs font-semibold line-clamp-2 leading-snug
-                        text-gray-900 dark:text-white"
-          >
-            {title}
-          </p>
-          <p className="text-[0.7rem] mt-0.5 text-gray-500 dark:text-gray-400">
+        <div className="flex flex-1 flex-col">
+          <p className="text-xs mt-0.5 text-black font-inter font-medium dark:text-gray-400">
             {author}
           </p>
-          {live && (
+          {live ? (
             <div className="flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
               <span className="text-[0.65rem] text-red-500 font-medium">
                 Live
               </span>
             </div>
-          )}
+          ) : <p className="text-[10px] font-inter text-slate50 dark:text-gray-500">
+            22k Subscribers
+          </p>}
+          </div>
+</div>
+          <button
+          onClick={(e) => e.stopPropagation()}
+          className="text-black dark:text-gray-500
+                     shrink-0 self-start mt-1
+                     bg-transparent border-none cursor-pointer"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          >
+            <circle cx="12" cy="5" r="1" />
+            <circle cx="12" cy="12" r="1" />
+            <circle cx="12" cy="19" r="1" />
+          </svg>
+        </button>
         </div>
       </div>
     </div>
@@ -279,7 +312,7 @@ export default function Homepage() {
   const [activeCategory, setActiveCategory] = useState(0);
 
   return (
-    <div className="w-full min-h-screen bg-white100 dark:bg-[#121212]">
+    <div className="w-full min-h-screen bg-white dark:bg-slate100">
       {/* ══════════════════════════════
           MOBILE LAYOUT
       ══════════════════════════════ */}
@@ -287,14 +320,14 @@ export default function Homepage() {
         {/* Trending header */}
         <div className="flex items-center justify-between mb-3">
           <h2
-            className="text-base font-bold
-                         text-gray-900 dark:text-white"
+            className="text-base font-bricolage font-medium
+                         text-black dark:text-white"
           >
             Trending
           </h2>
           <button
             className="flex items-center gap-0.5 text-xs
-                             text-gray-500 dark:text-gray-400
+                             text-black font-inter font-medium dark:text-gray-400
                              bg-transparent border-none cursor-pointer"
           >
             View more
@@ -318,21 +351,21 @@ export default function Homepage() {
                         -mx-4 px-4 scrollbar-hide"
         >
           {videos.slice(0, 4).map((v) => (
-            <MobileVideoCard key={v.id} {...v} cardWidth="200px" />
+            <MobileVideoCard key={v.id} {...v} cardWidth="140px" />
           ))}
         </div>
 
         {/* Categories header */}
         <div className="flex items-center justify-between mt-5 mb-3">
           <h2
-            className="text-base font-bold
-                         text-gray-900 dark:text-white"
+            className="text-base font-medium
+                         text-slate100 font-inter dark:text-white"
           >
             Categories you'd like
           </h2>
           <button
             className="flex items-center gap-0.5 text-xs
-                             text-gray-500 dark:text-gray-400
+                             text-slate100 font-inter font-medium dark:text-gray-400
                              bg-transparent border-none cursor-pointer"
           >
             View more
@@ -359,13 +392,13 @@ export default function Homepage() {
             <button
               key={c.id}
               onClick={() => setActiveCategory(i)}
-              className={`shrink-0 px-4 py-1.5 rounded-full text-sm
-                          font-semibold border-[1.5px] cursor-pointer
+              className={`shrink-0 px-4 py-2 rounded-full text-sm
+                          font-semibold  cursor-pointer
                           transition-all duration-150
                           ${
                             activeCategory === i
-                              ? "bg-[#f5a623] text-white border-[#f5a623]"
-                              : "bg-white dark:bg-[#1e1e1e] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700"
+                              ? "bg-orange100 text-slate100 border-[#f5a623]"
+                              : "bg-white300 dark:bg-[#1e1e1e] text-slate100 dark:text-gray-300 border-gray-200 dark:border-gray-700"
                           }`}
             >
               {c.label}
@@ -374,7 +407,7 @@ export default function Homepage() {
         </div>
 
         {/* Featured card */}
-        <div
+        {/* <div
           className="mt-4 rounded-2xl overflow-hidden cursor-pointer
                         bg-white dark:bg-[#1e1e1e]
                         shadow-sm dark:shadow-[0_1px_4px_rgba(0,0,0,0.4)]"
@@ -424,7 +457,7 @@ export default function Homepage() {
               </svg>
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* More videos list */}
         <div className="mt-5 flex flex-col gap-4">
@@ -441,8 +474,8 @@ export default function Homepage() {
         {/* Trending */}
         <section className="mb-8">
           <h2
-            className="text-lg font-bold mb-4
-                         text-gray-900 dark:text-white"
+            className="text-lg font-bricolage font-bold mb-4
+                         text-black dark:text-white"
           >
             Trending
           </h2>
@@ -461,7 +494,7 @@ export default function Homepage() {
         <section className="mb-8">
           <h2
             className="text-lg font-bold mb-4
-                         text-gray-900 dark:text-white"
+                         text-black font-bricolage dark:text-white"
           >
             Categories we think you'll like
           </h2>
@@ -480,7 +513,7 @@ export default function Homepage() {
         <section className="mb-8">
           <h2
             className="text-lg font-bold mb-4
-                         text-gray-900 dark:text-white"
+                         text-black font-bricolage dark:text-white"
           >
             Live streams
           </h2>

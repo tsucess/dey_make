@@ -1,26 +1,25 @@
-import { HiBell, HiSearch, HiPlus } from "react-icons/hi";
-import ThemeToggle from "../ThemeToggle";
+import {  HiSearch, HiPlus } from "react-icons/hi";
+import { IoNotificationsOutline } from "react-icons/io5";
 
 export default function TopBar() {
   return (
-    <header className="flex items-center justify-between px-6 py-3
-                       bg-white dark:bg-[#1a1a1a]
-                       border-b border-gray-100 dark:border-[#2d2d2d]
+    <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
+                       bg-white dark:bg-slate100
                        sticky top-0 z-10">
 
       {/* Search */}
-      <div className="flex items-center gap-2 w-[280px]
-                      bg-gray-100 dark:bg-[#2d2d2d]
-                      rounded-full px-4 py-2">
-        <HiSearch className="w-4 h-4 flex-shrink-0
-                             text-gray-400 dark:text-gray-500" />
+      <div className="flex items-center gap-2 w-70
+                      bg-white300 dark:bg-black100
+                      rounded-full px-4 py-2 border-[0.15px] border-slate700 ">
+        <HiSearch className="w-4 h-4 shrink-0
+                             text-black dark:text-gray-500" />
         <input
           type="text"
           placeholder="Search"
           className="bg-transparent outline-none border-none
-                     w-full text-sm
-                     text-gray-700 dark:text-gray-200
-                     placeholder-gray-400 dark:placeholder-gray-500"
+                     w-full text-sm font-inter
+                     text-black dark:text-slate200
+                     placeholder-black dark:placeholder-slate200"
         />
       </div>
 
@@ -29,17 +28,15 @@ export default function TopBar() {
 
         {/* Create */}
         <button className="flex items-center gap-1.5
-                           bg-[#f5a623] hover:bg-[#e09510]
-                           text-white font-semibold text-sm
-                           px-4 py-2 rounded-full
+                           bg-orange100 font-inter hover:bg-[#e09510]
+                           text-black font-semibold text-sm
+                           px-6 py-2.5 rounded-full
                            border-none cursor-pointer
                            transition-colors">
           <HiPlus className="w-4 h-4" />
           Create
         </button>
 
-        {/* Dark mode toggle */}
-        <ThemeToggle />
 
         {/* Bell */}
         <button className="w-9 h-9 flex items-center justify-center
@@ -47,15 +44,14 @@ export default function TopBar() {
                            bg-transparent
                            hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
                            transition-colors">
-          <HiBell className="w-5 h-5
-                             text-gray-500 dark:text-gray-400" />
+          <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
         </button>
 
         {/* Avatar */}
         <img
           src="https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"
           alt="avatar"
-          className="w-9 h-9 rounded-full object-cover cursor-pointer"
+          className="w-10 h-10 rounded-full object-cover cursor-pointer"
         />
       </div>
     </header>

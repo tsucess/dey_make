@@ -66,11 +66,8 @@ export default function BottomNav() {
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 flex items-center
-                 justify-around px-2 py-2 z-50 md:hidden border-t"
-      style={{
-        background: isDark ? "#1a1a1a" : "#ffffff",
-        borderColor: isDark ? "#2d2d2d" : "#f3f4f6",
-      }}
+                 justify-around px-2 pt-2 pb-10 z-50 md:hidden border-[0.33px] bg-orange100/1 backdrop-blur-xs backdrop-brightness-70 border-slate900"
+      
     >
       {navItems.map(({ to, label, icon }) => (
         <NavLink
@@ -78,15 +75,15 @@ export default function BottomNav() {
           to={to}
           end={to === "/"}
           className="flex flex-col items-center gap-0.5
-                     px-3 py-1 rounded-xl transition-colors"
+                     px-3 py-1 rounded-full transition-colors bg-white"
           style={({ isActive }) => ({
             color: isActive
-              ? "#f5a623"
+              ? "#FDB300"
               : isDark ? "#6b7280" : "#9ca3af",
           })}
         >
           {icon}
-          <span className="text-[0.6rem] font-medium">{label}</span>
+          {/* <span className="text-[0.6rem] font-medium">{label}</span> */}
         </NavLink>
       ))}
     </nav>

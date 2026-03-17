@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import Logo from "../Logo";
+import { RiLogoutCircleLine } from "react-icons/ri";
 import {
   HiHome, HiChartBar, HiChatAlt2,
   HiCog, HiUser, HiArrowLeft
@@ -15,24 +15,11 @@ const navItems = [
 
 export default function Sidebar() {
   return (
-    <aside className="flex flex-col w-[270px] min-h-screen
-                      bg-[#f5a623] flex-shrink-0">
+    <aside className="flex flex-col w-67.5 min-h-screen
+                      bg-orange100 shrink-0">
       <div className="px-5 pt-6 pb-4">
         {/* Logo always dark text on yellow sidebar */}
-        <div>
-          <div
-            className="text-[2rem] font-bold leading-none mb-1 text-gray-900"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            <span style={{ fontStyle: "italic" }}>D</span>eyMake
-          </div>
-          <p
-            className="text-[0.65rem] tracking-[0.18em] uppercase text-gray-900"
-            style={{ fontFamily: "Georgia, serif" }}
-          >
-            Content By You, Loved By All
-          </p>
-        </div>
+        <img src="./logo-app.png" className="w-47 h-16.5"/>
       </div>
 
       <nav className="flex flex-col flex-1 mt-2">
@@ -42,26 +29,26 @@ export default function Sidebar() {
             to={to}
             end={to === "/"}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-5 py-3.5 text-[0.95rem]
-               font-semibold transition-colors duration-150
+              `flex items-center gap-7 px-5 py-3.5 text-sm
+               font-medium transition-colors duration-150 font-inter
                ${isActive
-                 ? "bg-white/30 text-gray-900 border-l-4 border-gray-900"
-                 : "text-gray-900 hover:bg-black/10"
+                 ? "bg-orange300 text-black border-r-8 border-black shadow-nav-web"
+                 : "text-black hover:bg-orange300"
                }`
             }
           >
-            <Icon className="w-5 h-5 flex-shrink-0" />
+            <Icon className="w-5 h-5 shrink-0" />
             {label}
           </NavLink>
         ))}
       </nav>
 
       <button className="flex items-center gap-3 px-5 py-5
-                         text-red-700 font-semibold text-[0.95rem]
-                         hover:bg-black/10 transition-colors
+                         text-red-700 font-medium text-[0.95rem]
+                         hover:bg-orange300 font-inter transition-colors
                          bg-transparent border-none cursor-pointer
                          w-full text-left">
-        <HiArrowLeft className="w-5 h-5" />
+        <RiLogoutCircleLine className="w-6 h-6"/>
         Logout
       </button>
     </aside>
