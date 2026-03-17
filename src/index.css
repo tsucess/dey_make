@@ -9,6 +9,7 @@
 --font-inter: "Inter", sans-serif;
 --font-bricolage :  "Bricolage Grotesque", sans-serif;
 
+
 --color-slate100 : #1A1A1A;
 --color-orange100 : #FDB300;
 --color-slate200 : #D9D9D9;
@@ -17,11 +18,10 @@
 --color-white200: #F2F2F2;
 --color-slate400:#737373;
 --color-orange200: #FFD266;
+--color-black100: #333333;
 
 --shadow-toggle: 0 4px 10px 0 #0000000D;
 --shadow-waitlist: 0 4px 40px 0 #00000005;
+--shadow-waitlist-dark: 0 4px 40px 0 #FFFFFF1A;
 }
 
-.borderImage{
-  border-image: linear-gradient(90deg, #FDB30059, #00000080) 1;
-}

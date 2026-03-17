@@ -2,20 +2,20 @@
 export default function CreativesBanner({ onSignUp }) {
   return (
     <section
-      className="px-6 md:px-12 py-10
-                 bg-white100 dark:bg-[#121212]"
+      className="md:px-12 py-10
+                 bg-white100 dark:bg-slate100"
     >
-      <div className="max-w-5xl mx-auto">
+      <div className="md:max-w-5xl mx-auto">
         <div
-          className="flex flex-col md:flex-row items-center
-                     justify-between gap-10 rounded-3xl
-                     px-8 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-140 overflow-hidden"
+          className="flex flex-col md:flex-row md:items-center justify-center
+                     md:justify-between gap-10 md:rounded-3xl
+                     px-4 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-100 overflow-hidden"
           
         >
           {/* Left */}
-          <div className="flex-1">
+          <div className="max-w-50 flex flex-col gap-4 md:flex-1">
             <h2
-              className="font-semibold font-bricolage text-slate100 leading-tight mb-4"
+              className="font-semibold font-bricolage text-slate100 leading-tight"
               style={{ fontSize: "clamp(28px, 4vw, 40px)" }}
             >
               For creatives,
@@ -23,7 +23,7 @@ export default function CreativesBanner({ onSignUp }) {
               By creatives.
             </h2>
             <p
-              className="text-base font-inter text-slate100 leading-relaxed mb-7 max-w-sm"
+              className="text-base font-inter text-slate100 leading-relaxed max-w-sm"
               
             >
               Built by people who have been there and are building
@@ -31,7 +31,7 @@ export default function CreativesBanner({ onSignUp }) {
             </p>
             <button
               onClick={onSignUp}
-              className="font-semibold text-base px-16 py-3.5 rounded-xl
+              className="font-semibold text-base px-6 md:px-16 py-3.5 rounded-xl
                          cursor-pointer border-none transition-colors
                          bg-white hover:bg-gray-50 text-slate100"
             >
@@ -40,7 +40,7 @@ export default function CreativesBanner({ onSignUp }) {
           </div>
 
           {/* Phone — always light since it's on yellow bg */}
-          <img src="./creative.png" alt="" className="w-110 h-150 object-fill absolute -right-10 -bottom-20" />
+          <img src="./creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
         </div>
       </div>
     </section>

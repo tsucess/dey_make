@@ -1,7 +1,5 @@
-const avatarM =
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&q=80";
-const avatarF =
-  "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&q=80";
+import { useTheme } from "../../context/ThemeContext";
+
 
 function scrollToAbout() {
   var el = document.getElementById("about");
@@ -9,15 +7,16 @@ function scrollToAbout() {
 }
 
 export default function HeroSection({ onSignUp }) {
+  const {isDark} = useTheme()
   return (
-    <section className="flex flex-col items-center text-center
+    <section className="flex flex-col items-start md:items-center text-center
                         px-6 py-12 md:py-20
-                        bg-white100/20 dark:bg-slate100">
+                        bg-white100/20 dark:bg-slate100/20">
 
       {/* Badge */}
       
   <span className="text-xs font-medium font-inter text-slate100 dark:text-white 
-                   bg-slate100/5 dark:bg-[#2d2d2d] 
+                   bg-slate100/5 dark:bg-black100
                    rounded-full px-4 py-2.5 relative flex justify-center items-center after:content-[''] after:w-[106%] after:h-[110%] after:bg-linear-to-r after:-z-10 after:from-[#FDB30059] after:to-[#00000080] after:absolute after:rounded-full">
     Coming soon — Request early access
   </span>
@@ -41,7 +40,7 @@ export default function HeroSection({ onSignUp }) {
 
       {/* Subtext */}
       <p
-        className="text-slate100 font-inter dark:text-white max-w-xl
+        className="text-slate100 font-inter text-left md:text-center dark:text-white max-w-xl
                    leading-relaxed mb-7"
         style={{ fontSize: "clamp(14px, 2vw, 16px)" }}
       >
@@ -51,13 +50,13 @@ export default function HeroSection({ onSignUp }) {
       </p>
 
       {/* Buttons */}
-      <div className="flex flex-wrap justify-center gap-3 mb-12">
+      <div className="flex justify-start md:justify-center gap-3 mb-12">
         <button
           onClick={onSignUp}
           className="bg-orange100 font-inter hover:bg-[#e09510] text-slate100
-                     font-semibold text-[15px] px-9 py-3.5 rounded-xl
+                     font-semibold text-sm md:text-base px-4 md:px-9 py-3.5 rounded-xl
                      border-none cursor-pointer transition-colors
-                     min-w-45"
+                     md:min-w-45"
         >
           Join the waitlist
         </button>
@@ -65,19 +64,19 @@ export default function HeroSection({ onSignUp }) {
           onClick={scrollToAbout}
           className="bg-white dark:bg-transparent
                      text-slate100 font-inter dark:text-white
-                     font-semibold text-[15px] px-9 py-3.5 rounded-xl
-                     cursor-pointer transition-colors min-w-45
+                     font-semibold text-sm md:text-base px-6 md:px-9 py-3.5 rounded-xl
+                     cursor-pointer transition-colors md:min-w-45
                      border-2 border-slate100 dark:border-white
                      hover:bg-orange100 hover:text-[#f5a623]
-                     dark:hover:bg-orange100 dark:hover:text-[#f5a623]"
+                     dark:hover:bg-white  dark:hover:text-slate100"
         >
           Learn more
         </button>
       </div>
 
       {/* Desktop floating cards */}
-      
-      <div><img src="./Hero image dm.png" alt="" /></div>
+      <div className="md:hidden flex justify-center w-full"><img src={isDark ? './hero-mobile-dark.png' :"./hero-mobile.png"} alt=""  className="w-80"/></div>
+      <div className=" hidden md:block"><img src={isDark ? './hero-dark.png' :"./Hero image dm.png"} alt="" /></div>
     </section>
   );
 }

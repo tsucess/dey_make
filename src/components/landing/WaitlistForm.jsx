@@ -49,27 +49,27 @@ export default function WaitlistForm() {
   const inputClass = (hasError) =>
     `w-full px-3.5 py-3 rounded-lg text-sm outline-none
      transition-colors
-     text-slate200 dark:text-gray-200
-     placeholder-slate200 dark:placeholder-gray-600
-     bg-white dark:bg-[#2d2d2d]
+     text-slate200 dark:text-slate200
+     placeholder-slate200 dark:placeholder-slate200
+     bg-white dark:bg-black100
      ${hasError
        ? "border border-red-400 dark:border-red-500"
-       : "border border-white200 dark:border-gray-700 focus:border-[#f5a623] dark:focus:border-[#f5a623]"
+       : "border border-white200 dark:border-slate300 focus:border-[#f5a623] dark:focus:border-[#f5a623]"
      }`;
 
   return (
     <section
       id="waitlist"
-      className="px-6 md:px-12 py-16 text-center
-                 bg-white100 dark:bg-[#121212]"
+      className="px-6 md:px-12 py-16 text-left md:text-center
+                 bg-white100 dark:bg-slate100"
     >
       <h2
         className="font-semibold font-bricolage text-slate100 dark:text-white mb-3"
-        style={{ fontSize: "clamp(22px, 4vw, 32px)" }}
+        style={{ fontSize: "clamp(28px, 4vw, 32px)" }}
       >
         Be the first in line
       </h2>
-      <p className="text-sm text-slate100 font-inter dark:text-gray-400
+      <p className="text-sm text-slate100 font-inter dark:text-white
                     max-w-sm mx-auto mb-8 leading-relaxed">
         Join the DeyMake waitlist. Early creators get invited in batches
         and get a real say in shaping the platform.
@@ -77,14 +77,14 @@ export default function WaitlistForm() {
 
       {/* Form card */}
       <div
-        className="bg-white dark:bg-[#1e1e1e] rounded-2xl
+        className="bg-white dark:bg-slate100 rounded-2xl
                    border-[0.25px] border-gray-200 dark:border-gray-700
-                   max-w-xl mx-auto text-left shadow-waitlist px-16 py-10"
+                   max-w-3xl mx-auto text-left shadow-waitlist dark:shadow-waitlist-dark md:px-16 py-10"
       >
         <form
           onSubmit={handleSubmit}
           noValidate
-          className="p-7 flex flex-col gap-5 "
+          className=" p-4 md:p-7 flex flex-col gap-5 "
         >
           {/* First Name */}
           <div>
@@ -208,15 +208,15 @@ export default function WaitlistForm() {
                 checked={form.agreed}
                 onChange={handleChange}
                 className="w-4 h-4 mt-0.5 shrink-0
-                           accent-[#f5a623] cursor-pointer"
+                           accent-[#f5a623] cursor-pointer dark:bg-black100 border-2 dark:border-slate300"
               />
-              <span className="text-xs font-inter text-slate400 dark:text-gray-400
+              <span className="text-xs font-inter text-slate400 dark:text-slate200
                                leading-relaxed">
                 I agree to be contacted about the beta and understand my
                 data will be handled under the{" "}
                 <a
                   href="#"
-                  className="text-slate400 dark:text-white underline
+                  className="text-slate400 dark:text-slate200 underline
                              hover:text-orange100 transition-colors"
                 >
                   Privacy Notice
