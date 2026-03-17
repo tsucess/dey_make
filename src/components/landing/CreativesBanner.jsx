@@ -9,11 +9,11 @@ export default function CreativesBanner({ onSignUp }) {
         <div
           className="flex flex-col md:flex-row md:items-center justify-center
                      md:justify-between gap-10 md:rounded-3xl
-                     px-4 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-100 overflow-hidden"
+                     px-4 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-100 md:h-150 overflow-hidden"
           
         >
           {/* Left */}
-          <div className="max-w-50 flex flex-col gap-4 md:flex-1">
+          <div className="max-w-50 flex flex-col gap-4 md:max-w-sm md:flex-1">
             <h2
               className="font-semibold font-bricolage text-slate100 leading-tight"
               style={{ fontSize: "clamp(28px, 4vw, 40px)" }}

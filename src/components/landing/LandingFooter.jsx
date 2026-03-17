@@ -6,7 +6,7 @@ export default function LandingFooter({ onSignUp }) {
                    justify-between gap-4 max-w-5xl md:mx-auto"
     >
     
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center w-full md:w-auto gap-2 md:gap-10">
         {/* Logo */}
         <img src='./logo-footer.png' className="w-25 h-7 md:w-30"/>
 
