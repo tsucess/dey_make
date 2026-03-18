@@ -13,6 +13,7 @@ import Logo from '../components/Logo';
 import {  HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { IoSettingsSharp } from "react-icons/io5";
+import Sidebar from "../components/Layout/Sidebar";
 
 const avatar =
   "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
@@ -42,6 +43,11 @@ export default function VideoDetails() {
   const [subscribed, setSubscribed] = useState(false);
   const [comment, setComment] = useState("");
   const [showComments, setShowComments] = useState(true);
+  const [showMenu, setShowMenu] = useState(false)
+
+  function handleToggleMenu(){
+    setShowMenu(prev => !prev)
+  }
 
 
   return (
@@ -281,14 +287,17 @@ export default function VideoDetails() {
       {/* ══════════════════════════════
           DESKTOP LAYOUT
       ══════════════════════════════ */}
-      <div className="hidden md:flex flex-col w-full min-h-screen">
-
+      <div className="flex gap-3">
+         {showMenu && <Sidebar/>}
+      
+      <div className="hidden md:flex-1 md:flex flex-col w-full min-h-screen">
+ 
         {/* Desktop topbar */}
-         <header className="flex items-center justify-between  px-10 pb-3 pt-10
+         <header className="flex items-center justify-between pl-15 pr-10 pb-3 pt-10
                                bg-white dark:bg-slate100
                                sticky top-0 z-10 gap-16">
                                 <div className="flex items-center gap-3">
-                                 <button><IoMdMenu className="w-6 h-6 text-black200"/></button> 
+                                 <button onClick={handleToggleMenu} className="z-50 absolute top-10 left-5"><IoMdMenu className="w-6 h-6 text-black200"/></button> 
                                   <Logo />
 
                                 </div>
@@ -536,6 +545,7 @@ export default function VideoDetails() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
