@@ -122,19 +122,19 @@ export default function Leaderboard() {
             {/* 2nd */}
             <div className="flex flex-col items-center">
               <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./2.svg" />
+              <img src="./podium2.svg" />
             </div>
 
             {/* 1st */}
             <div className="flex flex-col items-center justify-end">
               <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./1.svg"  className="w-full h-full object-cover"/>
+              <img src="./podium1.svg"  className="w-full h-full object-cover"/>
             </div>
 
             {/* 3rd */}
             <div className="flex flex-col items-center">
               <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./3.svg" />
+              <img src="./podium3.svg" />
             </div>
 
           </div>
