@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import ThemeToggle from "../components/ThemeToggle";
+import { BsCcSquare } from "react-icons/bs";
 
 const avatar =
   "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
@@ -49,15 +49,15 @@ export default function VideoDetails() {
   const [comment, setComment] = useState("");
   const [showComments, setShowComments] = useState(true);
 
-  const bg         = isDark ? "#121212" : "#ffffff";
-  const bgSecond   = isDark ? "#1e1e1e" : "#f9fafb";
-  const bgInput    = isDark ? "#2d2d2d" : "#f9fafb";
-  const border     = isDark ? "#2d2d2d" : "#f3f4f6";
-  const borderMid  = isDark ? "#374151" : "#e5e7eb";
-  const textPrim   = isDark ? "#ffffff" : "#111827";
-  const textSecond = isDark ? "#9ca3af" : "#6b7280";
-  const textMuted  = isDark ? "#6b7280" : "#9ca3af";
-  const btnBorder  = isDark ? "#374151" : "#e5e7eb";
+  // const bg         = isDark ? "#121212" : "#ffffff";
+  // const bgSecond   = isDark ? "#1e1e1e" : "#f9fafb";
+  // const bgInput    = isDark ? "#2d2d2d" : "#f9fafb";
+  // const border     = isDark ? "#2d2d2d" : "#f3f4f6";
+  // const borderMid  = isDark ? "#374151" : "#e5e7eb";
+  // const textPrim   = isDark ? "#ffffff" : "#111827";
+  // const textSecond = isDark ? "#9ca3af" : "#6b7280";
+  // const textMuted  = isDark ? "#6b7280" : "#9ca3af";
+  // const btnBorder  = isDark ? "#374151" : "#e5e7eb";
 
   return (
     <div style={{ background: bg }}
@@ -111,11 +111,7 @@ export default function VideoDetails() {
           />
           <div className="absolute top-3 right-3 flex gap-2">
             <button className="w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                stroke="#374151" strokeWidth="2" strokeLinecap="round">
-                <rect x="2" y="7" width="20" height="14" rx="2"/>
-                <path d="M8 15h4M16 15h.01"/>
-              </svg>
+              <BsCcSquare />
             </button>
             <button className="w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
@@ -406,7 +402,7 @@ export default function VideoDetails() {
             </button>
 
             {/* Dark mode toggle */}
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
 
             <button className="w-9 h-9 flex items-center justify-center
                                 rounded-full transition-colors"
@@ -613,7 +609,7 @@ export default function VideoDetails() {
                 style={{ background: bgInput, borderColor: borderMid }}
               >
                 <img src={avatar} alt="me"
-                  className="w-6 h-6 rounded-full object-cover flex-shrink-0" />
+                  className="w-6 h-6 rounded-full object-cover shrink-0" />
                 <input
                   type="text"
                   placeholder="Tell the creator what you think!"

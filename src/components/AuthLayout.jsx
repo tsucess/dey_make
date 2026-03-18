@@ -10,7 +10,7 @@ export default function AuthLayout({ children }) {
 
       {/* Right: form */}
       <div className="flex-1 flex items-center justify-center
-                      overflow-y-auto py-8 md:py-12
+                      overflow-y-scroll pt-90 pb-8 md:py-12
                       bg-white dark:bg-slate100">
         <div className="w-full max-w-132.5 px-6 md:px-12">
           {children}

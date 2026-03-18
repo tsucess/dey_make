@@ -14,18 +14,18 @@ const rankList = [
   { rank: 10, name: "Jason Eton" , high:true      },
 ];
 
-const BLOCK_W = "w-[150px]";
+// const BLOCK_W = "w-28 md:w-[150px]";
 
 /* ── Podium person (avatar + name + views badge) ── */
 function PodiumPerson({ name, views, avatarSize }) {
   return (
-    <div className="flex flex-col items-center w-37.5">
+    <div className="flex flex-col items-center w-25 md:w-37.5">
       <img
         src={avatar}
         alt={name}
         className={`${avatarSize} rounded-full object-cover shadow-md mb-2`}
       />
-      <p className="text-lg font-medium text-center mb-1
+      <p className="text-sm md:text-lg font-medium text-center mb-1
                     text-black font-inter dark:text-white">
         {name}
       </p>
@@ -42,29 +42,29 @@ function PodiumPerson({ name, views, avatarSize }) {
 }
 
 /* ── Podium block ── */
-function PodiumBlock({ rank, blockHeight }) {
-  return (
-    <div
-      className={`${BLOCK_W} rounded-t-xl flex items-end
-                  justify-center pb-3 shrink-0`}
-      style={{
-        height: `${blockHeight}px`,
-        background: "linear-gradient(160deg, #FFD84D 0%, #F5A623 55%, #D4880A 100%)",
-      }}
-    >
-      <span
-        className="text-[4.5rem] font-black leading-none"
-        style={{
-          fontFamily: "Georgia, serif",
-          color: "#FFD000",
-          WebkitTextStroke: "3.5px #1a1a1a",
-        }}
-      >
-        {rank}
-      </span>
-    </div>
-  );
-}
+// function PodiumBlock({ rank, blockHeight }) {
+//   return (
+//     <div
+//       className={`${BLOCK_W} rounded-t-xl flex items-end
+//                   justify-center pb-3 shrink-0`}
+//       style={{
+//         height: `${blockHeight}px`,
+//         background: "linear-gradient(160deg, #FFD84D 0%, #F5A623 55%, #D4880A 100%)",
+//       }}
+//     >
+//       <span
+//         className="text-[4.5rem] font-black leading-none"
+//         style={{
+//           fontFamily: "Georgia, serif",
+//           color: "#FFD000",
+//           WebkitTextStroke: "3.5px #1a1a1a",
+//         }}
+//       >
+//         {rank}
+//       </span>
+//     </div>
+//   );
+// }
 
 export default function Leaderboard() {
   const [tab, setTab] = useState("Daily");
@@ -75,17 +75,17 @@ export default function Leaderboard() {
       <div className="px-6 py-5 w-full">
 
         {/* ── Tabs mobile ── */}
-        <div className="flex gap-2 md:hidden mb-6">
+        <div className="flex gap-2 justify-between md:hidden mb-6">
           {["Daily", "Weekly", "Monthly"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4.5 py-1.5 rounded-full text-[0.85rem]
-                          font-semibold border-[1.5px] cursor-pointer
+              className={`px-4.5 py-2 rounded-full text-[0.85rem]
+                          font-semibold cursor-pointer
                           transition-all duration-200
                           ${tab === t
-                            ? "bg-[#f5a623] text-white border-[#f5a623]"
-                            : "bg-white dark:bg-[#1e1e1e] text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-700"
+                            ? "bg-orange100 text-slate100"
+                            : "bg-slate150 dark:bg-[#1e1e1e] text-slate100 dark:text-gray-400  dark:border-gray-700"
                           }`}
             >
               {t}
@@ -117,34 +117,34 @@ export default function Leaderboard() {
 
         {/* ── Podium ── */}
         <div className="flex justify-center">
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-0.5 md:gap-2">
 
             {/* 2nd */}
             <div className="flex flex-col items-center">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-[72px] h-[72px]" />
-              <PodiumBlock rank={2} blockHeight={160} />
+              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
+              <img src="./2.svg" />
             </div>
 
             {/* 1st */}
-            <div className="flex flex-col items-center">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-[88px] h-[88px]" />
-              <PodiumBlock rank={1} blockHeight={220} />
+            <div className="flex flex-col items-center justify-end">
+              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
+              <img src="./1.svg"  className="w-full h-full object-cover"/>
             </div>
 
             {/* 3rd */}
             <div className="flex flex-col items-center">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-[64px] h-[64px]" />
-              <PodiumBlock rank={3} blockHeight={120} />
+              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
+              <img src="./3.svg" />
             </div>
 
           </div>
         </div>
 
         {/* ── You currently rank ── */}
-        <div className="flex justify-center flex-col items-center">
+        <div className="flex justify-center flex-col md:items-center">
           <div className="flex items-center justify-between
-                          bg-orange100 rounded-t-xl px-7 py-3.5
-                          w-4/5 max-w-full">
+                          bg-orange100 rounded-full md:rounded-t-xl px-7 py-3.5
+                          md:w-4/5 max-w-full">
             <span className="font-semibold text-base font-inter text-black">
               You Currently Rank
             </span>
@@ -163,7 +163,7 @@ export default function Leaderboard() {
         
 
         {/* ── Rank list ── */}
-        <div className="flex flex-col items-center bg-white300 gap-2 w-4/5 max-w-full">
+        <div className="flex flex-col items-center md:bg-white300 gap-2 md:w-4/5 max-w-full">
           {rankList.map((item, i) => (
             <div
               key={i}
