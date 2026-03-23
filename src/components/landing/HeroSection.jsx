@@ -75,8 +75,8 @@ export default function HeroSection({ onSignUp }) {
       </div>
 
       {/* Desktop floating cards */}
-      <div className="md:hidden flex justify-center w-full"><img src={isDark ? './hero-mobile-dark.png' :"./hero-mobile.png"} alt=""  className="w-80"/></div>
-      <div className=" hidden md:block"><img src={isDark ? './hero-dark.png' :"./Hero image dm.png"} alt="" /></div>
+      <div className="md:hidden flex justify-center w-full"><img src={isDark ? './home_dark_m.png' :"./home_m.png"} alt=""  className="w-80"/></div>
+      <div className=" hidden md:block"><img src={isDark ? './home_dark.png' :"./home.png"} alt="" /></div>
     </section>
   );
 }
