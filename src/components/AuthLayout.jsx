@@ -6,7 +6,7 @@ export default function AuthLayout({ children }) {
       {/* Left: VR image — desktop only */}
       <div
         className="hidden md:block w-2/5 shrink-0 h-full"
-      ><img src="./auth-img.png" alt="" className="w-full h-full"/></div>
+      ><img src="/auth-img.png" alt="" className="w-full h-full"/></div>
 
       {/* Right: form */}
       <div className="flex-1 flex items-center justify-center

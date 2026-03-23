@@ -1,7 +1,6 @@
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
-import ThemeToggle from "../ThemeToggle";
 import { Outlet } from "react-router-dom";
 
 export default function AppLayout() {
@@ -24,7 +23,7 @@ export default function AppLayout() {
         {/* Mobile TopBar */}
         <div className="flex md:hidden items-center justify-between
                         px-4 py-3 bg-white dark:bg-[#1a1a1a] dark:border-gray-800">
-          <img src="./logo-footer.png" alt="" className="w-33 h-10"/>
+          <img src="/logo-footer.png" alt="DeyMake" className="w-33 h-10"/>
           <div className="flex items-center gap-1">
             {/* <ThemeToggle /> */}
             {/* Search */}

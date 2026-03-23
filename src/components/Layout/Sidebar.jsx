@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { RiLogoutCircleLine } from "react-icons/ri";
 import {
   HiHome, HiChartBar, HiChatAlt2,
-  HiCog, HiUser, HiArrowLeft
+  HiCog, HiUser
 } from "react-icons/hi";
 
 const navItems = [
@@ -19,7 +19,7 @@ export default function Sidebar() {
                       bg-orange100 shrink-0">
       <div className="px-5 pt-6 pb-4">
         {/* Logo always dark text on yellow sidebar */}
-        <img src="./logo-app.png" className="w-47 h-16.5"/>
+        <img src="/logo-app.png" alt="DeyMake" className="w-47 h-16.5"/>
       </div>
 
       <nav className="flex flex-col flex-1 mt-2">

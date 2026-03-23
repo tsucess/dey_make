@@ -6,6 +6,10 @@ import Login from "./pages/Login";
 import AppLayout from "./components/Layout/AppLayout";
 import Homepage from "./pages/Homepage";
 import Leaderboard from "./pages/Leaderboard";
+import CreateUpload from "./pages/CreateUpload";
+import Messages from "./pages/Messages";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
 
 export default function App() {
@@ -43,7 +47,11 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<Homepage />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
+          <Route path="/messages" element={<Messages />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
+        <Route path="/create" element={<CreateUpload />} />
         <Route path="/video/:id" element={<VideoDetails />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>

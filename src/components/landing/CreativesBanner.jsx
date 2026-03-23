@@ -40,7 +40,7 @@ export default function CreativesBanner({ onSignUp }) {
           </div>
 
           {/* Phone — always light since it's on yellow bg */}
-          <img src="./creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
+          <img src="/creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
         </div>
       </div>
     </section>

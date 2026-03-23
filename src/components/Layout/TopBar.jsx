@@ -1,4 +1,5 @@
-import {  HiSearch, HiPlus } from "react-icons/hi";
+import { Link } from "react-router-dom";
+import { HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
 
 export default function TopBar() {
@@ -27,15 +28,18 @@ export default function TopBar() {
       <div className="flex items-center gap-3">
 
         {/* Create */}
-        <button className="flex items-center gap-1.5
-                           bg-orange100 font-inter hover:bg-[#e09510]
-                           text-black font-semibold text-sm
-                           px-6 py-2.5 rounded-full
-                           border-none cursor-pointer
-                           transition-colors">
+        <Link
+          to="/create"
+          className="flex items-center gap-1.5
+                     bg-orange100 font-inter hover:bg-[#e09510]
+                     text-black font-semibold text-sm
+                     px-6 py-2.5 rounded-full
+                     border-none cursor-pointer
+                     transition-colors"
+        >
           <HiPlus className="w-4 h-4" />
           Create
-        </button>
+        </Link>
 
 
         {/* Bell */}

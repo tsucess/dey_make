@@ -8,17 +8,17 @@ export default function WhySection() {
 
   const features = [
     {
-      icon: <img src='./visibilty-icon.png' />,
+      icon: <img src='/visibilty-icon.png' alt="" />,
       title: "Better Visibility",
       desc: "Your content gets a fair chance to be seen by the right people.",
     },
     {
-      icon: <img src='./connection-icon.png' />,
+      icon: <img src='/connection-icon.png' alt="" />,
       title: "More connection",
       desc: "Real engagement that leads to community, not just numbers.",
     },
     {
-      icon: <img src="./noise-icon.png" />,
+      icon: <img src="/noise-icon.png" alt="" />,
       title: "Less Noise",
       desc: "No more cluttered feeds or forced virality.",
     },

@@ -1,207 +1,187 @@
-import { useState } from "react";
-import { MdArrowDropUp, MdArrowDropDown } from "react-icons/md";
+import { useMemo, useState } from "react";
+import { MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
 
 const avatar =
-  "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
+  "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=120&q=80";
 
-const rankList = [
-  { rank: 4,  name: "Jason Robertson", high:false  },
-  { rank: 5,  name: "Jason Eton", high:true       },
-  { rank: 6,  name: "Jason Eton Michel" , high:true},
-  { rank: 7,  name: "Jason Gamis"  , high:false    },
-  { rank: 8,  name: "Jason Eton"  , high:false     },
-  { rank: 9,  name: "Jason Eton"  , high:false     },
-  { rank: 10, name: "Jason Eton" , high:true      },
-];
+const leaderboardData = {
+  Daily: {
+    currentRank: { position: 23, trend: "up" },
+    podium: [
+      { rank: 2, name: "Jason Eton", views: "164.3M", image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+      { rank: 1, name: "Jason Eton", views: "164.3M", image: "/podium1.svg", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
+      { rank: 3, name: "Jason Eton", views: "164.3M", image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+    ],
+    standings: [
+      { rank: 4, name: "Jason Eton", trend: "down" },
+      { rank: 5, name: "Jason Eton", trend: "up" },
+      { rank: 6, name: "Jason Eton", trend: "up" },
+      { rank: 7, name: "Jason Eton", trend: "down" },
+      { rank: 7, name: "Jason Eton", trend: "down" },
+    ],
+  },
+  Weekly: {
+    currentRank: { position: 18, trend: "up" },
+    podium: [
+      { rank: 2, name: "Jason Eton", views: "142.8M", image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+      { rank: 1, name: "Jason Eton", views: "205.4M", image: "/podium1.svg", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
+      { rank: 3, name: "Jason Eton", views: "138.9M", image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+    ],
+    standings: [
+      { rank: 4, name: "Jason Eton", trend: "up" },
+      { rank: 5, name: "Jason Eton", trend: "down" },
+      { rank: 6, name: "Jason Eton", trend: "up" },
+      { rank: 7, name: "Jason Eton", trend: "up" },
+      { rank: 8, name: "Jason Eton", trend: "down" },
+    ],
+  },
+  Monthly: {
+    currentRank: { position: 12, trend: "up" },
+    podium: [
+      { rank: 2, name: "Jason Eton", views: "129.7M", image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+      { rank: 1, name: "Jason Eton", views: "244.1M", image: "/podium1.png", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
+      { rank: 3, name: "Jason Eton", views: "122.4M", image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
+    ],
+    standings: [
+      { rank: 4, name: "Jason Eton", trend: "up" },
+      { rank: 5, name: "Jason Eton", trend: "up" },
+      { rank: 6, name: "Jason Eton", trend: "down" },
+      { rank: 7, name: "Jason Eton", trend: "up" },
+      { rank: 8, name: "Jason Eton", trend: "down" },
+    ],
+  },
+};
 
-// const BLOCK_W = "w-28 md:w-[150px]";
+const tabs = Object.keys(leaderboardData);
 
-/* ── Podium person (avatar + name + views badge) ── */
-function PodiumPerson({ name, views, avatarSize }) {
+function ViewsBadge({ views }) {
   return (
-    <div className="flex flex-col items-center w-25 md:w-37.5">
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#8C8C8C] px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M8 6v12l10-6-10-6Z" />
+      </svg>
+      <span>{views}</span>
+    </div>
+  );
+}
+
+function TrendIndicator({ trend }) {
+  const isUp = trend === "up";
+
+  return (
+    <span
+      className={`flex h-7 w-7 items-center justify-center rounded-full border-2 bg-white ${
+        isUp ? "border-green100 text-green100" : "border-red100 text-red100"
+      }`}
+      aria-label={isUp ? "Trending up" : "Trending down"}
+    >
+      {isUp ? <MdArrowDropUp className="h-5 w-5" /> : <MdArrowDropDown className="h-5 w-5" />}
+    </span>
+  );
+}
+
+function PodiumCard({ item }) {
+  const isWinner = item.rank === 1;
+
+  return (
+    <div className={`flex flex-col items-center ${isWinner ? "translate-y-0" : "translate-y-4 md:translate-y-6"}`}>
       <img
         src={avatar}
-        alt={name}
-        className={`${avatarSize} rounded-full object-cover shadow-md mb-2`}
+        alt={item.name}
+        className={`rounded-full object-cover shadow-md ${isWinner ? "h-14 w-14 md:h-[72px] md:w-[72px]" : "h-12 w-12 md:h-16 md:w-16"}`}
       />
-      <p className="text-sm md:text-lg font-medium text-center mb-1
-                    text-black font-inter dark:text-white">
-        {name}
+      <p className="mt-2 text-center text-lg font-medium font-inter text-slate100 dark:text-white md:text-[2rem]">
+        {item.name}
       </p>
-      <div className="flex items-center gap-1 px-2 py-1 rounded-full
-                      mb-2.5 bg-black/52 dark:bg-gray-600 text-white
-                      text-[0.72rem] font-inter font-medium">
-        <svg width="8" height="8" viewBox="0 0 24 24" fill="white">
-          <polygon points="5,3 19,12 5,21" />
-        </svg>
-        {views}
+      <div className="mt-1">
+        <ViewsBadge views={item.views} />
+      </div>
+      <img src={item.image} alt={item.alt} className={`mt-3 h-auto ${item.widthClass}`} />
+    </div>
+  );
+}
+
+function StandingRow({ item, isLast }) {
+  return (
+    <div
+      className={`flex items-center justify-between py-4 ${
+        isLast ? "" : "border-b border-black/6 dark:border-white/8"
+      }`}
+    >
+      <div className="flex items-center gap-4">
+        <img src={avatar} alt={item.name} className="h-10 w-10 rounded-full object-cover" />
+        <span className="text-base font-medium font-inter text-slate100 dark:text-white md:text-[1.05rem]">
+          {item.name}
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <span className="text-xl font-medium font-inter text-slate100 dark:text-white">{item.rank}</span>
+        <TrendIndicator trend={item.trend} />
       </div>
     </div>
   );
 }
 
-/* ── Podium block ── */
-// function PodiumBlock({ rank, blockHeight }) {
-//   return (
-//     <div
-//       className={`${BLOCK_W} rounded-t-xl flex items-end
-//                   justify-center pb-3 shrink-0`}
-//       style={{
-//         height: `${blockHeight}px`,
-//         background: "linear-gradient(160deg, #FFD84D 0%, #F5A623 55%, #D4880A 100%)",
-//       }}
-//     >
-//       <span
-//         className="text-[4.5rem] font-black leading-none"
-//         style={{
-//           fontFamily: "Georgia, serif",
-//           color: "#FFD000",
-//           WebkitTextStroke: "3.5px #1a1a1a",
-//         }}
-//       >
-//         {rank}
-//       </span>
-//     </div>
-//   );
-// }
-
 export default function Leaderboard() {
   const [tab, setTab] = useState("Daily");
+  const currentBoard = useMemo(() => leaderboardData[tab], [tab]);
 
   return (
-    <div className="w-full min-h-screen pb-20 md:pb-0
-                    bg-white dark:bg-[#121212]">
-      <div className="px-6 py-5 w-full">
+    <div className="min-h-full bg-white px-4 pb-20 pt-4 dark:bg-[#1A1A1A] md:px-8 md:pb-10 md:pt-6">
+      <div className="mx-auto flex w-full max-w-[980px] flex-col items-center">
+        <div className="w-full max-w-[620px] rounded-full bg-[#F2F2F2] p-2 dark:bg-[#343434]">
+          <div className="grid grid-cols-3 gap-2">
+            {tabs.map((item) => {
+              const isActive = tab === item;
 
-        {/* ── Tabs mobile ── */}
-        <div className="flex gap-2 justify-between md:hidden mb-6">
-          {["Daily", "Weekly", "Monthly"].map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4.5 py-2 rounded-full text-[0.85rem]
-                          font-semibold cursor-pointer
-                          transition-all duration-200
-                          ${tab === t
-                            ? "bg-orange100 text-slate100"
-                            : "bg-slate150 dark:bg-[#1e1e1e] text-slate100 dark:text-gray-400  dark:border-gray-700"
-                          }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-
-        {/* ── Tabs desktop ── */}
-        <div className="hidden md:flex justify-center mb-10">
-          <div className="w-full max-w-117 bg-white300 dark:bg-[#1e1e1e]
-                          rounded-full p-1.5 flex justify-between">
-            {["Daily", "Weekly", "Monthly"].map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-7 py-2 rounded-full text-[0.9rem]
-                            font-semibold border-none cursor-pointer
-                            transition-all duration-200
-                            ${tab === t
-                              ? "bg-orange100 text-black"
-                              : "bg-transparent text-black dark:text-gray-400"
-                            }`}
-              >
-                {t}
-              </button>
-            ))}
+              return (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setTab(item)}
+                  className={`rounded-full px-4 py-3 text-sm font-medium font-inter transition-colors md:text-[1.05rem] ${
+                    isActive
+                      ? "bg-orange100 text-black"
+                      : "text-slate100 hover:bg-white/70 dark:text-white dark:hover:bg-white/8"
+                  }`}
+                >
+                  {item}
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* ── Podium ── */}
-        <div className="flex justify-center">
-          <div className="flex items-end gap-0.5 md:gap-2">
-
-            {/* 2nd */}
-            <div className="flex flex-col items-center">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./podium2.svg" />
-            </div>
-
-            {/* 1st */}
-            <div className="flex flex-col items-center justify-end">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./podium1.svg"  className="w-full h-full object-cover"/>
-            </div>
-
-            {/* 3rd */}
-            <div className="flex flex-col items-center">
-              <PodiumPerson name="Jason Eton" views="164.3M" avatarSize="w-10 h-10 md:w-[72px] md:h-[72px]" />
-              <img src="./podium3.svg" />
-            </div>
-
-          </div>
+        <div className="mt-8 flex w-full items-end justify-center gap-1 overflow-x-auto pb-4 sm:gap-2 md:mt-10 md:gap-4">
+          <PodiumCard item={currentBoard.podium[0]} />
+          <PodiumCard item={currentBoard.podium[1]} />
+          <PodiumCard item={currentBoard.podium[2]} />
         </div>
 
-        {/* ── You currently rank ── */}
-        <div className="flex justify-center flex-col md:items-center">
-          <div className="flex items-center justify-between
-                          bg-orange100 rounded-full md:rounded-t-xl px-7 py-3.5
-                          md:w-4/5 max-w-full">
-            <span className="font-semibold text-base font-inter text-black">
+        <section className="w-full overflow-hidden rounded-[2rem] md:rounded-[2.25rem]">
+          <div className="flex items-center justify-between bg-orange100 px-6 py-5 md:px-10">
+            <span className="text-lg font-medium font-inter text-black md:text-[1.75rem]">
               You Currently Rank
             </span>
-            <div className="flex items-center gap-2.5">
-              <span className="font-medium font-inter text-base text-black">
-                23
+            <div className="flex items-center gap-4">
+              <span className="text-2xl font-medium font-inter text-black md:text-[2rem]">
+                {currentBoard.currentRank.position}
               </span>
-              <button className="w-8 h-8 rounded-full
-                                 border-2 border-green100 bg-white
-                                 flex items-center justify-center
-                                 cursor-pointer text-[0.55rem] text-gray-900">
-                <MdArrowDropUp className="w-6 h-6 text-green100"/>
-              </button>
+              <TrendIndicator trend={currentBoard.currentRank.trend} />
             </div>
           </div>
-        
 
-        {/* ── Rank list ── */}
-        <div className="flex flex-col items-center md:bg-white300 gap-2 md:w-4/5 max-w-full">
-          {rankList.map((item, i) => (
-            <div
-              key={i}
-              className="flex items-center justify-between w-full
-                         rounded-xl px-7 py-3"
-            >
-              <div className="flex items-center gap-3">
-                <img
-                  src={avatar}
-                  alt={item.name}
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <span className="font-medium text-sm font-inter
-                                 text-black dark:text-white">
-                  {item.name}
-                </span>
-              </div>
-              <div className="flex items-center gap-2.5">
-                <span className="font-medium text-sm font-inter
-                                 text-black dark:text-gray-300">
-                  {item.rank}
-                </span>
-                {item.high ? <button className="w-8 h-8 rounded-full
-                                 border-2 border-green100 bg-white
-                                 flex items-center justify-center
-                                 cursor-pointer text-[0.55rem] text-gray-900">
-                <MdArrowDropUp className="w-6 h-6 text-green100"/>
-              </button> : <button className="w-8 h-8 rounded-full
-                                 border-2 border-red100 bg-white
-                                 flex items-center justify-center
-                                 cursor-pointer text-[0.55rem] text-gray-900">
-                <MdArrowDropDown className="w-6 h-6 text-red100"/>
-              </button>}
-              </div>
-            </div>
-          ))}
-        </div>
-</div>
+          <div className="bg-[#F3F3F3] px-6 py-5 dark:bg-[#343434] md:px-10 md:py-6">
+            {currentBoard.standings.map((item, index) => (
+              <StandingRow
+                key={`${item.rank}-${index}`}
+                item={item}
+                isLast={index === currentBoard.standings.length - 1}
+              />
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
