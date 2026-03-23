@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { IoMdArrowDropright } from "react-icons/io";
 
 const profileTabs = ["Posts", "Liked", "Saved", "Drafts"];
 
@@ -18,11 +19,9 @@ const profile = {
 
 function ViewsBadge({ views }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/15 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-sm">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M8 6v12l10-6-10-6Z" />
-      </svg>
-      <span>{views}</span>
+    <div className="inline-flex items-center gap-1 rounded-full border-y-2 border-white bg-black/50 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-xs backdrop-brightness-100">
+      <IoMdArrowDropright className="w-6 h-6 text-white"/>
+      <span className="text-white font-inter text-sm">{views}</span>
     </div>
   );
 }
@@ -33,50 +32,47 @@ export default function Profile() {
 
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
-      <section className="relative h-44 overflow-hidden bg-[#0D62B0] md:h-56">
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 18% 20%, rgba(255,255,255,.2) 0, rgba(255,255,255,0) 22%), radial-gradient(circle at 82% 18%, rgba(255,255,255,.16) 0, rgba(255,255,255,0) 18%), radial-gradient(circle at 70% 72%, rgba(255,255,255,.16) 0, rgba(255,255,255,0) 20%), linear-gradient(135deg, rgba(1,57,117,.35), rgba(1,57,117,0))",
-          }}
-        />
+      <section className="h-60 w-full  md:h-60">
+        <img src="./header_profile.png" alt="" className="w-full h-full object-fit" />
+        
       </section>
 
       <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pb-12">
-        <div className="-mt-9 md:-mt-12">
+        <div className="-mt-7 md:-mt-9">
+          <div className="flex flex-col gap-8 md:pl-30">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
             <img
               src={profile.avatar}
               alt={profile.name}
-              className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg dark:border-slate100 md:h-28 md:w-28"
+              className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg object-center dark:border-slate100 md:h-28 md:w-28"
             />
 
             <div className="space-y-1">
-              <h1 className="text-3xl font-medium font-inter text-slate100 dark:text-white md:text-4xl">
+              <h1 className="text-lg font-medium font-inter text-black dark:text-white md:text-xl">
                 {profile.name}
               </h1>
-              <p className="text-xl font-inter text-slate50 dark:text-slate200">{profile.subscribers}</p>
+              <p className="text-base font-inter text-slate700 dark:text-slate200">{profile.subscribers}</p>
             </div>
           </div>
 
-          <p className="mt-6 text-2xl font-medium font-inter text-slate100 dark:text-white md:text-[2rem]">
+          <p className="text-2xl font-medium font-inter text-black dark:text-white md:text-xl">
             {profile.bio}
           </p>
 
-          <div className="mt-6 flex flex-col gap-3 md:flex-row md:gap-6">
+          <div className="flex flex-col gap-3 md:flex-row md:gap-6">
             <button
               type="button"
-              className="min-w-54 rounded-full bg-white300 px-8 py-4 text-xl font-medium font-inter text-slate100 transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white"
+              className="min-w-54 rounded-full bg-white300 px-8 py-4 text-lg font-medium font-inter text-black transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white"
             >
               Edit profile
             </button>
             <button
               type="button"
-              className="min-w-54 rounded-full bg-white300 px-8 py-4 text-xl font-medium font-inter text-slate100 transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white"
+              className="min-w-54 rounded-full bg-white300 px-8 py-4 text-lg font-medium font-inter text-black transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white"
             >
               Share profile
             </button>
+          </div>
           </div>
 
           <div className="mt-8 rounded-full bg-white300 p-2 dark:bg-black100 md:mt-10">
@@ -89,7 +85,7 @@ export default function Profile() {
                     key={tab}
                     type="button"
                     onClick={() => setActiveTab(tab)}
-                    className={`rounded-full px-5 py-4 text-lg font-medium font-inter transition-colors md:text-2xl ${
+                    className={`rounded-full px-5 py-3 text-base font-semibold font-inter transition-colors md:text-lg ${
                       isActive
                         ? "bg-orange100 text-black"
                         : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-[#454545]"
@@ -106,9 +102,9 @@ export default function Profile() {
             {visiblePosts.map((post) => (
               <article
                 key={post.id}
-                className="relative aspect-[0.83] overflow-hidden rounded-[1.6rem] bg-slate200/95 dark:bg-[#d9d9d9]"
+                className="relative h-75 overflow-hidden rounded-2xl bg-slate200/95 dark:bg-slate200"
               >
-                <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/12" />
+                {/* <div className="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/12" /> */}
                 <div className="absolute bottom-4 right-4">
                   <ViewsBadge views={post.views} />
                 </div>
