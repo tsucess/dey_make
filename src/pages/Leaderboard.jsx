@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
+import { IoMdArrowDropright } from "react-icons/io";
 
 const avatar =
   "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=120&q=80";
@@ -9,7 +10,7 @@ const leaderboardData = {
     currentRank: { position: 23, trend: "up" },
     podium: [
       { rank: 2, name: "Jason Eton", views: "164.3M", image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
-      { rank: 1, name: "Jason Eton", views: "164.3M", image: "/podium1.svg", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
+      { rank: 1, name: "Jason Eton", views: "164.3M", image: "/podium1.png", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
       { rank: 3, name: "Jason Eton", views: "164.3M", image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
     ],
     standings: [
@@ -24,7 +25,7 @@ const leaderboardData = {
     currentRank: { position: 18, trend: "up" },
     podium: [
       { rank: 2, name: "Jason Eton", views: "142.8M", image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
-      { rank: 1, name: "Jason Eton", views: "205.4M", image: "/podium1.svg", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
+      { rank: 1, name: "Jason Eton", views: "205.4M", image: "/podium1.png", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" },
       { rank: 3, name: "Jason Eton", views: "138.9M", image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" },
     ],
     standings: [
@@ -57,9 +58,7 @@ const tabs = Object.keys(leaderboardData);
 function ViewsBadge({ views }) {
   return (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-[#8C8C8C] px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-        <path d="M8 6v12l10-6-10-6Z" />
-      </svg>
+      <IoMdArrowDropright className="w-6 h-6 text-white"/>
       <span>{views}</span>
     </div>
   );
@@ -84,13 +83,13 @@ function PodiumCard({ item }) {
   const isWinner = item.rank === 1;
 
   return (
-    <div className={`flex flex-col items-center ${isWinner ? "translate-y-0" : "translate-y-4 md:translate-y-6"}`}>
+    <div className={`flex flex-col items-center`}>
       <img
         src={avatar}
         alt={item.name}
-        className={`rounded-full object-cover shadow-md ${isWinner ? "h-14 w-14 md:h-[72px] md:w-[72px]" : "h-12 w-12 md:h-16 md:w-16"}`}
+        className={`rounded-full object-cover shadow-md ${isWinner ? "h-14 w-14 md:h-18 md:w-18" : "h-12 w-12 md:h-16 md:w-16"}`}
       />
-      <p className="mt-2 text-center text-lg font-medium font-inter text-slate100 dark:text-white md:text-[2rem]">
+      <p className="mt-2 text-center text-base font-medium font-inter text-slate100 dark:text-white md:text-lg">
         {item.name}
       </p>
       <div className="mt-1">
@@ -116,7 +115,7 @@ function StandingRow({ item, isLast }) {
       </div>
 
       <div className="flex items-center gap-4">
-        <span className="text-xl font-medium font-inter text-slate100 dark:text-white">{item.rank}</span>
+        <span className="text-base font-medium font-inter text-slate100 dark:text-white">{item.rank}</span>
         <TrendIndicator trend={item.trend} />
       </div>
     </div>
@@ -129,8 +128,8 @@ export default function Leaderboard() {
 
   return (
     <div className="min-h-full bg-white px-4 pb-20 pt-4 dark:bg-[#1A1A1A] md:px-8 md:pb-10 md:pt-6">
-      <div className="mx-auto flex w-full max-w-[980px] flex-col items-center">
-        <div className="w-full max-w-[620px] rounded-full bg-[#F2F2F2] p-2 dark:bg-[#343434]">
+      <div className="mx-auto flex w-full max-w-245 flex-col items-center">
+        <div className="w-full max-w-155 rounded-full bg-[#F2F2F2] p-2 dark:bg-[#343434]">
           <div className="grid grid-cols-3 gap-2">
             {tabs.map((item) => {
               const isActive = tab === item;
@@ -153,19 +152,19 @@ export default function Leaderboard() {
           </div>
         </div>
 
-        <div className="mt-8 flex w-full items-end justify-center gap-1 overflow-x-auto pb-4 sm:gap-2 md:mt-10 md:gap-4">
+        <div className="mt-8 flex w-full items-end justify-center gap-2 md:mt-10">
           <PodiumCard item={currentBoard.podium[0]} />
           <PodiumCard item={currentBoard.podium[1]} />
           <PodiumCard item={currentBoard.podium[2]} />
         </div>
 
-        <section className="w-full overflow-hidden rounded-[2rem] md:rounded-[2.25rem]">
+        <section className="w-full rounded-4xl overflow-hidden md:rounded-2xl">
           <div className="flex items-center justify-between bg-orange100 px-6 py-5 md:px-10">
-            <span className="text-lg font-medium font-inter text-black md:text-[1.75rem]">
+            <span className="text-base font-medium font-inter text-black md:text-lg">
               You Currently Rank
             </span>
             <div className="flex items-center gap-4">
-              <span className="text-2xl font-medium font-inter text-black md:text-[2rem]">
+              <span className="text-base font-medium font-inter text-black md:text-lg">
                 {currentBoard.currentRank.position}
               </span>
               <TrendIndicator trend={currentBoard.currentRank.trend} />
