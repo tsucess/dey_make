@@ -67,9 +67,12 @@ export default function LandingNavbar({ onSignUp }) {
       {/* Mobile dropdown */}
       {menuOpen && (
         <div
-          className="md:hidden flex flex-col gap-12 px-6 pb-4 pt-12
-                     border-t border-gray-100 dark:border-gray-800
-                     bg-white/85 backdrop-blur-xs backdrop-brightness-90 z-20 absolute h-screen top-0 left-0 w-full p-4 dark:bg-slate100"
+          className={`md:hidden flex flex-col gap-12 px-6 pb-4 pt-12
+    border-t border-gray-100 dark:border-gray-800
+    bg-white/85 backdrop-blur-xs backdrop-brightness-90
+    z-20 absolute h-screen top-0 left-0 w-full
+    dark:bg-slate100/50 
+    transition-all duration-300 ease-in-out ${menuOpen ?  "translate-x-0 opacity-100" : "-translate-x-full opacity-0"}`}
         >
           <div className="flex justify-between items-center">
             <button onClick={() => setMenuOpen(false)}><IoClose className="text-slate100 dark:text-white w-8 h-8"/>

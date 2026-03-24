@@ -32,7 +32,7 @@ export default function Sidebar() {
               `flex items-center gap-7 px-5 py-3.5 text-sm
                font-medium transition-colors duration-150 font-inter
                ${isActive
-                 ? "bg-orange300 text-black border-r-8 border-black shadow-nav-web"
+                 ? "bg-orange300 text-black border-r-8 border-black"
                  : "text-black hover:bg-orange300"
                }`
             }
