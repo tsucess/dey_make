@@ -57,7 +57,7 @@ const tabs = Object.keys(leaderboardData);
 
 function ViewsBadge({ views }) {
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#8C8C8C] px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
+    <div className="inline-flex items-center gap-1.5 rounded-full bg-slate600 px-3 py-1 text-xs font-medium border-y border-y-white font-inter text-white md:text-sm dark:bg-white/20 backdrop-blur-md backdrop-brightness-100">
       <IoMdArrowDropright className="w-6 h-6 text-white"/>
       <span>{views}</span>
     </div>
@@ -127,9 +127,9 @@ export default function Leaderboard() {
   const currentBoard = useMemo(() => leaderboardData[tab], [tab]);
 
   return (
-    <div className="min-h-full bg-white px-4 pb-20 pt-4 dark:bg-[#1A1A1A] md:px-8 md:pb-10 md:pt-6">
+    <div className="min-h-full bg-white px-4 pb-20 pt-4 dark:bg-slate100 md:px-8 md:pb-10 md:pt-6">
       <div className="mx-auto flex w-full max-w-245 flex-col items-center">
-        <div className="w-full max-w-155 rounded-full bg-[#F2F2F2] p-2 dark:bg-[#343434]">
+        <div className="w-full max-w-155 rounded-full bg-white200 p-2 dark:bg-black100">
           <div className="grid grid-cols-3 gap-2">
             {tabs.map((item) => {
               const isActive = tab === item;
@@ -171,7 +171,7 @@ export default function Leaderboard() {
             </div>
           </div>
 
-          <div className="space-y-3 md:space-y-0 md:bg-[#F3F3F3] md:px-10 md:py-6 md:dark:bg-[#343434]">
+          <div className="space-y-3 md:space-y-0 md:bg-[#F3F3F3] md:px-10 md:py-6 md:dark:bg-black100">
             {currentBoard.standings.map((item, index) => (
               <StandingRow
                 key={`${item.rank}-${index}`}

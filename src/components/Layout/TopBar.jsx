@@ -13,7 +13,7 @@ export default function TopBar() {
                       bg-white300 dark:bg-black100
                       rounded-full px-4 py-2 border-[0.15px] border-slate700 ">
         <HiSearch className="w-4 h-4 shrink-0
-                             text-black dark:text-gray-500" />
+                             text-black dark:text-slate200" />
         <input
           type="text"
           placeholder="Search"

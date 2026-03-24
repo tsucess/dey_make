@@ -116,14 +116,14 @@ const categories = [
 function ShowMoreDivider() {
   return (
     <div className="mt-4 flex w-full items-center gap-3">
-      <div className="h-[0.88px] flex-1 bg-slate500 dark:bg-gray-700" />
-      <button className="flex items-center gap-1 whitespace-nowrap px-1 text-sm font-medium font-inter text-black dark:text-gray-400">
+      <div className="h-[0.88px] flex-1 bg-slate500 dark:bg-slate500" />
+      <button className="flex items-center gap-1 whitespace-nowrap px-1 text-sm font-medium font-inter text-black dark:text-white">
         Show more
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
           <path d="M6 9l6 6 6-6" />
         </svg>
       </button>
-      <div className="h-[0.88px] flex-1 bg-slate500 dark:bg-gray-700" />
+      <div className="h-[0.88px] flex-1 bg-slate500 dark:bg-slate500" />
     </div>
   );
 }
@@ -169,7 +169,7 @@ function MobileTrendingCard({ id, thumb, title, author, showViews }) {
   return (
     <div
       onClick={() => navigate(`/video/${id}`)}
-      className="flex w-[168px] shrink-0 cursor-pointer flex-col"
+      className="flex w-42 shrink-0 cursor-pointer flex-col"
     >
       <div className="relative aspect-[0.88] w-full overflow-hidden rounded-[1.75rem] bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={thumb} alt={title} className="h-full w-full object-cover" />
@@ -207,7 +207,7 @@ function MobileFeaturedCard({ id, thumb, author }) {
 
   return (
     <article className="cursor-pointer" onClick={() => navigate(`/video/${id}`)}>
-      <div className="aspect-[1.18] overflow-hidden rounded-[2rem] bg-gray-200 dark:bg-[#2d2d2d]">
+      <div className="aspect-[1.18] overflow-hidden rounded-4xl bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={thumb} alt={author} className="h-full w-full object-cover" />
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -266,8 +266,8 @@ export default function Homepage() {
       </div>
 
       <div className="hidden w-full px-6 py-5 md:block">
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">
+        <section className="mb-8 space-y-4">
+          <h2 className="text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
             Trending
           </h2>
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
@@ -278,8 +278,8 @@ export default function Homepage() {
           <ShowMoreDivider />
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">
+        <section className="mb-8 space-y-4">
+          <h2 className="text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
             Categories we think you'll like
           </h2>
           <div className="grid w-full grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-6">
@@ -290,8 +290,8 @@ export default function Homepage() {
           <ShowMoreDivider />
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">
+        <section className="mb-8 space-y-4">
+          <h2 className=" text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
             Live streams
           </h2>
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">

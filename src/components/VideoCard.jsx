@@ -16,10 +16,11 @@ export default function VideoCard({ id, thumb, title, author, tags = [], live })
           className="w-full h-full object-cover group-hover:scale-105
                      transition-transform duration-300" />
         {live && (
-          <span className="absolute top-2 left-2 bg-red-500 text-white
-                           text-[0.6rem] font-bold px-2 py-0.5 rounded">
+          <div className="absolute top-2 left-2 bg-red-500 text-white
+                           text-[10px] font-bold px-2 py-0.5 flex gap-1 items-center">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
             LIVE
-          </span>
+          </div>
         )}
       </div>
       <div className="flex items-start gap-3 mt-2.5 px-0.5">
