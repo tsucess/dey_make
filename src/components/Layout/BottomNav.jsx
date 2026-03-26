@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 
 const navItems = [
   {
-    to: "/",
+    to: "/home",
     label: "Home",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"

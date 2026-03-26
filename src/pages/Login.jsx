@@ -1,19 +1,27 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import Logo from "../components/Logo";
 import SocialButtonRow from "../components/SocialButton";
 import OrDivider from "../components/OrDivider";
 import NetworkIllustration from "../components/NetworkIllustration";
+import { useAuth } from "../context/AuthContext";
+import { ApiError, firstError } from "../services/api";
 
 export default function Login({ onNavigateToSignUp, onSuccess }) {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+    setSubmitError("");
   };
 
   const validate = () => {
@@ -31,14 +39,36 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/signup"));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    onSuccess();
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await login(form);
+      onSuccess?.();
+      navigate("/home", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrors({
+          email: error.errors?.email?.[0] || "",
+          password: error.errors?.password?.[0] || "",
+        });
+        setSubmitError(firstError(error.errors, error.message));
+      } else {
+        setSubmitError("Unable to sign in right now. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -52,6 +82,11 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
       </h2> */}
 
       <form onSubmit={handleSubmit} noValidate className="pt-8 pb-5">
+        {submitError && (
+          <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-300">
+            {submitError}
+          </p>
+        )}
 
         {/* Email */}
         <div className="mb-3">
@@ -122,11 +157,12 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
         {/* Submit */}
         <button
           type="submit"
+          disabled={isSubmitting}
           className="w-full py-3 bg-orange100 hover:bg-[#e09510]
                      text-slate100 font-inter  font-semibold text-sm rounded-md
-                     transition-colors cursor-pointer border-none"
+                     transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Sign In
+          {isSubmitting ? "Signing In..." : "Sign In"}
         </button>
       </form>
 
@@ -138,7 +174,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
         Are you new here?{" "}
         <button
           type="button"
-          onClick={onNavigateToSignUp}
+          onClick={navigateToSignUp}
           className="text-black200 dark:text-slate200
                      underline font-semibold cursor-pointer
                      bg-transparent border-none

@@ -1,9 +1,15 @@
-export default function CategoryCard({ thumb, label, subs }) {
+import { FALLBACK_THUMBNAIL } from "../utils/content";
+
+export default function CategoryCard({ thumb, label, subs, onClick, active = false }) {
   return (
-    <div className="flex flex-col cursor-pointer group w-full">
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full cursor-pointer flex-col text-left group ${active ? "rounded-2xl ring-2 ring-orange100 ring-offset-2 ring-offset-white dark:ring-offset-slate100" : ""}`}
+    >
       <div className="w-full aspect-video h-50 rounded-xl overflow-hidden
                       bg-gray-200 dark:bg-gray-700">
-        <img src={thumb} alt={label}
+        <img src={thumb || FALLBACK_THUMBNAIL} alt={label}
           className="w-full h-full object-cover group-hover:scale-105
                      transition-transform duration-300" />
       </div>
@@ -16,6 +22,6 @@ export default function CategoryCard({ thumb, label, subs }) {
           {subs}
         </p>
       </div>
-    </div>
+    </button>
   );
 }

@@ -1,20 +1,28 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import Logo from "../components/Logo";
 import SocialButtonRow from "../components/SocialButton";
 import OrDivider from "../components/OrDivider";
 import NetworkIllustration from "../components/NetworkIllustration";
+import { useAuth } from "../context/AuthContext";
+import { ApiError, firstError } from "../services/api";
 
 export default function SignUp({ onNavigateToLogin, onSuccess }) {
+  const navigate = useNavigate();
+  const { register } = useAuth();
   const [form, setForm] = useState({ fullName: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+    setSubmitError("");
   };
 
   const validate = () => {
@@ -44,14 +52,38 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const navigateToLogin = onNavigateToLogin ?? (() => navigate("/login"));
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
-    onSuccess();
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      await register(form);
+      onSuccess?.();
+      navigate("/home", { replace: true });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrors({
+          fullName: error.errors?.fullName?.[0] || "",
+          email: error.errors?.email?.[0] || "",
+          password: error.errors?.password?.[0] || "",
+          agreed: "",
+        });
+        setSubmitError(firstError(error.errors, error.message));
+      } else {
+        setSubmitError("Unable to create your account right now. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -65,6 +97,11 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
       </h2>
 
       <form onSubmit={handleSubmit} noValidate className="pt-8 pb-2">
+        {submitError && (
+          <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-300">
+            {submitError}
+          </p>
+        )}
 
         {/* Full Name */}
         <div className="mb-3">
@@ -183,11 +220,12 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
         {/* Submit */}
         <button
           type="submit"
+          disabled={isSubmitting}
           className="w-full py-3 bg-orange100 hover:bg-[#e09510]
                      text-slate100 font-semibold text-sm rounded-md
-                     transition-colors cursor-pointer border-none"
+                     transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Sign Up
+          {isSubmitting ? "Creating Account..." : "Sign Up"}
         </button>
       </form>
 
@@ -199,7 +237,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
         Already have an account?{" "}
         <button
           type="button"
-          onClick={onNavigateToLogin}
+          onClick={navigateToLogin}
           className="text-black200 dark:text-slate200
                      underline font-semibold cursor-pointer
                      bg-transparent border-none

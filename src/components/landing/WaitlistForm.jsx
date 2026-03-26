@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ApiError, api, firstError } from "../../services/api";
 
 export default function WaitlistForm() {
   const [form, setForm] = useState({
@@ -11,6 +12,9 @@ export default function WaitlistForm() {
     agreed: false,
   });
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState("");
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -19,6 +23,8 @@ export default function WaitlistForm() {
       [name]: type === "checkbox" ? checked : value,
     }));
     setErrors((prev) => ({ ...prev, [name]: "" }));
+    setSubmitError("");
+    setSubmitMessage("");
   };
 
   const validate = () => {
@@ -38,11 +44,48 @@ export default function WaitlistForm() {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+    setSubmitMessage("");
+
+    try {
+      await api.joinWaitlist(form);
+      setSubmitMessage("Thanks for joining the waitlist. We’ll reach out when your invite is ready.");
+      setForm({
+        firstName: "",
+        email: "",
+        phone: "",
+        country: "",
+        describes: "",
+        loveToSee: "",
+        agreed: false,
+      });
+      setErrors({});
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrors({
+          firstName: error.errors?.firstName?.[0] || "",
+          email: error.errors?.email?.[0] || "",
+          phone: error.errors?.phone?.[0] || "",
+          country: error.errors?.country?.[0] || "",
+          describes: error.errors?.describes?.[0] || "",
+          loveToSee: error.errors?.loveToSee?.[0] || "",
+          agreed: error.errors?.agreed?.[0] || "",
+        });
+        setSubmitError(firstError(error.errors, error.message));
+      } else {
+        setSubmitError("We couldn’t join the waitlist right now. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -86,6 +129,17 @@ export default function WaitlistForm() {
           noValidate
           className=" p-4 md:p-7 flex flex-col gap-5 "
         >
+          {submitMessage && (
+            <p className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-300">
+              {submitMessage}
+            </p>
+          )}
+          {submitError && (
+            <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+              {submitError}
+            </p>
+          )}
+
           {/* First Name */}
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
@@ -231,11 +285,12 @@ export default function WaitlistForm() {
           {/* Submit */}
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full py-4 font-inter bg-orange100 hover:bg-[#e09510]
                        text-slate100 font-semibold text-[15px] rounded-xl
-                       border-none cursor-pointer transition-colors"
+                       border-none cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Join the waitlist
+            {isSubmitting ? "Joining waitlist..." : "Join the waitlist"}
           </button>
         </form>
       </div>

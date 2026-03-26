@@ -1,12 +1,13 @@
 import { NavLink } from "react-router-dom";
 import { RiLogoutCircleLine } from "react-icons/ri";
+import { useAuth } from "../../context/AuthContext";
 import {
   HiHome, HiChartBar, HiChatAlt2,
   HiCog, HiUser
 } from "react-icons/hi";
 
 const navItems = [
-  { to: "/",            icon: HiHome,     label: "Homepage"    },
+  { to: "/home",        icon: HiHome,     label: "Homepage"    },
   { to: "/leaderboard", icon: HiChartBar, label: "Leaderboard" },
   { to: "/messages",    icon: HiChatAlt2, label: "Message"     },
   { to: "/settings",    icon: HiCog,      label: "Settings"    },
@@ -14,6 +15,8 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+  const { logout } = useAuth();
+
   return (
     <aside className="flex flex-col w-67.5 min-h-screen
                       bg-orange100 shrink-0">
@@ -47,7 +50,8 @@ export default function Sidebar() {
                          text-red-700 font-medium text-[0.95rem]
                          hover:bg-orange300 font-inter transition-colors
                          bg-transparent border-none cursor-pointer
-                         w-full text-left">
+                         w-full text-left"
+        onClick={logout}>
         <RiLogoutCircleLine className="w-6 h-6"/>
         Logout
       </button>

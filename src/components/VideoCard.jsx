@@ -1,9 +1,8 @@
 import { useNavigate } from "react-router-dom";
+import { FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
 
-export default function VideoCard({ id, thumb, title, author, tags = [], live }) {
+export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live }) {
   const navigate = useNavigate();
-  const avatar =
-    "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
 
   return (
     <div
@@ -12,7 +11,7 @@ export default function VideoCard({ id, thumb, title, author, tags = [], live })
     >
       <div className="relative w-full h-60.5 aspect-video rounded-xl overflow-hidden
                       bg-gray-200 dark:bg-gray-700">
-        <img src={thumb} alt={title}
+        <img src={thumb || FALLBACK_THUMBNAIL} alt={title}
           className="w-full h-full object-cover group-hover:scale-105
                      transition-transform duration-300" />
         {live && (
@@ -23,7 +22,7 @@ export default function VideoCard({ id, thumb, title, author, tags = [], live })
         )}
       </div>
       <div className="flex items-start gap-3 mt-2.5 px-0.5">
-        <img src={avatar} alt={author}
+        <img src={avatarUrl || FALLBACK_AVATAR} alt={author}
           className="w-11 h-11 rounded-full object-cover shrink-0 mt-0.5" />
         <div className="min-w-0 flex-1 flex flex-col gap-1">
           <p className="text-base font-medium font-inter text-black dark:text-white

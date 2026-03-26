@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
+import { useAuth } from "../../context/AuthContext";
 
 export default function TopBar() {
+  const { user } = useAuth();
+
   return (
     <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
                        bg-white dark:bg-slate100
@@ -52,11 +55,13 @@ export default function TopBar() {
         </button>
 
         {/* Avatar */}
-        <img
-          src="https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"
-          alt="avatar"
-          className="w-10 h-10 rounded-full object-cover cursor-pointer"
-        />
+        <Link to="/profile">
+          <img
+            src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
+            alt={user?.fullName || "Profile"}
+            className="w-10 h-10 rounded-full object-cover cursor-pointer"
+          />
+        </Link>
       </div>
     </header>
   );

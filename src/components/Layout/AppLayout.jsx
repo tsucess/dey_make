@@ -8,6 +8,7 @@ import { MdSunny } from "react-icons/md";
 import { useTheme } from "../../context/ThemeContext";
 
 function getMobileTitle(pathname) {
+  if (pathname.startsWith("/home")) return "DeyMake";
   if (pathname.startsWith("/leaderboard")) return "Leaderboard";
   if (pathname.startsWith("/messages")) return "Inbox";
   if (pathname.startsWith("/profile")) return "Profile";
@@ -31,7 +32,7 @@ function MobileActionButton({ children, onClick }) {
 export default function AppLayout() {
   const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
-  const isHomepage = location.pathname === "/";
+  const isHomepage = location.pathname === "/home";
   const mobileTitle = getMobileTitle(location.pathname);
 
   return (
