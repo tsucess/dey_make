@@ -19,7 +19,7 @@ const ALL_CATEGORY = { id: "all", slug: "all", label: "All" };
 
 function SectionState({ message, actionLabel, onAction }) {
   return (
-    <div className="rounded-3xl bg-[#F4F4F4] px-5 py-8 text-center dark:bg-[#232323]">
+    <div className="rounded-3xl bg-white300 px-5 py-8 text-center dark:bg-black200">
       <p className="text-sm font-inter text-slate100 dark:text-white">{message}</p>
       {onAction ? (
         <button
@@ -160,6 +160,7 @@ export default function Homepage() {
     [activeCategory, categories],
   );
 
+
   useEffect(() => {
     let ignore = false;
 
@@ -284,10 +285,9 @@ export default function Homepage() {
             <SectionState message="Loading trending videos..." />
           ) : trendingVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {trendingVideos.slice(0, 12).map((video) => {
-               console.log(video)
-                return <VideoCard key={video.id} {...mapVideoToCardProps(video)} />
-              })}
+              {trendingVideos.slice(0, 12).map((video) => (
+                <VideoCard key={video.id} {...mapVideoToCardProps(video)} />
+              ))}
             </div>
           ) : (
             <SectionState message="No trending videos available yet." />
@@ -296,11 +296,11 @@ export default function Homepage() {
         </section>
 
         <section className="mb-8 space-y-4">
-          <h2 className="text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
+          <h2 className="text-lg font-medium font-bricolage text-black dark:text-white md:text-2xl">
             Categories we think you'll like
           </h2>
           <div className="grid w-full grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-6">
-            {categories
+            { categories
               .filter((category) => category.slug !== ALL_CATEGORY.slug)
               .slice(0, 6)
               .map((category) => (
@@ -320,8 +320,8 @@ export default function Homepage() {
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold font-bricolage text-black dark:text-white">{selectedCategory.label} videos</h2>
-              <p className="text-sm text-slate400 dark:text-slate200">Loaded via the category-aware videos endpoint</p>
+              <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{selectedCategory.label} videos</h2>
+              {/* <p className="text-sm text-slate400 dark:text-slate200">Loaded via the category-aware videos endpoint</p> */}
             </div>
           </div>
           {loadingFeed ? (
@@ -338,8 +338,8 @@ export default function Homepage() {
           <ShowMoreDivider />
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">Live streams</h2>
+        <section className="mb-8 space-y-4">
+          <h2 className=" text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">Live streams</h2>
           {loading ? (
             <SectionState message="Loading live streams..." />
           ) : liveVideos.length ? (

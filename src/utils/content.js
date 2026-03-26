@@ -1,4 +1,4 @@
-export const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=120&q=80";
+export const FALLBACK_AVATAR = "../public/default avatar.png";
 export const FALLBACK_THUMBNAIL = "./public/Trending image.png";
 
 const compactNumberFormatter = new Intl.NumberFormat("en", {

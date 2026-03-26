@@ -3,7 +3,6 @@ import { FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
 
 export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live }) {
   const navigate = useNavigate();
-
   return (
     <div
       className="flex flex-col cursor-pointer group w-full"
