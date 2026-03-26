@@ -290,8 +290,8 @@ export default function Homepage() {
           <ShowMoreDivider />
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">
+        <section className="mb-8 space-y-4">
+          <h2 className="text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
             Categories we think you'll like
           </h2>
           <div className="grid w-full grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-6">

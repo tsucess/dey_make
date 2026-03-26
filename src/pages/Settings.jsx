@@ -67,13 +67,13 @@ function ToggleSwitch({ enabled, onToggle }) {
       role="switch"
       aria-checked={enabled}
       onClick={onToggle}
-      className={`relative inline-flex h-[18px] w-[30px] items-center rounded-full transition-colors ${
+      className={`relative inline-flex h-4.5 w-7.5 items-center rounded-full transition-colors ${
         enabled ? "bg-orange100" : "bg-[#CFCFCF] dark:bg-[#C9C9C9]"
       }`}
     >
       <span
         className={`inline-block h-3 w-3 rounded-full bg-white shadow-sm transition-transform ${
-          enabled ? "translate-x-[16px]" : "translate-x-[2px]"
+          enabled ? "translate-x-4" : "translate-x-0.5"
         }`}
       />
     </button>
@@ -83,10 +83,10 @@ function ToggleSwitch({ enabled, onToggle }) {
 function SectionHeader({ title, isOpen, onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 py-4 text-left md:py-5">
-      <span className="text-[1.12rem] font-medium font-inter text-slate100 dark:text-white md:text-[1.4rem]">
+      <span className="text-base font-medium font-inter text-slate100 dark:text-white md:text-lg">
         {title}
       </span>
-      <MdKeyboardArrowDown className={`h-5 w-5 text-slate600 transition-transform dark:text-slate200 ${isOpen ? "rotate-180" : ""}`} />
+      <MdKeyboardArrowDown className={`h-5 w-5 text-slate600 transition-transform dark:text-white ${isOpen ? "rotate-180" : ""}`} />
     </button>
   );
 }
@@ -106,7 +106,7 @@ function SettingRow({ label, description, control }) {
 function SelectField({ label, value, onChange }) {
   return (
     <div className="py-3 md:py-[0.95rem]">
-      <label className="mb-2 block text-[0.96rem] font-medium font-inter text-slate100 dark:text-white md:text-[1.02rem]">
+      <label className="mb-2 block text-[0.96rem] font-medium font-inter text-slate100 dark:text-white md:text-base">
         {label}
       </label>
       <div className="relative">
@@ -271,13 +271,32 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-[#343232] md:px-8 md:py-8">
-      <div className="mx-auto w-full max-w-[740px]">
-        <h1 className="mb-6 hidden text-3xl font-medium font-inter text-slate100 dark:text-white md:block">Settings</h1>
+    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-8 md:py-8">
+      <div className="mx-auto w-full max-w-185">
+        <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">Settings</h1>
 
+<<<<<<< HEAD
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
         {savingSection ? <p className="mb-4 text-sm text-slate500 dark:text-slate200">Saving {savingSection.toLowerCase()}...</p> : null}
+=======
+        <div className="divide-y divide-black/12 dark:bg-black100 px-6 py-10 rounded-2xl dark:divide-slate200">
+          <section>
+            <SectionHeader title="Notifications" isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
+            {openSections.notifications ? (
+              <div className="pb-4 md:pb-5">
+                {notifications.map(([key, label, description]) => (
+                  <SettingRow
+                    key={key}
+                    label={label}
+                    description={description}
+                    control={<ToggleSwitch enabled={values[key]} onToggle={() => toggleValue(key)} />}
+                  />
+                ))}
+              </div>
+            ) : null}
+          </section>
+>>>>>>> 19daccaa40f8e677fe8b27aa33b3aa844510b014
 
         {loading ? (
           <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">

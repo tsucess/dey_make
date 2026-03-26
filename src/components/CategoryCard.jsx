@@ -13,7 +13,7 @@ export default function CategoryCard({ thumb, label, subs, onClick, active = fal
           className="w-full h-full object-cover group-hover:scale-105
                      transition-transform duration-300" />
       </div>
-      <div className="mt-2 px-0.5 flex flex-col gap-0.5">
+      <div className="mt-2 px-0.5 flex flex-col gap-1">
         <p className="text-sm font-medium
                       text-black font-inter dark:text-white">
           {label}
