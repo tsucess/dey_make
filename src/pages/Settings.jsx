@@ -275,28 +275,9 @@ export default function Settings() {
       <div className="mx-auto w-full max-w-185">
         <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">Settings</h1>
 
-<<<<<<< HEAD
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
         {savingSection ? <p className="mb-4 text-sm text-slate500 dark:text-slate200">Saving {savingSection.toLowerCase()}...</p> : null}
-=======
-        <div className="divide-y divide-black/12 dark:bg-black100 px-6 py-10 rounded-2xl dark:divide-slate200">
-          <section>
-            <SectionHeader title="Notifications" isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
-            {openSections.notifications ? (
-              <div className="pb-4 md:pb-5">
-                {notifications.map(([key, label, description]) => (
-                  <SettingRow
-                    key={key}
-                    label={label}
-                    description={description}
-                    control={<ToggleSwitch enabled={values[key]} onToggle={() => toggleValue(key)} />}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </section>
->>>>>>> 19daccaa40f8e677fe8b27aa33b3aa844510b014
 
         {loading ? (
           <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
