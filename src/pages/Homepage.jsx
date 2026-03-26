@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import CategoryCard from "../components/CategoryCard";
 import VideoCard from "../components/VideoCard";
 import { api, firstError } from "../services/api";
@@ -18,7 +19,7 @@ const ALL_CATEGORY = { id: "all", slug: "all", label: "All" };
 
 function SectionState({ message, actionLabel, onAction }) {
   return (
-    <div className="rounded-3xl bg-[#F4F4F4] px-5 py-8 text-center dark:bg-[#232323]">
+    <div className="rounded-3xl bg-white300 px-5 py-8 text-center dark:bg-black200">
       <p className="text-sm font-inter text-slate100 dark:text-white">{message}</p>
       {onAction ? (
         <button
@@ -36,11 +37,14 @@ function SectionState({ message, actionLabel, onAction }) {
 function ShowMoreDivider() {
   return (
     <div className="mt-4 flex w-full items-center gap-3">
-      <div className="h-px flex-1 bg-slate500 dark:bg-gray-700" />
-      <span className="px-1 text-sm font-medium font-inter text-black dark:text-gray-400">
-        Fresh from the API
+      <div className="h-px flex-1 bg-slate500" />
+      <div className="flex items-center gap-1">
+      <span className="px-1 text-sm font-medium font-inter text-black dark:text-white">
+        Show more
       </span>
-      <div className="h-px flex-1 bg-slate500 dark:bg-gray-700" />
+      <MdKeyboardArrowDown  className="text-black dark:text-white w-4 h-4"/>
+      </div>
+      <div className="h-px flex-1 bg-slate500" />
     </div>
   );
 }
@@ -80,7 +84,7 @@ function MobileTrendingCard({ video, showViews }) {
   const creator = video.author || video.creator;
 
   return (
-    <div onClick={() => navigate(`/video/${video.id}`)} className="flex w-[168px] shrink-0 cursor-pointer flex-col">
+    <div onClick={() => navigate(`/video/${video.id}`)} className="flex w-42 shrink-0 cursor-pointer flex-col">
       <div className="relative aspect-[0.88] w-full overflow-hidden rounded-[1.75rem] bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
         {showViews ? (
@@ -120,7 +124,7 @@ function MobileFeaturedCard({ video }) {
 
   return (
     <article className="cursor-pointer" onClick={() => navigate(`/video/${video.id}`)}>
-      <div className="aspect-[1.18] overflow-hidden rounded-[2rem] bg-gray-200 dark:bg-[#2d2d2d]">
+      <div className="aspect-[1.18] overflow-hidden rounded-4xl bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
@@ -155,6 +159,7 @@ export default function Homepage() {
     () => categories.find((category) => category.slug === activeCategory) || ALL_CATEGORY,
     [activeCategory, categories],
   );
+
 
   useEffect(() => {
     let ignore = false;
@@ -274,8 +279,8 @@ export default function Homepage() {
       <div className="hidden w-full px-6 py-5 md:block">
         {error ? <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">Trending</h2>
+        <section className="mb-8 space-y-4">
+          <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">Trending</h2>
           {loading ? (
             <SectionState message="Loading trending videos..." />
           ) : trendingVideos.length ? (
@@ -291,11 +296,11 @@ export default function Homepage() {
         </section>
 
         <section className="mb-8 space-y-4">
-          <h2 className="text-lg font-semibold font-bricolage text-black dark:text-white md:text-2xl">
+          <h2 className="text-lg font-medium font-bricolage text-black dark:text-white md:text-2xl">
             Categories we think you'll like
           </h2>
           <div className="grid w-full grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-6">
-            {categories
+            { categories
               .filter((category) => category.slug !== ALL_CATEGORY.slug)
               .slice(0, 6)
               .map((category) => (
@@ -315,8 +320,8 @@ export default function Homepage() {
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-bold font-bricolage text-black dark:text-white">{selectedCategory.label} videos</h2>
-              <p className="text-sm text-slate400 dark:text-slate200">Loaded via the category-aware videos endpoint</p>
+              <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{selectedCategory.label} videos</h2>
+              {/* <p className="text-sm text-slate400 dark:text-slate200">Loaded via the category-aware videos endpoint</p> */}
             </div>
           </div>
           {loadingFeed ? (
@@ -333,8 +338,8 @@ export default function Homepage() {
           <ShowMoreDivider />
         </section>
 
-        <section className="mb-8">
-          <h2 className="mb-4 text-lg font-bold font-bricolage text-black dark:text-white">Live streams</h2>
+        <section className="mb-8 space-y-4">
+          <h2 className=" text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">Live streams</h2>
           {loading ? (
             <SectionState message="Loading live streams..." />
           ) : liveVideos.length ? (

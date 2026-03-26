@@ -12,9 +12,9 @@ const tabs = [
 
 function ViewsBadge({ views }) {
   return (
-    <div className="inline-flex items-center gap-1.5 rounded-full bg-[#8C8C8C] px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
+    <div className="inline-flex items-center gap-1 rounded-full bg-black/52 backdrop-blur-xs backdrop-brightness-90 border-y border-y-white px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
       <IoMdArrowDropright className="h-6 w-6 text-white" />
-      <span>{formatCompactNumber(views)} views</span>
+      <span>{formatCompactNumber(views)}views</span>
     </div>
   );
 }
@@ -57,13 +57,14 @@ function podiumAsset(rank) {
 function PodiumCard({ item }) {
   const isWinner = item.rank === 1;
   const asset = podiumAsset(item.rank);
+  console.log(item)
 
   return (
-    <div className="flex flex-col items-center">
+    <div className={`flex flex-col items-center ${item.rank === 1 ? 'order-2' : item.rank === 2 ? 'order-1' : 'order-3'}`}>
       <img
         src={getProfileAvatar(item.user)}
         alt={getProfileName(item.user)}
-        className={`rounded-full object-cover shadow-md ${isWinner ? "h-14 w-14 md:h-18 md:w-18" : "h-12 w-12 md:h-16 md:w-16"}`}
+        className={`rounded-full object-cover shadow-md ${isWinner ? "h-12 w-12 md:h-16 md:w-16" : "h-11 w-11 md:h-15 md:w-15"}`}
       />
       <p className="mt-2 text-center text-base font-medium font-inter text-slate100 dark:text-white md:text-lg">
         {getProfileName(item.user)}
@@ -178,7 +179,7 @@ export default function Leaderboard() {
               ))}
             </div>
 
-            <section className="mt-8 w-full overflow-hidden rounded-4xl md:rounded-2xl">
+            <section className=" w-full overflow-hidden rounded-4xl md:rounded-2xl">
               <div className="flex items-center justify-between bg-orange100 px-6 py-5 md:px-10">
                 <span className="text-base font-medium font-inter text-black md:text-lg">You Currently Rank</span>
                 <div className="flex items-center gap-4">

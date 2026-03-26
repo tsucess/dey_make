@@ -2,14 +2,21 @@ import { Link } from "react-router-dom";
 import { HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
+import { CreateDropdown } from "./CreateDropdown";
+import { useState } from "react";
 
 export default function TopBar() {
   const { user } = useAuth();
+  const [isVisible, setIsVisible] = useState(false)
+
+  function toggleVisiblity(){
+    setIsVisible(prev => !prev)
+  }
 
   return (
     <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
                        bg-white dark:bg-slate100
-                       sticky top-0 z-10">
+                       sticky top-0 z-10 ">
 
       {/* Search */}
       <div className="flex items-center gap-2 w-70
@@ -28,11 +35,11 @@ export default function TopBar() {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 relative">
 
         {/* Create */}
-        <Link
-          to="/create"
+        
+        <button onClick={toggleVisiblity}
           className="flex items-center gap-1.5
                      bg-orange100 font-inter hover:bg-[#e09510]
                      text-black font-semibold text-sm
@@ -42,8 +49,8 @@ export default function TopBar() {
         >
           <HiPlus className="w-4 h-4" />
           Create
-        </Link>
-
+        </button>
+        <CreateDropdown isVisible={isVisible}/>
 
         {/* Bell */}
         <button className="w-9 h-9 flex items-center justify-center
