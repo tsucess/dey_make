@@ -1,5 +1,5 @@
 export const FALLBACK_AVATAR = "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=120&q=80";
-export const FALLBACK_THUMBNAIL = "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?w=800&q=80";
+export const FALLBACK_THUMBNAIL = "./public/Trending image.png";
 
 const compactNumberFormatter = new Intl.NumberFormat("en", {
   notation: "compact",
@@ -61,7 +61,7 @@ export function getProfileAvatar(profile) {
 }
 
 export function getProfileName(profile, fallback = "Unknown creator") {
-  return profile?.fullName || fallback;
+  return profile?.fullName.toLowerCase() || fallback;
 }
 
 export function getVideoTitle(video) {
@@ -71,7 +71,7 @@ export function getVideoTitle(video) {
 }
 
 export function getVideoTags(video) {
-  return [video?.category?.label || video?.category?.name, video?.location].filter(Boolean);
+  return [video?.category?.label || video?.category?.name].filter(Boolean);
 }
 
 export function buildVideoLink(id) {
