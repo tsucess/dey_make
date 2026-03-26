@@ -40,6 +40,19 @@ export function AuthProvider({ children }) {
       setUser(response.data.user);
       return response.data.user;
     },
+    async authenticateWithToken(token) {
+      setStoredToken(token);
+
+      try {
+        const response = await api.me();
+        setUser(response.data.user);
+        return response.data.user;
+      } catch (error) {
+        setStoredToken(null);
+        setUser(null);
+        throw error;
+      }
+    },
     async logout() {
       try {
         await api.logout();

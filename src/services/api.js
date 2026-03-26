@@ -1,4 +1,24 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api/v1").replace(/\/$/, "");
+const DEFAULT_API_BASE_URL = "https://api.deymake.com/api/v1";
+const LOCAL_API_FALLBACK = "http://127.0.0.1:8000";
+
+function normalizeApiBaseUrl(value) {
+  const trimmedValue = (value || "").trim().replace(/\/$/, "");
+  if (!trimmedValue) return DEFAULT_API_BASE_URL;
+  return trimmedValue.endsWith("/api/v1") ? trimmedValue : `${trimmedValue}/api/v1`;
+}
+
+function resolveApiBaseUrl() {
+  const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (configuredBaseUrl) return normalizeApiBaseUrl(configuredBaseUrl);
+
+  if (typeof window !== "undefined" && ["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return normalizeApiBaseUrl(LOCAL_API_FALLBACK);
+  }
+
+  return normalizeApiBaseUrl(DEFAULT_API_BASE_URL);
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 const TOKEN_STORAGE_KEY = "deymake.auth.token";
 
 export class ApiError extends Error {
@@ -56,6 +76,7 @@ async function request(path, options = {}) {
 export const api = {
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
   register: (payload) => request("/auth/register", { method: "POST", body: payload }),
+  getOAuthRedirectUrl: (provider) => `${API_BASE_URL}/auth/oauth/${encodeURIComponent(provider)}/redirect`,
   me: () => request("/auth/me"),
   logout: () => request("/auth/logout", { method: "POST" }),
   joinWaitlist: (payload) => request("/waitlist", { method: "POST", body: payload }),

@@ -30,7 +30,7 @@ Some successful actions return only a `message` with no `data` payload.
 - `403 Forbidden` for ownership/participant violations.
 - `404 Not Found` for missing models and draft content hidden from non-owners.
 - `422 Unprocessable Entity` for validation failures and some business-rule failures.
-- `501 Not Implemented` for OAuth placeholders.
+- `503 Service Unavailable` when an OAuth provider is not configured on the backend.
 
 Validation errors follow Laravel's default JSON validation style, for example:
 
@@ -215,8 +215,8 @@ These are the main resource objects returned throughout the API.
 | POST | `/auth/login` | No | JSON: `email` required email; `password` required string | `200`, `data.user`, `data.token`, `data.tokenType` |
 | POST | `/auth/forgot-password` | No | JSON: `email` required and must exist | `200`, `data.email`, `data.resetToken`, `data.expiresInMinutes` |
 | POST | `/auth/reset-password` | No | JSON: `email` required and must exist; `token` required; `password` required min 8, mixed case, includes number | `200`, `data.user` |
-| GET | `/auth/oauth/{provider}/redirect` | No | Path param `provider`: `google` or `facebook` | Currently returns `501` with `data.provider`, `data.configured=false` |
-| GET | `/auth/oauth/{provider}/callback` | No | Path param `provider`: `google` or `facebook` | Currently returns `501` with `data.provider`, `data.configured=false` |
+| GET | `/auth/oauth/{provider}/redirect` | No | Path param `provider`: `google` or `facebook` | `302` redirect to the provider auth screen; JSON clients receive `503` when credentials are missing |
+| GET | `/auth/oauth/{provider}/callback` | No | Path/query params from provider callback | `302` redirect to frontend `/auth/callback#provider=...&token=...`; JSON clients receive provider/config errors as JSON |
 | GET | `/auth/me` | Yes | None | `200`, `data.user` |
 | POST | `/auth/logout` | Yes | None | `200`, message only |
 
@@ -225,6 +225,8 @@ These are the main resource objects returned throughout the API.
 - Login failures return `422` with an `errors.email` array.
 - Password reset tokens expire after 60 minutes.
 - The current implementation returns the raw password reset token in the response instead of sending email.
+- OAuth is initiated from the frontend but completed on the backend so provider secrets stay server-side.
+- Backend OAuth configuration uses `FRONTEND_URL`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `FACEBOOK_CLIENT_ID`, `FACEBOOK_CLIENT_SECRET`, and `FACEBOOK_REDIRECT_URI`.
 
 ## Waitlist
 

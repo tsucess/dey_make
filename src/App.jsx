@@ -8,6 +8,7 @@ import Homepage from "./pages/Homepage";
 import Leaderboard from "./pages/Leaderboard";
 import CreateUpload from "./pages/CreateUpload";
 import Messages from "./pages/Messages";
+import OAuthCallback from "./pages/OAuthCallback";
 import Profile from "./pages/Profile";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="/welcome" element={<LandingRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/auth/callback" element={<OAuthCallback />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>

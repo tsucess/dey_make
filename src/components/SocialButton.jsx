@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { api } from "../services/api";
+
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 48 48">
@@ -18,21 +21,32 @@ function FacebookIcon() {
 }
 
 function SocialBtn({ provider, onClick }) {
+  const [isStarting, setIsStarting] = useState(false);
+  const label = provider === "google" ? "Google" : "Facebook";
+
+  const handleClick = () => {
+    setIsStarting(true);
+    onClick?.();
+    window.location.assign(api.getOAuthRedirectUrl(provider));
+  };
+
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
+      disabled={isStarting}
       className="flex-1 flex items-center justify-center gap-2
                  px-4 py-3 rounded-md text-sm font-inter font-medium
                  border cursor-pointer transition-colors
                  bg-white300 dark:bg-black100
                  border-gray-200 dark:border-gray-700
                  text-black200 dark:text-white
-                 hover:bg-white200 dark:hover:bg-[#3a3a3a]"
+                 hover:bg-white200 dark:hover:bg-[#3a3a3a]
+                 disabled:cursor-not-allowed disabled:opacity-60"
     >
       {provider === "google" ? <GoogleIcon /> : <FacebookIcon />}
-      <span className="hidden md:inline">Continue with {provider === "google" ? "google" : "facebook"}</span>
-      <span className="md:hidden">{provider === "google" ? "Google" : "Facebook"}</span>
+      <span className="hidden md:inline">{isStarting ? `Connecting to ${label}...` : `Continue with ${label}`}</span>
+      <span className="md:hidden">{isStarting ? "Connecting..." : label}</span>
     </button>
   );
 }
