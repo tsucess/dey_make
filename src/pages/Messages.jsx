@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
@@ -78,6 +78,8 @@ function SectionCard({ title, children }) {
 
 export default function Messages() {
   const { user } = useAuth();
+  const isMountedRef = useRef(true);
+  const activeConversationIdRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -96,83 +98,132 @@ export default function Messages() {
   );
 
   useEffect(() => {
-    let ignore = false;
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
 
-    async function loadInbox() {
+  useEffect(() => () => {
+    isMountedRef.current = false;
+  }, []);
+
+  const loadInbox = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
       setLoading(true);
       setError("");
-
-      try {
-        const [conversationResponse, suggestedResponse] = await Promise.all([
-          api.getConversations(),
-          api.getSuggestedUsers(),
-        ]);
-
-        if (ignore) return;
-
-        const nextConversations = conversationResponse?.data?.conversations || [];
-        setConversations(nextConversations);
-        setSuggestedUsers(suggestedResponse?.data?.users || []);
-        setActiveConversationId((current) =>
-          nextConversations.some((conversation) => conversation.id === current)
-            ? current
-            : nextConversations[0]?.id || null,
-        );
-      } catch (nextError) {
-        if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load messages."));
-        }
-      } finally {
-        if (!ignore) setLoading(false);
-      }
     }
 
-    loadInbox();
+    try {
+      const [conversationResponse, suggestedResponse] = await Promise.all([
+        api.getConversations(),
+        api.getSuggestedUsers(),
+      ]);
 
-    return () => {
-      ignore = true;
-    };
+      if (!isMountedRef.current) return;
+
+      const currentActiveConversationId = activeConversationIdRef.current;
+      const nextConversations = (conversationResponse?.data?.conversations || []).map((conversation) =>
+        conversation.id === currentActiveConversationId
+          ? { ...conversation, unreadCount: 0 }
+          : conversation,
+      );
+
+      setConversations(nextConversations);
+      setSuggestedUsers(suggestedResponse?.data?.users || []);
+      setActiveConversationId((current) =>
+        nextConversations.some((conversation) => conversation.id === current)
+          ? current
+          : nextConversations[0]?.id || null,
+      );
+    } catch (nextError) {
+      if (!silent && isMountedRef.current) {
+        setError(firstError(nextError?.errors, nextError?.message || "Unable to load messages."));
+      }
+    } finally {
+      if (!silent && isMountedRef.current) setLoading(false);
+    }
+  }, []);
+
+  const loadConversationMessages = useCallback(async (conversationId, { silent = false } = {}) => {
+    if (!conversationId) {
+      setMessages([]);
+      return;
+    }
+
+    if (!silent) setLoadingMessages(true);
+
+    try {
+      const response = await api.getConversationMessages(conversationId);
+
+      if (!isMountedRef.current) return;
+
+      const nextMessages = response?.data?.messages || [];
+      const latestMessage = nextMessages[nextMessages.length - 1] || null;
+
+      setMessages(nextMessages);
+      setConversations((current) =>
+        current.map((conversation) =>
+          conversation.id === conversationId
+            ? {
+                ...conversation,
+                unreadCount: 0,
+                ...(latestMessage
+                  ? {
+                      lastMessage: latestMessage,
+                      updatedAt: latestMessage.createdAt,
+                    }
+                  : {}),
+              }
+            : conversation,
+        ),
+      );
+
+      api.markConversationRead(conversationId).catch(() => {});
+    } catch (nextError) {
+      if (!silent && isMountedRef.current) {
+        setError(firstError(nextError?.errors, nextError?.message || "Unable to load conversation."));
+      }
+    } finally {
+      if (!silent && isMountedRef.current) setLoadingMessages(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (!activeConversationId) {
-      setMessages([]);
-      return undefined;
-    }
+    loadInbox();
+  }, [loadInbox]);
 
-    let ignore = false;
+  useEffect(() => {
+    loadConversationMessages(activeConversationId);
+  }, [activeConversationId, loadConversationMessages]);
 
-    async function loadConversationMessages() {
-      setLoadingMessages(true);
+  useEffect(() => {
+    if (!feedback) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedback("");
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [feedback]);
+
+  useEffect(() => {
+    let polling = false;
+
+    const intervalId = window.setInterval(async () => {
+      if (polling || !isMountedRef.current) return;
+
+      polling = true;
 
       try {
-        const response = await api.getConversationMessages(activeConversationId);
-
-        if (!ignore) {
-          setMessages(response?.data?.messages || []);
-          setConversations((current) =>
-            current.map((conversation) =>
-              conversation.id === activeConversationId ? { ...conversation, unreadCount: 0 } : conversation,
-            ),
-          );
-        }
-
-        api.markConversationRead(activeConversationId).catch(() => {});
-      } catch (nextError) {
-        if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load conversation."));
-        }
+        await Promise.all([
+          loadInbox({ silent: true }),
+          activeConversationId ? loadConversationMessages(activeConversationId, { silent: true }) : Promise.resolve(),
+        ]);
       } finally {
-        if (!ignore) setLoadingMessages(false);
+        polling = false;
       }
-    }
+    }, 5000);
 
-    loadConversationMessages();
-
-    return () => {
-      ignore = true;
-    };
-  }, [activeConversationId]);
+    return () => window.clearInterval(intervalId);
+  }, [activeConversationId, loadConversationMessages, loadInbox]);
 
   async function startConversation(participant) {
     const existingConversation = conversations.find((conversation) => conversation.participant?.id === participant.id);

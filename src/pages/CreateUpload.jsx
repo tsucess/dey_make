@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { HiX } from "react-icons/hi";
 import { IoCloudUploadOutline, IoImageOutline, IoVideocamOutline } from "react-icons/io5";
 import { MdOutlineGifBox } from "react-icons/md";
@@ -30,10 +30,14 @@ function parseTaggedUsers(value) {
 
 export default function CreateUpload() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const fileInputRef = useRef(null);
+  const draftId = searchParams.get("id");
+  const isEditingDraft = Boolean(draftId);
   const [selectedType, setSelectedType] = useState("image");
   const [selectedFile, setSelectedFile] = useState(null);
+  const [existingMediaUrl, setExistingMediaUrl] = useState("");
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
     title: "",
@@ -43,20 +47,23 @@ export default function CreateUpload() {
     people: "",
     categoryId: "",
   });
-  const [loading, setLoading] = useState(true);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [loadingDraft, setLoadingDraft] = useState(false);
   const [submitting, setSubmitting] = useState("");
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
 
   const currentType = uploadTypes.find((type) => type.id === selectedType);
-  const previewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
+  const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
+  const previewUrl = selectedFilePreviewUrl || existingMediaUrl;
   const canGoLive = selectedType === "video";
+  const isLoading = loadingCategories || loadingDraft;
 
   useEffect(() => {
     let ignore = false;
 
     async function loadCategories() {
-      setLoading(true);
+      setLoadingCategories(true);
 
       try {
         const response = await api.getCategories();
@@ -64,7 +71,7 @@ export default function CreateUpload() {
       } catch (nextError) {
         if (!ignore) setError(firstError(nextError.errors, nextError.message || "Unable to load categories."));
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore) setLoadingCategories(false);
       }
     }
 
@@ -75,13 +82,60 @@ export default function CreateUpload() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!draftId) return undefined;
+
+    let ignore = false;
+
+    async function loadDraft() {
+      setLoadingDraft(true);
+      setError("");
+
+      try {
+        const response = await api.getVideo(draftId);
+        const nextVideo = response?.data?.video;
+
+        if (!nextVideo?.id || !nextVideo.isDraft) {
+          throw new Error("This draft is no longer available.");
+        }
+
+        if (!ignore) {
+          setSelectedType(nextVideo.type || "image");
+          setSelectedFile(null);
+          setExistingMediaUrl(nextVideo.mediaUrl || nextVideo.thumbnailUrl || "");
+          setForm({
+            title: nextVideo.title || "",
+            caption: nextVideo.caption || "",
+            description: nextVideo.description || "",
+            location: nextVideo.location || "",
+            people: Array.isArray(nextVideo.taggedUsers) ? nextVideo.taggedUsers.join(", ") : "",
+            categoryId: nextVideo.category?.id ? String(nextVideo.category.id) : "",
+          });
+        }
+      } catch (nextError) {
+        if (!ignore) {
+          setError(firstError(nextError?.errors, nextError?.message || "Unable to load draft."));
+        }
+      } finally {
+        if (!ignore) setLoadingDraft(false);
+      }
+    }
+
+    loadDraft();
+
+    return () => {
+      ignore = true;
+    };
+  }, [draftId]);
+
   useEffect(() => () => {
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
+    if (selectedFilePreviewUrl) URL.revokeObjectURL(selectedFilePreviewUrl);
+  }, [selectedFilePreviewUrl]);
 
   function handleFileChange(event) {
     const file = event.target.files?.[0];
     if (file) {
+      setError("");
       setSelectedFile(file);
       const nextType = detectUploadType(file);
       if (nextType) setSelectedType(nextType);
@@ -94,12 +148,12 @@ export default function CreateUpload() {
     setError("");
     setFeedback("");
 
-    if (!selectedFile) {
+    if (!selectedFile && !existingMediaUrl) {
       setError("Choose a file before continuing.");
       return;
     }
 
-    if (detectedType && detectedType !== selectedType) {
+    if (selectedFile && detectedType && detectedType !== selectedType) {
       setError(`The selected file is a ${detectedType}. Switch the upload type or choose another file.`);
       return;
     }
@@ -112,15 +166,18 @@ export default function CreateUpload() {
     setSubmitting(action);
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append("file", selectedFile);
+      let upload = null;
 
-      const uploadResponse = await api.uploadFile(uploadFormData);
-      const upload = uploadResponse?.data?.upload;
+      if (selectedFile) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("file", selectedFile);
 
-      const createResponse = await api.createVideo({
+        const uploadResponse = await api.uploadFile(uploadFormData);
+        upload = uploadResponse?.data?.upload;
+      }
+
+      const payload = {
         type: selectedType,
-        uploadId: upload?.id,
         categoryId: form.categoryId ? Number(form.categoryId) : null,
         title: form.title.trim() || null,
         caption: form.caption.trim() || null,
@@ -129,13 +186,27 @@ export default function CreateUpload() {
         taggedUsers: parseTaggedUsers(form.people),
         isDraft: action === "draft",
         isLive: action === "live",
-      });
+      };
 
-      let nextVideo = createResponse?.data?.video;
+      if (upload?.id) payload.uploadId = upload.id;
 
-      if (action === "publish") {
+      const response = isEditingDraft
+        ? await api.updateVideo(draftId, payload)
+        : await api.createVideo(payload);
+
+      let nextVideo = response?.data?.video;
+
+      if (action === "publish" && nextVideo?.isDraft) {
         const publishResponse = await api.publishVideo(nextVideo.id);
         nextVideo = publishResponse?.data?.video;
+      }
+
+      if (nextVideo?.mediaUrl) {
+        setExistingMediaUrl(nextVideo.mediaUrl);
+      }
+
+      if (selectedFile) {
+        setSelectedFile(null);
       }
 
       setFeedback(
@@ -145,6 +216,12 @@ export default function CreateUpload() {
             ? "Your live video is now available."
             : "Upload published successfully.",
       );
+
+      if (action === "draft" && nextVideo?.id) {
+        navigate(`/create?id=${nextVideo.id}`, { replace: true });
+        return;
+      }
+
       navigate(`/video/${nextVideo.id}`);
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || "Unable to complete upload."));
@@ -169,7 +246,7 @@ export default function CreateUpload() {
         </div>
 
         <div className="mx-auto max-w-5xl">
-          <h1 className="mb-6 text-2xl font-semibold font-inter md:mb-8">Upload</h1>
+          <h1 className="mb-6 text-2xl font-semibold font-inter md:mb-8">{isEditingDraft ? "Edit draft" : "Upload"}</h1>
           <p className="mb-6 text-sm text-slate500 dark:text-slate200">Signed in as {user?.fullName || user?.name || "creator"}</p>
 
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
@@ -224,7 +301,7 @@ export default function CreateUpload() {
                 <span className="mt-1 text-sm font-medium text-orange100">or browse</span>
               </>
             )}
-            {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">Selected: {selectedFile.name}</span> : null}
+            {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">Selected: {selectedFile.name}</span> : previewUrl ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">Current draft media loaded</span> : null}
           </button>
 
           <div className="space-y-4 md:space-y-5">
@@ -249,7 +326,7 @@ export default function CreateUpload() {
               <label className="mb-2 block text-sm font-medium text-slate600 dark:text-slate200">Category</label>
               <select
                 value={form.categoryId}
-                disabled={loading}
+                disabled={isLoading}
                 onChange={(event) => setForm((prev) => ({ ...prev, categoryId: event.target.value }))}
                 className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-[#1F1F1F] dark:text-white"
               >
@@ -270,7 +347,7 @@ export default function CreateUpload() {
               disabled={Boolean(submitting)}
               className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
             >
-              {submitting === "draft" ? "Saving..." : "Save draft"}
+              {submitting === "draft" ? (isEditingDraft ? "Updating..." : "Saving...") : (isEditingDraft ? "Update draft" : "Save draft")}
             </button>
             <button
               type="button"

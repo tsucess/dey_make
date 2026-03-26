@@ -141,6 +141,7 @@ export default function VideoDetails() {
   const [submittingReplyId, setSubmittingReplyId] = useState(null);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const canSubscribeToAuthor = Boolean(video?.author?.id) && user?.id !== video?.author?.id;
 
   useEffect(() => {
     let ignore = false;
@@ -231,7 +232,7 @@ export default function VideoDetails() {
   }
 
   async function handleSubscribe() {
-    if (!video?.author?.id || !requireAuth()) return;
+    if (!video?.author?.id || user?.id === video.author.id || !requireAuth()) return;
 
     setBusyAction(`subscribe-${video.author.id}`);
     setError("");
@@ -441,14 +442,16 @@ export default function VideoDetails() {
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    disabled={busyAction === `subscribe-${video.author?.id}`}
-                    onClick={handleSubscribe}
-                    className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {video.currentUserState?.subscribed ? "Subscribed" : "Subscribe"}
-                  </button>
+                  {canSubscribeToAuthor ? (
+                    <button
+                      type="button"
+                      disabled={busyAction === `subscribe-${video.author?.id}`}
+                      onClick={handleSubscribe}
+                      className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {video.currentUserState?.subscribed ? "Subscribed" : "Subscribe"}
+                    </button>
+                  ) : null}
                 </div>
 
                 <div className="flex flex-wrap gap-3">
