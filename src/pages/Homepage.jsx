@@ -236,7 +236,7 @@ export default function Homepage() {
   }, [activeCategory]);
 
   return (
-    <div className="min-h-full w-full bg-white dark:bg-black300">
+    <div className="min-h-full w-full bg-white dark:bg-slate100">
       <div className="flex flex-col px-4 pb-24 pt-2 md:hidden">
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 

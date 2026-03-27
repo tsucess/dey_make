@@ -85,7 +85,7 @@ export default function AppLayout() {
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto pb-27 md:pb-0">
+        <main className="flex-1 overflow-y-auto pb-27 bg-white dark:bg-slate100 md:pb-0">
           <Outlet />
         </main>
 

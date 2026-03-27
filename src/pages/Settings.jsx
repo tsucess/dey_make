@@ -5,6 +5,7 @@ import { api, firstError } from "../services/api";
 import { IoIosArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";
 import { MdArrowCircleLeft } from "react-icons/md";
+import { useAuth } from "../context/AuthContext";
 
 const notificationOptions = [
   ["messages", "Messages", "Get notified when someone sends you a new message"],
@@ -280,6 +281,8 @@ export default function Settings() {
     persistChanges(nextValues, { accessibilityPreferences: nextValues.accessibilityPreferences }, "Accessibility");
   }
 
+  const { logout } = useAuth();
+
   return (
     <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-10 md:py-8">
 <button onClick={goBack} className="bg-white300 w-10 h-10 rounded-full flex items-center justify-center mb-6 md:hidden"><IoIosArrowBack className="text-slate900 w-5 h-5"/></button>
@@ -367,7 +370,7 @@ export default function Settings() {
           </div>
         )}
       </div>
-       <button className="text-red300 font-inter text-sm flex gap-1 mt-5 items-center-safe md:hidden"><MdArrowCircleLeft className="w-4 h-4"/> Logout</button>
+       <button onClick={logout} className="text-red300 font-inter text-sm flex gap-1 mt-5 items-center-safe md:hidden"><MdArrowCircleLeft className="w-4 h-4"/> Logout</button>
 
     </div>
   );
