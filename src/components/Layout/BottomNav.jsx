@@ -62,7 +62,7 @@ const navItems = [
 export default function BottomNav() {
   return (
     <nav
-      className="fixed bottom-3 left-1/2 z-50 flex w-[calc(100%-1.5rem)] max-w-[430px] -translate-x-1/2 items-center justify-between rounded-[2rem] border border-black/5 bg-white/85 px-4 py-3 shadow-[0_18px_50px_rgba(15,23,42,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
+      className="fixed w-full h-22 bottom-0 left-0 z-50 flex items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-4 py-3  backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
     >
       {navItems.map(({ to, label, icon }) => (
         <NavLink
@@ -74,10 +74,10 @@ export default function BottomNav() {
 
             return `flex items-center justify-center rounded-full transition-all duration-200 ${
               isCreate
-                ? "h-12 w-[4.5rem] bg-white text-[#A5A5A5] shadow-[0_8px_20px_rgba(15,23,42,0.08)] dark:bg-white dark:text-[#A5A5A5]"
+                ? "h-12 w-18 bg-white text-slate900 dark:bg-black100 dark:text-slate200"
                 : isActive
-                  ? "h-12 w-12 bg-orange100 text-white shadow-[0_10px_20px_rgba(253,179,0,0.28)]"
-                  : "h-12 w-12 bg-white text-[#B5B5B5] shadow-[0_8px_20px_rgba(15,23,42,0.06)] dark:bg-white dark:text-[#B5B5B5]"
+                  ? "h-12 w-12 bg-white text-orange100 dark:bg-black100"
+                  : "h-12 w-12 bg-white text-slate900 dark:bg-black100 dark:text-slate200"
             }`;
           }}
           aria-label={label}

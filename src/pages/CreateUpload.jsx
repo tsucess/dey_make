@@ -248,7 +248,7 @@ export default function CreateUpload() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label="Close upload page"
-            className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate150 dark:bg-black100 dark:text-slate200"
+            className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate50 dark:bg-black100 dark:text-slate200"
           >
             <HiX className="h-5 w-5" />
           </button>
@@ -332,7 +332,7 @@ export default function CreateUpload() {
                 value={form.categoryId}
                 disabled={isLoading}
                 onChange={(event) => setForm((prev) => ({ ...prev, categoryId: event.target.value }))}
-                className="w-full rounded-2xl py-4 text-sm text-slate50 outline-none dark:bg-[#1F1F1F] dark:text-white"
+                className="w-full rounded-2xl py-4 text-sm text-slate50 outline-none dark:bg-transparent dark:text-slate200"
               >
                 <option value="">Choose a category</option>
                 { categories.map((category) => (
@@ -344,7 +344,7 @@ export default function CreateUpload() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 md:flex-row md:justify-end">
+          <div className="mt-10 flex gap-3 flex-row justify-end">
             <button
               type="button"
               onClick={() => handleSubmit("draft")}

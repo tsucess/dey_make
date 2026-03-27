@@ -366,30 +366,30 @@ export default function Profile() {
                       </button>
                     </>
                   ) : (
-                    <>
+                    <div className="flex gap-4 justify-center">
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         Edit profile
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         Share profile
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-8 rounded-full bg-white300 p-2 dark:bg-black100 md:mt-10">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="mt-8 md:rounded-full md:bg-white300 p-2 dark:md:bg-black100 md:mt-10">
+            <div className="grid grid-cols-4 gap-2 md:grid-cols-4">
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
 
@@ -398,10 +398,10 @@ export default function Profile() {
                     key={tab.feed}
                     type="button"
                     onClick={() => setActiveTab(tab.feed)}
-                    className={`rounded-full px-5 py-2 text-base font-medium font-inter transition-colors md:text-lg ${
+                    className={`md:rounded-full px-5 py-2 text-base font-medium font-inter transition-colors md:text-lg ${
                       isActive
-                        ? "bg-orange100 text-black"
-                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-[#454545]"
+                        ? "text-orange100 border-b-2 border-b-orange100 md:bg-orange100 md:text-black"
+                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100"
                     }`}
                   >
                     {tab.label}

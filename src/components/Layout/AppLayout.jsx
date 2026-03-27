@@ -1,8 +1,9 @@
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
-import { Outlet, useLocation } from "react-router-dom";
+import { Link, Outlet, useLocation } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
+import { IoMdSettings } from "react-icons/io";
 import { IoMoonOutline, IoNotificationsOutline } from "react-icons/io5";
 import { MdSunny } from "react-icons/md";
 import { useTheme } from "../../context/ThemeContext";
@@ -22,7 +23,7 @@ function MobileActionButton({ children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-[#333333]"
+      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100"
     >
       {children}
     </button>
@@ -33,6 +34,7 @@ export default function AppLayout() {
   const location = useLocation();
   const { isDark, toggleTheme } = useTheme();
   const isHomepage = location.pathname === "/home";
+  const isProfile = location.pathname === "/profile";
   const mobileTitle = getMobileTitle(location.pathname);
 
   return (
@@ -53,7 +55,7 @@ export default function AppLayout() {
           {isHomepage ? (
             <img src="/logo-footer.png" alt="DeyMake" className="h-10 w-auto" />
           ) : (
-            <h1 className="text-[2rem] font-semibold font-inter text-slate100 dark:text-white">
+            <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
               {mobileTitle}
             </h1>
           )}
@@ -61,9 +63,9 @@ export default function AppLayout() {
           <div className="flex items-center gap-3">
             {isHomepage ? (
               <>
-                <MobileActionButton onClick={toggleTheme}>
+                {/* <MobileActionButton onClick={toggleTheme}>
                   {isDark ? <MdSunny className="h-5 w-5" /> : <IoMoonOutline className="h-5 w-5" />}
-                </MobileActionButton>
+                </MobileActionButton> */}
                 <MobileActionButton>
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
@@ -71,16 +73,19 @@ export default function AppLayout() {
                   <IoNotificationsOutline className="h-5 w-5" />
                 </MobileActionButton>
               </>
-            ) : (
+            ) :(
               <MobileActionButton>
                 <HiOutlineSearch className="h-5 w-5" />
               </MobileActionButton>
             )}
+            {isProfile && <Link to='/settings'><MobileActionButton>
+                <IoMdSettings className="h-5 w-5"/>
+              </MobileActionButton> </Link>}
           </div>
         </div>
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto pb-[108px] md:pb-0">
+        <main className="flex-1 overflow-y-auto pb-27 md:pb-0">
           <Outlet />
         </main>
 

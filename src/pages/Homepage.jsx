@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye } from "react-icons/fa";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { MdArrowForwardIos } from "react-icons/md";
 import CategoryCard from "../components/CategoryCard";
 import VideoCard from "../components/VideoCard";
 import { api, firstError } from "../services/api";
@@ -34,6 +35,12 @@ function SectionState({ message, actionLabel, onAction }) {
   );
 }
 
+function ViewMoreBtn(){
+  return <button className="flex items-center font-medium text-sm text-black200 dark:text-white font-inter gap-1.5">
+    View more <MdArrowForwardIos />
+  </button>
+}
+
 function ShowMoreDivider() {
   return (
     <div className="mt-4 flex w-full items-center gap-3">
@@ -51,12 +58,12 @@ function ShowMoreDivider() {
 
 function MobileSectionHeader({ title, subtitle }) {
   return (
-    <div className="mb-4 flex items-center justify-between gap-3">
+    <div className="flex items-center justify-between gap-3">
       <div>
-        <h2 className="text-[1.05rem] font-semibold font-inter text-slate100 dark:text-white">
+        <h2 className="text-2xl font-semibold font-bricolage text-slate100 dark:text-white">
           {title}
         </h2>
-        {subtitle ? <p className="mt-1 text-xs text-slate400 dark:text-slate200">{subtitle}</p> : null}
+        {/* {subtitle ? <p className="mt-1 text-xs text-slate400 dark:text-slate200">{subtitle}</p> : null} */}
       </div>
     </div>
   );
@@ -82,13 +89,14 @@ function MoreButton() {
 function MobileTrendingCard({ video, showViews }) {
   const navigate = useNavigate();
   const creator = video.author || video.creator;
+  const title = getVideoTitle(video);
 
   return (
     <div onClick={() => navigate(`/video/${video.id}`)} className="flex w-42 shrink-0 cursor-pointer flex-col">
       <div className="relative aspect-[0.88] w-full overflow-hidden rounded-[1.75rem] bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
         {showViews ? (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-black/35 px-2.5 py-1 text-[0.7rem] font-medium text-white backdrop-blur-md">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/45 backdrop-blur-xl px-2.5 py-1 text-xs font-inter font-medium text-black200">
             <FaEye className="h-3.5 w-3.5" />
             {formatCompactNumber(video.views || 0)}
           </span>
@@ -96,17 +104,17 @@ function MobileTrendingCard({ video, showViews }) {
       </div>
 
       <div className="mt-2.5 flex flex-col gap-2">
-        <p className="line-clamp-2 text-[0.95rem] font-medium leading-snug font-inter text-black dark:text-white">
-          {getVideoTitle(video)}
+        <p className="line-clamp-2 text-base font-medium leading-snug font-inter text-black dark:text-white">
+          {title.length > 15 ? title.slice(0,15)+'...' : title}
         </p>
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <img src={getProfileAvatar(creator)} alt={getProfileName(creator)} className="h-8 w-8 shrink-0 rounded-full object-cover" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium font-inter text-black dark:text-white">
+              <p className="truncate text-sm font-medium font-inter text-black capitalize dark:text-white">
                 {getProfileName(creator)}
               </p>
-              <p className="text-[11px] font-inter text-[#8E8E8E]">
+              <p className="text-xs font-inter text-slate400 dark:slate700">
                 {formatSubscriberLabel(creator?.subscriberCount || 0)}
               </p>
             </div>
@@ -131,10 +139,10 @@ function MobileFeaturedCard({ video }) {
         <div className="flex min-w-0 items-center gap-3">
           <img src={getProfileAvatar(creator)} alt={getProfileName(creator)} className="h-10 w-10 rounded-full object-cover" />
           <div className="min-w-0">
-            <p className="truncate text-[1.05rem] font-medium font-inter text-black dark:text-white">
+            <p className="truncate text-[1.05rem] font-medium font-inter text-black capitalize dark:text-white">
               {getProfileName(creator)}
             </p>
-            <p className="text-sm font-inter text-[#8E8E8E]">
+            <p className="text-sm font-inter text-slate400 dark:text-slate700">
               {formatSubscriberLabel(creator?.subscriberCount || 0)}
             </p>
           </div>
@@ -228,11 +236,15 @@ export default function Homepage() {
   }, [activeCategory]);
 
   return (
-    <div className="min-h-full w-full bg-white dark:bg-slate100">
+    <div className="min-h-full w-full bg-white dark:bg-black300">
       <div className="flex flex-col px-4 pb-24 pt-2 md:hidden">
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
-        <MobileSectionHeader title="Trending" subtitle="Live and popular content powered by the backend" />
+<div className="flex justify-between items-center mb-6">
+  <MobileSectionHeader title="Trending" subtitle="Live and popular content powered by the backend" />
+  <ViewMoreBtn/>
+</div>
+        
         {loading ? (
           <SectionState message="Loading trending videos..." />
         ) : trendingVideos.length ? (
@@ -246,17 +258,21 @@ export default function Homepage() {
         )}
 
         <div className="mt-8">
-          <MobileSectionHeader title="Categories you'd like" subtitle="Filtering uses the videos endpoint" />
+          <div className="flex justify-between items-center mb-6">
+  <MobileSectionHeader title="Categories you'd like" subtitle="Filtering uses the videos endpoint" />
+  <ViewMoreBtn/>
+</div>
+          
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
             {categories.map((category) => (
               <button
                 key={category.id}
                 type="button"
                 onClick={() => setActiveCategory(category.slug)}
-                className={`shrink-0 rounded-full px-5 py-3 text-[0.95rem] font-medium font-inter transition-colors ${
+                className={`shrink-0 rounded-full px-5 py-3 text-sm font-medium font-inter transition-colors ${
                   activeCategory === category.slug
-                    ? "bg-orange100 text-black"
-                    : "bg-[#F3F3F3] text-slate100 dark:bg-[#2A2A2A] dark:text-white"
+                    ? "bg-orange100 text-black200"
+                    : "bg-white300 text-slate100 dark:bg-black100 dark:text-slate200"
                 }`}
               >
                 {category.label}
