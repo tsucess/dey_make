@@ -132,10 +132,10 @@ function ThemePill({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+      className={`rounded-full px-4 py-2 text-sm font-medium font-inter transition-colors ${
         active
           ? "bg-orange100 text-black"
-          : "bg-[#F3F3F3] text-slate100 dark:bg-[#4A4747] dark:text-white"
+          : "bg-slate150 text-slate100 dark:bg-black100 dark:text-white"
       }`}
     >
       {label}
@@ -271,8 +271,8 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-8 md:py-8">
-      <div className="mx-auto w-full max-w-185">
+    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-10 md:py-8">
+      <div className="mx-auto w-full">
         <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">Settings</h1>
 
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
@@ -284,7 +284,7 @@ export default function Settings() {
             Loading your preferences...
           </div>
         ) : (
-          <div className="divide-y divide-black/12 dark:divide-white/12">
+          <div className="divide-y divide-black/12 dark:divide-white/12 bg-white300 rounded-2xl p-6">
             <section>
               <SectionHeader title="Notifications" isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
               {openSections.notifications ? (
