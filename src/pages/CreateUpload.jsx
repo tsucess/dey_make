@@ -331,22 +331,11 @@ export default function CreateUpload() {
                 className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-[#1F1F1F] dark:text-white"
               >
                 <option value="">Choose a category</option>
-                {categories.length > 1 ? categories.map((category) => (
+                { categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label || category.name}
                   </option>
-                )) : <> 
-  <option value="technology">Technology</option>
-  <option value="health">Health & Wellness</option>
-  <option value="education">Education</option>
-  <option value="entertainment">Entertainment</option>
-  <option value="business">Business & Finance</option>
-  <option value="lifestyle">Lifestyle</option>
-  <option value="travel">Travel</option>
-  <option value="food">Food & Recipes</option>
-  <option value="fashion">Fashion & Beauty</option>
-  <option value="sports">Sports</option>
-</>}
+                )) }
               </select>
             </div>
           </div>
