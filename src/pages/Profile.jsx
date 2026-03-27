@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { useAuth } from "../context/AuthContext";
@@ -49,6 +49,7 @@ function FeedTile({ video, onOpen }) {
 export default function Profile() {
   const navigate = useNavigate();
   const { syncUser } = useAuth();
+  const avatarInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState(profileTabs[0].feed);
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
@@ -57,6 +58,8 @@ export default function Profile() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [isAvatarPreviewOpen, setIsAvatarPreviewOpen] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
 
@@ -64,7 +67,26 @@ export default function Profile() {
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
     [activeTab],
   );
+  const displayProfile = useMemo(
+    () => (form.avatarUrl ? { ...(profile || {}), avatarUrl: form.avatarUrl } : profile),
+    [form.avatarUrl, profile],
+  );
+  const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
+
+  useEffect(() => {
+    if (!feedback) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      setFeedback("");
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [feedback]);
+
+  useEffect(() => {
+    if (editing) setIsAvatarPreviewOpen(false);
+  }, [editing]);
 
   useEffect(() => {
     let ignore = false;
@@ -151,6 +173,11 @@ export default function Profile() {
       const nextProfile = response?.data?.profile;
 
       setProfile(nextProfile);
+      setForm({
+        fullName: nextProfile?.fullName || "",
+        bio: nextProfile?.bio || "",
+        avatarUrl: nextProfile?.avatarUrl || "",
+      });
       syncUser(nextProfile);
       setEditing(false);
       setFeedback("Profile updated successfully.");
@@ -172,6 +199,66 @@ export default function Profile() {
     }
   }
 
+  async function handleAvatarFileChange(event) {
+    const selectedFile = event.target.files?.[0];
+
+    if (!selectedFile) return;
+
+    setUploadingAvatar(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("file", selectedFile);
+
+      const uploadResponse = await api.uploadFile(uploadFormData);
+      const uploadedAvatarUrl = uploadResponse?.data?.upload?.url;
+
+      if (!uploadedAvatarUrl) {
+        throw new Error("Unable to resolve the uploaded profile picture.");
+      }
+
+      setForm((current) => ({ ...current, avatarUrl: uploadedAvatarUrl }));
+
+      if (editing) {
+        setFeedback("Profile picture uploaded. Save profile to keep this change.");
+        return;
+      }
+
+      const response = await api.updateProfile({ avatarUrl: uploadedAvatarUrl });
+      const nextProfile = response?.data?.profile;
+
+      setProfile(nextProfile);
+      setForm((current) => ({
+        ...current,
+        fullName: nextProfile?.fullName || current.fullName,
+        bio: nextProfile?.bio || "",
+        avatarUrl: nextProfile?.avatarUrl || uploadedAvatarUrl,
+      }));
+      syncUser(nextProfile);
+      setFeedback("Profile picture updated successfully.");
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || "Unable to upload profile picture."));
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
+    }
+  }
+
+  function handleAvatarClick() {
+    if (editing) {
+      avatarInputRef.current?.click();
+      return;
+    }
+
+    setIsAvatarPreviewOpen(true);
+  }
+
+  function handleOpenFeedItem(videoId) {
+    navigate(activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
+  }
+
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
       <section className="h-56 w-full bg-[radial-gradient(circle_at_top_left,_#f5b942,_#f0932b_40%,_#101010)] md:h-64" />
@@ -187,14 +274,34 @@ export default function Profile() {
             ) : (
               <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
-                  <img
-                    src={getProfileAvatar(profile)}
-                    alt={getProfileName(profile)}
-                    className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg dark:border-slate100 md:h-28 md:w-28"
-                  />
+                  <div className="relative w-fit">
+                    <button
+                      type="button"
+                      onClick={handleAvatarClick}
+                      disabled={uploadingAvatar}
+                      className="group relative block rounded-full disabled:cursor-not-allowed"
+                      aria-label={editing ? "Change profile picture" : "View profile picture"}
+                    >
+                      <img
+                        src={avatarPreviewUrl}
+                        alt={getProfileName(displayProfile)}
+                        className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg transition-opacity group-hover:opacity-90 dark:border-slate100 md:h-28 md:w-28"
+                      />
+                      <span className="absolute inset-x-0 bottom-1 mx-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                        {uploadingAvatar ? "Uploading..." : editing ? "Change photo" : "View photo"}
+                      </span>
+                    </button>
+                    <input
+                      ref={avatarInputRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif"
+                      onChange={handleAvatarFileChange}
+                      className="hidden"
+                    />
+                  </div>
 
                   <div className="space-y-1">
-                    <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(profile)}</h1>
+                    <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
                     <p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
@@ -318,7 +425,7 @@ export default function Profile() {
           ) : visiblePosts.length ? (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-8 md:gap-6">
               {visiblePosts.map((post) => (
-                <FeedTile key={post.id} video={post} onOpen={(id) => navigate(`/video/${id}`)} />
+                <FeedTile key={post.id} video={post} onOpen={handleOpenFeedItem} />
               ))}
             </div>
           ) : (
@@ -327,6 +434,27 @@ export default function Profile() {
             </div>
           )}
         </div>
+
+        {isAvatarPreviewOpen ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6"
+            onClick={() => setIsAvatarPreviewOpen(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Profile picture preview"
+          >
+            <div className="relative max-h-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setIsAvatarPreviewOpen(false)}
+                className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-2 text-sm font-medium text-white"
+              >
+                Close
+              </button>
+              <img src={avatarPreviewUrl} alt={getProfileName(displayProfile)} className="max-h-[80vh] max-w-full rounded-3xl object-contain shadow-2xl" />
+            </div>
+          </div>
+        ) : null}
       </div>
     </div>
   );
