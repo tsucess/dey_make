@@ -258,8 +258,7 @@ export default function CreateUpload() {
                   <option key={category.id} value={category.id}>
                     {category.label || category.name}
                   </option>
-                )) : <>
-  <option value="">Select a category</option>
+                )) : <> 
   <option value="technology">Technology</option>
   <option value="health">Health & Wellness</option>
   <option value="education">Education</option>
