@@ -267,20 +267,24 @@ export default function CreateUpload() {
       <div className="mx-auto max-w-6xl px-6 py-8 md:px-10 md:py-10">
         <div className="mb-8 flex items-start justify-between gap-4 md:mb-10">
           <Logo className="w-34 h-auto md:w-44 md:h-auto" />
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            aria-label="Close upload page"
-            className="mt-3 flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate150 dark:bg-black100 dark:text-slate200"
-          >
-            <HiX className="h-5 w-5" />
-          </button>
+          
         </div>
 
         <div className="mx-auto max-w-5xl">
-          <h1 className="mb-6 text-2xl font-semibold font-inter md:mb-8">{isEditingDraft ? "Edit draft" : "Upload"}</h1>
-          <p className="mb-6 text-sm text-slate500 dark:text-slate200">Signed in as {user?.fullName || user?.name || "creator"}</p>
-
+          <div className="flex justify-between items-start mb-8">
+          <div className="space-y-1.5">
+          <h1 className="text-2xl font-semibold font-inter">{isEditingDraft ? "Edit draft" : "Upload"}</h1>
+          <p className="text-sm font-medium text-slate500 dark:text-slate200">Signed in as {user?.fullName || user?.name || "creator"}</p>
+           </div>
+           <button
+            type="button"
+            onClick={() => navigate(-1)}
+            aria-label="Close upload page"
+            className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate50 dark:bg-black100 dark:text-slate200"
+          >
+            <HiX className="h-5 w-5" />
+          </button>
+           </div>
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
@@ -292,7 +296,7 @@ export default function CreateUpload() {
                 onClick={() => setSelectedType(id)}
                 className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
                   selectedType === id
-                    ? "border-orange100 bg-orange100/10"
+                    ? "border-orange100 bg-orange200/10"
                     : "border-transparent bg-white dark:bg-transparent"
                 }`}
               >
@@ -350,7 +354,7 @@ export default function CreateUpload() {
                 value={form[key]}
                 placeholder={placeholder}
                 onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))}
-                className="h-18 w-full rounded-full bg-white300 px-7 text-base font-inter text-slate100 outline-none placeholder:text-slate600 dark:bg-black100 dark:text-white dark:placeholder:text-slate200"
+                className="h-18 w-full rounded-full bg-white300 px-7 text-base font-inter text-slate50 outline-none placeholder:text-slate50 dark:bg-black100 dark:text-white dark:placeholder:text-slate200"
               />
             ))}
 
@@ -375,12 +379,12 @@ export default function CreateUpload() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 md:flex-row md:justify-end">
+          <div className="mt-10 flex gap-3 flex-row justify-end">
             <button
               type="button"
               onClick={() => handleSubmit("draft")}
               disabled={Boolean(submitting)}
-              className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
+              className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
             >
               {submitting === "draft" ? (isEditingDraft ? "Updating..." : "Saving...") : (isEditingDraft ? "Update draft" : "Save draft")}
             </button>
@@ -388,18 +392,18 @@ export default function CreateUpload() {
               type="button"
               onClick={() => handleSubmit("publish")}
               disabled={Boolean(submitting)}
-              className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold text-black transition-colors hover:bg-[#e0a000] disabled:cursor-not-allowed disabled:opacity-60"
+              className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting === "publish" ? "Publishing..." : "Publish now"}
+              {submitting === "publish" ? "Uploading..." : "Upload"}
             </button>
-            <button
+            {/* <button
               type="button"
               onClick={() => handleSubmit("live")}
               disabled={Boolean(submitting) || !canGoLive}
               className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting === "live" ? "Going live..." : "Go live"}
-            </button>
+            </button> */}
           </div>
         </div>
       </div>

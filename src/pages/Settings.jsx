@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { useTheme } from "../context/ThemeContext";
 import { api, firstError } from "../services/api";
+import { IoIosArrowBack } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
+import { MdArrowCircleLeft } from "react-icons/md";
+import { useAuth } from "../context/AuthContext";
 
 const notificationOptions = [
   ["messages", "Messages", "Get notified when someone sends you a new message"],
@@ -80,6 +84,7 @@ function ToggleSwitch({ enabled, onToggle }) {
   );
 }
 
+
 function SectionHeader({ title, isOpen, onClick }) {
   return (
     <button type="button" onClick={onClick} className="flex w-full items-center justify-between gap-4 py-4 text-left md:py-5">
@@ -132,10 +137,10 @@ function ThemePill({ label, active, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+      className={`rounded-full px-4 py-2 text-sm font-medium font-inter transition-colors ${
         active
           ? "bg-orange100 text-black"
-          : "bg-[#F3F3F3] text-slate100 dark:bg-[#4A4747] dark:text-white"
+          : "bg-slate150 text-slate100 dark:bg-black100 dark:text-white"
       }`}
     >
       {label}
@@ -156,6 +161,12 @@ export default function Settings() {
   const [savingSection, setSavingSection] = useState("");
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+
+  const navigate = useNavigate(); // ✅ correct place
+
+  function goBack() {
+    navigate(-1);
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -270,9 +281,12 @@ export default function Settings() {
     persistChanges(nextValues, { accessibilityPreferences: nextValues.accessibilityPreferences }, "Accessibility");
   }
 
+  const { logout } = useAuth();
+
   return (
-    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-8 md:py-8">
-      <div className="mx-auto w-full max-w-185">
+    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-10 md:py-8">
+<button onClick={goBack} className="bg-white300 w-10 h-10 rounded-full flex items-center justify-center mb-6 md:hidden"><IoIosArrowBack className="text-slate900 w-5 h-5"/></button>
+      <div className="mx-auto w-full">
         <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">Settings</h1>
 
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
@@ -284,7 +298,7 @@ export default function Settings() {
             Loading your preferences...
           </div>
         ) : (
-          <div className="divide-y divide-black/12 dark:divide-white/12">
+          <div className="divide-y divide-black/12 dark:divide-white/12 bg-white300 dark:bg-black100 rounded-2xl p-6">
             <section>
               <SectionHeader title="Notifications" isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
               {openSections.notifications ? (
@@ -356,6 +370,8 @@ export default function Settings() {
           </div>
         )}
       </div>
+       <button onClick={logout} className="text-red300 font-inter text-sm flex gap-1 mt-5 items-center-safe md:hidden"><MdArrowCircleLeft className="w-4 h-4"/> Logout</button>
+
     </div>
   );
 }

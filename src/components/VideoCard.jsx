@@ -27,7 +27,7 @@ export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = 
         <div className="min-w-0 flex-1 flex flex-col gap-1">
           <p className="text-base md:text-lg font-medium font-inter text-black dark:text-white
                         leading-snug line-clamp-2">
-            {title}
+            {title.length > 15 ? title.slice(0,15)+'...': title}
           </p>
           <p className="text-xs text-black font-medium font-inter capitalize dark:text-white">
             {author}

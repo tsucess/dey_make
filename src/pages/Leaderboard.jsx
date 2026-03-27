@@ -80,7 +80,7 @@ function PodiumCard({ item }) {
 function StandingRow({ item, isLast }) {
   return (
     <div
-      className={`flex items-center justify-between rounded-3xl bg-[#F3F3F3] px-4 py-4 dark:bg-[#343434] md:rounded-none md:bg-transparent md:px-0 ${
+      className={`flex items-center justify-between rounded-3xl px-4 py-4 dark:md:bg-[#343434] md:rounded-none md:bg-transparent md:px-0 ${
         isLast ? "" : "md:border-b md:border-black/6 md:dark:border-white/8"
       }`}
     >
@@ -179,8 +179,8 @@ export default function Leaderboard() {
               ))}
             </div>
 
-            <section className=" w-full overflow-hidden rounded-4xl md:rounded-2xl">
-              <div className="flex items-center justify-between bg-orange100 px-6 py-5 md:px-10">
+            <section className="mt-6 md:mt-0 w-full md:overflow-hidden md:rounded-4xl">
+              <div className="flex items-center justify-between bg-orange100 rounded-full md:rounded-none px-6 py-5 md:px-10">
                 <span className="text-base font-medium font-inter text-black md:text-lg">You Currently Rank</span>
                 <div className="flex items-center gap-4">
                   <span className="text-base font-medium font-inter text-black md:text-lg">{currentRank}</span>
@@ -188,7 +188,7 @@ export default function Leaderboard() {
                 </div>
               </div>
 
-              <div className="space-y-3 md:space-y-0 md:bg-[#F3F3F3] md:px-10 md:py-6 md:dark:bg-[#343434]">
+              <div className=" bg-white dark:bg-transparent md:bg-[#F3F3F3] md:px-10 md:py-6 md:dark:bg-[#343434]">
                 {board.standings.length ? (
                   board.standings.map((item, index) => (
                     <StandingRow key={item.userId} item={item} isLast={index === board.standings.length - 1} />

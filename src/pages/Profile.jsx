@@ -35,7 +35,7 @@ function FeedTile({ video, onOpen }) {
       className="group relative h-75 cursor-pointer overflow-hidden rounded-2xl bg-slate200/95 dark:bg-slate200"
     >
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
         <p className="line-clamp-2 text-sm font-medium text-white md:text-base">{getVideoTitle(video)}</p>
       </div>
       {video.isLive ? <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">LIVE</span> : null}
@@ -261,14 +261,14 @@ export default function Profile() {
 
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
-      <section className="h-56 w-full bg-[radial-gradient(circle_at_top_left,_#f5b942,_#f0932b_40%,_#101010)] md:h-64" />
+      <img src="./header_profile.png" className="h-56 w-full md:h-64" />
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pb-12">
+      <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pl-20 md:pb-12">
         <div className="-mt-12 md:-mt-16">
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-          <div className="rounded-[2rem] bg-white300 p-5 shadow-sm dark:bg-black100 md:p-8">
+          <div className="md:p-8">
             {loadingProfile ? (
               <p className="text-sm text-slate600 dark:text-slate200">Loading profile...</p>
             ) : (
@@ -366,30 +366,30 @@ export default function Profile() {
                       </button>
                     </>
                   ) : (
-                    <>
+                    <div className="flex gap-4 justify-center">
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         Edit profile
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         Share profile
                       </button>
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-8 rounded-full bg-white300 p-2 dark:bg-black100 md:mt-10">
-            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+          <div className="mt-8 md:rounded-full md:bg-white300 p-2 dark:md:bg-black100 md:mt-10">
+            <div className="grid grid-cols-4 gap-2 md:grid-cols-4">
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
 
@@ -398,10 +398,10 @@ export default function Profile() {
                     key={tab.feed}
                     type="button"
                     onClick={() => setActiveTab(tab.feed)}
-                    className={`rounded-full px-5 py-3 text-base font-semibold font-inter transition-colors md:text-lg ${
+                    className={`md:rounded-full px-5 py-2 text-base font-medium font-inter transition-colors md:text-lg ${
                       isActive
-                        ? "bg-orange100 text-black"
-                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-[#454545]"
+                        ? "text-orange100 border-b-2 border-b-orange100 md:bg-orange100 md:text-black"
+                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100"
                     }`}
                   >
                     {tab.label}
