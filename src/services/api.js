@@ -21,6 +21,24 @@ function resolveApiBaseUrl() {
 const API_BASE_URL = resolveApiBaseUrl();
 const TOKEN_STORAGE_KEY = "deymake.auth.token";
 
+function buildQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+
+    const stringValue = `${value}`.trim();
+
+    if (!stringValue) return;
+
+    searchParams.set(key, stringValue);
+  });
+
+  const queryString = searchParams.toString();
+
+  return queryString ? `?${queryString}` : "";
+}
+
 export class ApiError extends Error {
   constructor(message, status, errors = {}) {
     super(message);
@@ -94,14 +112,19 @@ export const api = {
   getProfileFeed: (feed) => request(`/me/${feed}`),
   getUser: (id) => request(`/users/${id}`),
   getUserPosts: (id) => request(`/users/${id}/posts`),
-  searchUsers: (query) => request(`/users/search?q=${encodeURIComponent(query)}`),
+  searchUsers: (query) => request(`/users/search${buildQueryString({ q: query })}`),
+  search: (query) => request(`/search${buildQueryString({ q: query })}`),
+  searchSuggestions: (query) => request(`/search/suggestions${buildQueryString({ q: query })}`),
+  searchVideos: (query) => request(`/search/videos${buildQueryString({ q: query })}`),
+  searchCreators: (query) => request(`/search/creators${buildQueryString({ q: query })}`),
+  searchCategories: (query) => request(`/search/categories${buildQueryString({ q: query })}`),
   getPreferences: () => request("/me/preferences"),
   updatePreferences: (payload) => request("/me/preferences", { method: "PATCH", body: payload }),
   getLeaderboard: (period) => request(`/leaderboard?period=${period}`),
   getConversations: () => request("/conversations"),
   getSuggestedUsers: () => request("/conversations/suggested"),
   createConversation: (payload) => request("/conversations", { method: "POST", body: payload }),
-  getConversationMessages: (id) => request(`/conversations/${id}/messages`),
+  getConversationMessages: (id, options = {}) => request(`/conversations/${id}/messages${buildQueryString({ after: options.after })}`),
   sendConversationMessage: (id, body) => request(`/conversations/${id}/messages`, { method: "POST", body: { body } }),
   markConversationRead: (id) => request(`/conversations/${id}/read`, { method: "POST" }),
   getVideo: (id) => request(`/videos/${id}`),

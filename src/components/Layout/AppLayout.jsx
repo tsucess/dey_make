@@ -1,17 +1,19 @@
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
 import { IoMoonOutline, IoNotificationsOutline } from "react-icons/io5";
 import { MdSunny } from "react-icons/md";
 import { useTheme } from "../../context/ThemeContext";
+import { buildSearchPath } from "../../utils/search";
 
 function getMobileTitle(pathname) {
   if (pathname.startsWith("/home")) return "DeyMake";
   if (pathname.startsWith("/leaderboard")) return "Leaderboard";
   if (pathname.startsWith("/messages")) return "Inbox";
   if (pathname.startsWith("/profile")) return "Profile";
+  if (pathname.startsWith("/search")) return "Search";
   if (pathname.startsWith("/settings")) return "Settings";
 
   return "DeyMake";
@@ -31,9 +33,14 @@ function MobileActionButton({ children, onClick }) {
 
 export default function AppLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isDark, toggleTheme } = useTheme();
   const isHomepage = location.pathname === "/home";
   const mobileTitle = getMobileTitle(location.pathname);
+
+  function openSearch() {
+    navigate(buildSearchPath());
+  }
 
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
@@ -64,7 +71,7 @@ export default function AppLayout() {
                 <MobileActionButton onClick={toggleTheme}>
                   {isDark ? <MdSunny className="h-5 w-5" /> : <IoMoonOutline className="h-5 w-5" />}
                 </MobileActionButton>
-                <MobileActionButton>
+                <MobileActionButton onClick={openSearch}>
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
                 <MobileActionButton>
@@ -72,7 +79,7 @@ export default function AppLayout() {
                 </MobileActionButton>
               </>
             ) : (
-              <MobileActionButton>
+              <MobileActionButton onClick={openSearch}>
                 <HiOutlineSearch className="h-5 w-5" />
               </MobileActionButton>
             )}

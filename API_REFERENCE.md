@@ -3,7 +3,8 @@
 Official reference for the backend API implemented in `deymake_backend`.
 
 - Base URL: `https://api.deymake.com/api/v1`
-- Framework: Laravel 11
+- Framework: Laravel 12
+- Runtime: PHP 8.2+
 - Auth: Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`)
 - Default content type: `application/json`
 - File upload endpoint uses `multipart/form-data`
@@ -56,7 +57,42 @@ Accept: application/json
 
 ### Pagination
 
-No API endpoints currently implement pagination. Collection endpoints return full arrays.
+Many collection endpoints are paginated.
+
+- Paginated responses keep the resource array under `data.<key>`.
+- Pagination stats are returned under `meta.<key>`.
+- Supported query params: `page` and either `per_page` or `limit`.
+- Standard pagination meta fields are: `currentPage`, `lastPage`, `perPage`, `total`, `count`, `from`, `to`, `hasMorePages`, `nextPageUrl`, `prevPageUrl`.
+- Default page sizes vary by endpoint:
+  - video/profile feeds: default `12`, max `50`
+  - `/search` and `/users/search`: default `10`, max `25`
+  - `/search/suggestions`: default `5`, max `10`
+  - `/search/videos`, `/search/creators`, `/search/categories`: default `12`, max `25`
+
+Example paginated response:
+
+```json
+{
+  "message": "Videos retrieved successfully.",
+  "data": {
+    "videos": []
+  },
+  "meta": {
+    "videos": {
+      "currentPage": 1,
+      "lastPage": 1,
+      "perPage": 12,
+      "total": 0,
+      "count": 0,
+      "from": null,
+      "to": null,
+      "hasMorePages": false,
+      "nextPageUrl": null,
+      "prevPageUrl": null
+    }
+  }
+}
+```
 
 ## Resource shapes
 
@@ -247,11 +283,11 @@ These are the main resource objects returned throughout the API.
 
 | Method | Path | Auth | Request | Success response |
 | --- | --- | --- | --- | --- |
-| GET | `/videos/trending` | No | None | `200`, `data.videos` |
-| GET | `/videos/live` | No | None | `200`, `data.videos` |
-| GET | `/videos` | No | Optional query: `category` as category ID or slug | `200`, `data.videos` |
+| GET | `/videos/trending` | No | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/videos/live` | No | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/videos` | No | Optional query: `category` as category ID or slug; `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
 | GET | `/videos/{video}` | No | Path param `video` | `200`, `data.video` |
-| GET | `/videos/{video}/related` | No | Path param `video` | `200`, `data.videos` |
+| GET | `/videos/{video}/related` | No | Path param `video`; optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
 | POST | `/videos/{video}/view` | No | Path param `video` | `200`, `data.views`, `data.video` |
 | POST | `/videos/{video}/share` | No | Path param `video` | `200`, `data.shares`, `data.shareUrl` |
 
@@ -267,11 +303,17 @@ These are the main resource objects returned throughout the API.
 
 | Method | Path | Auth | Request | Success response |
 | --- | --- | --- | --- | --- |
-| GET | `/search` | No | Optional query: `q` | `200`, `data.videos`, `data.creators`, `data.categories` |
-| GET | `/search/suggestions` | No | Optional query: `q` | `200`, limited suggestion arrays in `data.videos`, `data.creators`, `data.categories` |
-| GET | `/search/videos` | No | Optional query: `q` | `200`, `data.videos` |
-| GET | `/search/creators` | No | Optional query: `q` | `200`, `data.creators` |
-| GET | `/search/categories` | No | Optional query: `q` | `200`, `data.categories` |
+| GET | `/search` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, `data.videos`, `data.creators`, `data.categories`, `meta.videos`, `meta.creators`, `meta.categories` |
+| GET | `/search/suggestions` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, limited arrays in `data.videos`, `data.creators`, `data.categories`, plus `meta.videos`, `meta.creators`, `meta.categories` |
+| GET | `/search/videos` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/search/creators` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, `data.creators`, `meta.creators` |
+| GET | `/search/categories` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, `data.categories`, `meta.categories` |
+
+### Search notes
+
+- Search queries are normalized by trimming and collapsing repeated whitespace.
+- Missing, blank, or whitespace-only `q` values return empty paginated result sets instead of listing all records.
+- The same blank-query behavior applies to `GET /users/search`.
 
 ### Leaderboard
 
@@ -294,9 +336,9 @@ Each podium/standing/current-user-rank item contains:
 
 | Method | Path | Auth | Request | Success response |
 | --- | --- | --- | --- | --- |
-| GET | `/users/search` | No | Optional query: `q` | `200`, `data.users` |
+| GET | `/users/search` | No | Optional query: `q`, `page`, `per_page`/`limit` | `200`, `data.users`, `meta.users` |
 | GET | `/users/{user}` | No | Path param `user` | `200`, `data.user` |
-| GET | `/users/{user}/posts` | No | Path param `user` | `200`, `data.videos` |
+| GET | `/users/{user}/posts` | No | Path param `user`; optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
 
 ## Uploads and video creation
 
@@ -375,10 +417,10 @@ Each podium/standing/current-user-rank item contains:
 
 | Method | Path | Auth | Request | Success response |
 | --- | --- | --- | --- | --- |
-| GET | `/me/posts` | Yes | None | `200`, `data.videos` |
-| GET | `/me/liked` | Yes | None | `200`, `data.videos` |
-| GET | `/me/saved` | Yes | None | `200`, `data.videos` |
-| GET | `/me/drafts` | Yes | None | `200`, `data.videos` |
+| GET | `/me/posts` | Yes | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/me/liked` | Yes | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/me/saved` | Yes | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
+| GET | `/me/drafts` | Yes | Optional query: `page`, `per_page`/`limit` | `200`, `data.videos`, `meta.videos` |
 
 ### Preferences
 
@@ -425,7 +467,7 @@ Each podium/standing/current-user-rank item contains:
 | GET | `/conversations` | Yes | None | `200`, `data.conversations` |
 | GET | `/conversations/suggested` | Yes | None | `200`, `data.users` |
 | POST | `/conversations` | Yes | JSON: `userId` required existing user; optional `message` max 2000 | `201`, `data.conversation` |
-| GET | `/conversations/{conversation}/messages` | Yes | Path param `conversation`; participant only | `200`, `data.messages` |
+| GET | `/conversations/{conversation}/messages` | Yes | Path param `conversation`; participant only; optional query `after` to return only messages with IDs greater than the provided message ID | `200`, `data.messages` |
 | POST | `/conversations/{conversation}/messages` | Yes | JSON: `body` required string max 2000; participant only | `201`, `data.message` |
 | POST | `/conversations/{conversation}/read` | Yes | Path param `conversation`; participant only | `200`, message only |
 
@@ -433,6 +475,7 @@ Each podium/standing/current-user-rank item contains:
 
 - Conversations are one-to-one based on the current implementation.
 - `POST /conversations` reuses the existing 1:1 conversation if one already exists.
+- `GET /conversations/{conversation}/messages?after={messageId}` can be used for incremental polling to fetch only newly created messages.
 - Starting a conversation with yourself returns `422`.
 - Sending a message updates the sender's `last_read_at` and creates notifications for other participants.
 

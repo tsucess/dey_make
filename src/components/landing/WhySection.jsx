@@ -1,11 +1,4 @@
-import { HiSparkles } from "react-icons/hi2";
-import { BsEmojiSmile } from "react-icons/bs";
-import { TbStack2 } from "react-icons/tb";
-import { useTheme } from "../../context/ThemeContext";
-
 export default function WhySection() {
-  const { isDark } = useTheme();
-
   const features = [
     {
       icon: <img src='/visibilty-icon.png' alt="" />,

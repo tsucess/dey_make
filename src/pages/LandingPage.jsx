@@ -7,7 +7,7 @@ import CreativesBanner from "../components/landing/CreativesBanner";
 import FAQSection from "../components/landing/FAQSection";
 import LandingFooter from "../components/landing/LandingFooter";
 
-export default function LandingPage({ onLogin, onSignUp }) {
+export default function LandingPage({ onSignUp }) {
   return (
     <div className="min-h-screen bg-white dark:bg-[#121212]">
       <LandingNavbar onSignUp={onSignUp} />

@@ -7,6 +7,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    test: {
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.js',
+    },
     server: {
       host: '127.0.0.1',
       port: 5173,

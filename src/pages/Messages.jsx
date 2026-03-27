@@ -3,6 +3,71 @@ import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
 
+const INBOX_POLL_INTERVAL_MS = 15000;
+const ACTIVE_CONVERSATION_POLL_INTERVAL_MS = 5000;
+
+function isDocumentHidden() {
+  return typeof document !== "undefined" && document.visibilityState === "hidden";
+}
+
+function mergeMessages(currentMessages, incomingMessages) {
+  if (!incomingMessages.length) return currentMessages;
+
+  const messagesById = new Map(currentMessages.map((message) => [message.id, message]));
+
+  incomingMessages.forEach((message) => {
+    messagesById.set(message.id, message);
+  });
+
+  return [...messagesById.values()].sort(
+    (left, right) => new Date(left.createdAt || 0).getTime() - new Date(right.createdAt || 0).getTime(),
+  );
+}
+
+function getConversationActivityTimestamp(conversation) {
+  return new Date(conversation?.lastMessage?.createdAt || conversation?.updatedAt || 0).getTime();
+}
+
+function sortConversations(conversations) {
+  return [...conversations].sort(
+    (left, right) => getConversationActivityTimestamp(right) - getConversationActivityTimestamp(left),
+  );
+}
+
+function hasNewerLocalSummary(currentConversation, incomingConversation) {
+  const currentMessageId = Number(currentConversation?.lastMessage?.id || 0);
+  const incomingMessageId = Number(incomingConversation?.lastMessage?.id || 0);
+
+  if (currentMessageId !== incomingMessageId) {
+    return currentMessageId > incomingMessageId;
+  }
+
+  return getConversationActivityTimestamp(currentConversation) > getConversationActivityTimestamp(incomingConversation);
+}
+
+function mergeConversationSummaries(currentConversations, incomingConversations, activeConversationId) {
+  const currentById = new Map(currentConversations.map((conversation) => [conversation.id, conversation]));
+
+  return sortConversations(
+    incomingConversations.map((incomingConversation) => {
+      const currentConversation = currentById.get(incomingConversation.id);
+      const shouldPreserveLocalSummary = currentConversation && hasNewerLocalSummary(currentConversation, incomingConversation);
+
+      return {
+        ...incomingConversation,
+        ...(shouldPreserveLocalSummary
+          ? {
+              lastMessage: currentConversation.lastMessage ?? incomingConversation.lastMessage,
+              updatedAt: currentConversation.updatedAt ?? incomingConversation.updatedAt,
+              status: currentConversation.status ?? incomingConversation.status,
+            }
+          : {}),
+        unreadCount: incomingConversation.id === activeConversationId ? 0 : incomingConversation.unreadCount,
+      };
+    }),
+  );
+}
+
 function ConversationRow({ conversation, active, onClick }) {
   const participant = conversation.participant;
   const preview = conversation.lastMessage?.body || conversation.status;
@@ -80,6 +145,8 @@ export default function Messages() {
   const { user } = useAuth();
   const isMountedRef = useRef(true);
   const activeConversationIdRef = useRef(null);
+  const conversationsRef = useRef([]);
+  const messagesRef = useRef([]);
   const [conversations, setConversations] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -101,33 +168,51 @@ export default function Messages() {
     activeConversationIdRef.current = activeConversationId;
   }, [activeConversationId]);
 
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+
+  useEffect(() => {
+    messagesRef.current = [];
+  }, [activeConversationId]);
+
   useEffect(() => () => {
     isMountedRef.current = false;
   }, []);
 
-  const loadInbox = useCallback(async ({ silent = false } = {}) => {
+  const loadInbox = useCallback(async ({ silent = false, includeSuggested = true } = {}) => {
     if (!silent) {
       setLoading(true);
       setError("");
     }
 
     try {
-      const [conversationResponse, suggestedResponse] = await Promise.all([
-        api.getConversations(),
-        api.getSuggestedUsers(),
-      ]);
+      const requests = [api.getConversations()];
+
+      if (includeSuggested) {
+        requests.push(api.getSuggestedUsers());
+      }
+
+      const [conversationResponse, suggestedResponse] = await Promise.all(requests);
 
       if (!isMountedRef.current) return;
 
       const currentActiveConversationId = activeConversationIdRef.current;
-      const nextConversations = (conversationResponse?.data?.conversations || []).map((conversation) =>
-        conversation.id === currentActiveConversationId
-          ? { ...conversation, unreadCount: 0 }
-          : conversation,
+      const nextConversations = mergeConversationSummaries(
+        conversationsRef.current,
+        conversationResponse?.data?.conversations || [],
+        currentActiveConversationId,
       );
 
       setConversations(nextConversations);
-      setSuggestedUsers(suggestedResponse?.data?.users || []);
+      if (includeSuggested) {
+        setSuggestedUsers(suggestedResponse?.data?.users || []);
+      }
+
       setActiveConversationId((current) =>
         nextConversations.some((conversation) => conversation.id === current)
           ? current
@@ -142,7 +227,7 @@ export default function Messages() {
     }
   }, []);
 
-  const loadConversationMessages = useCallback(async (conversationId, { silent = false } = {}) => {
+  const loadConversationMessages = useCallback(async (conversationId, { silent = false, after } = {}) => {
     if (!conversationId) {
       setMessages([]);
       return;
@@ -151,32 +236,36 @@ export default function Messages() {
     if (!silent) setLoadingMessages(true);
 
     try {
-      const response = await api.getConversationMessages(conversationId);
+      const response = await api.getConversationMessages(conversationId, { after });
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || activeConversationIdRef.current !== conversationId) return;
 
       const nextMessages = response?.data?.messages || [];
       const latestMessage = nextMessages[nextMessages.length - 1] || null;
 
-      setMessages(nextMessages);
+      setMessages((current) => (after ? mergeMessages(current, nextMessages) : nextMessages));
       setConversations((current) =>
-        current.map((conversation) =>
-          conversation.id === conversationId
-            ? {
-                ...conversation,
-                unreadCount: 0,
-                ...(latestMessage
-                  ? {
-                      lastMessage: latestMessage,
-                      updatedAt: latestMessage.createdAt,
-                    }
-                  : {}),
-              }
-            : conversation,
+        sortConversations(
+          current.map((conversation) =>
+            conversation.id === conversationId
+              ? {
+                  ...conversation,
+                  unreadCount: 0,
+                  ...(latestMessage
+                    ? {
+                        lastMessage: latestMessage,
+                        updatedAt: latestMessage.createdAt,
+                      }
+                    : {}),
+                }
+              : conversation,
+          ),
         ),
       );
 
-      api.markConversationRead(conversationId).catch(() => {});
+      if (!after || nextMessages.some((message) => !message.isMine)) {
+        api.markConversationRead(conversationId).catch(() => {});
+      }
     } catch (nextError) {
       if (!silent && isMountedRef.current) {
         setError(firstError(nextError?.errors, nextError?.message || "Unable to load conversation."));
@@ -208,22 +297,45 @@ export default function Messages() {
     let polling = false;
 
     const intervalId = window.setInterval(async () => {
-      if (polling || !isMountedRef.current) return;
+      if (polling || !isMountedRef.current || isDocumentHidden()) return;
 
       polling = true;
 
       try {
-        await Promise.all([
-          loadInbox({ silent: true }),
-          activeConversationId ? loadConversationMessages(activeConversationId, { silent: true }) : Promise.resolve(),
-        ]);
+        await loadInbox({ silent: true, includeSuggested: false });
       } finally {
         polling = false;
       }
-    }, 5000);
+    }, INBOX_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
-  }, [activeConversationId, loadConversationMessages, loadInbox]);
+  }, [loadInbox]);
+
+  useEffect(() => {
+    if (!activeConversationId) return undefined;
+
+    let polling = false;
+
+    const intervalId = window.setInterval(async () => {
+      const currentConversationId = activeConversationIdRef.current;
+      const lastMessageId = messagesRef.current[messagesRef.current.length - 1]?.id;
+
+      if (polling || !isMountedRef.current || !currentConversationId || isDocumentHidden()) return;
+
+      polling = true;
+
+      try {
+        await loadConversationMessages(currentConversationId, {
+          silent: true,
+          after: lastMessageId,
+        });
+      } finally {
+        polling = false;
+      }
+    }, ACTIVE_CONVERSATION_POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [activeConversationId, loadConversationMessages]);
 
   async function startConversation(participant) {
     const existingConversation = conversations.find((conversation) => conversation.participant?.id === participant.id);
@@ -271,7 +383,7 @@ export default function Messages() {
 
       if (!nextMessage) return;
 
-      setMessages((current) => [...current, nextMessage]);
+      setMessages((current) => mergeMessages(current, [nextMessage]));
       setDraftMessage("");
       setConversations((current) => {
         const updated = current.map((conversation) =>

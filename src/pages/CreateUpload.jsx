@@ -28,6 +28,20 @@ function parseTaggedUsers(value) {
     .filter((entry) => Number.isInteger(entry) && entry > 0);
 }
 
+function normalizeCategoryId(value) {
+  if (value === "" || value === null || value === undefined) return "";
+
+  const numericValue = Number(value);
+
+  return Number.isInteger(numericValue) && numericValue > 0 ? String(numericValue) : "";
+}
+
+function parseCategoryId(value) {
+  const numericValue = Number(value);
+
+  return Number.isInteger(numericValue) && numericValue > 0 ? numericValue : null;
+}
+
 export default function CreateUpload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -83,6 +97,23 @@ export default function CreateUpload() {
   }, []);
 
   useEffect(() => {
+    if (!categories.length) return;
+
+    setForm((current) => {
+      if (!current.categoryId) return current;
+
+      const nextCategoryId = normalizeCategoryId(current.categoryId);
+      const hasCategory = categories.some((category) => String(category.id) === nextCategoryId);
+
+      if (!hasCategory) {
+        return { ...current, categoryId: "" };
+      }
+
+      return nextCategoryId === current.categoryId ? current : { ...current, categoryId: nextCategoryId };
+    });
+  }, [categories]);
+
+  useEffect(() => {
     if (!draftId) return undefined;
 
     let ignore = false;
@@ -109,7 +140,7 @@ export default function CreateUpload() {
             description: nextVideo.description || "",
             location: nextVideo.location || "",
             people: Array.isArray(nextVideo.taggedUsers) ? nextVideo.taggedUsers.join(", ") : "",
-            categoryId: nextVideo.category?.id ? String(nextVideo.category.id) : "",
+            categoryId: normalizeCategoryId(nextVideo.category?.id),
           });
         }
       } catch (nextError) {
@@ -144,6 +175,7 @@ export default function CreateUpload() {
 
   async function handleSubmit(action) {
     const detectedType = detectUploadType(selectedFile);
+    const categoryId = parseCategoryId(form.categoryId);
 
     setError("");
     setFeedback("");
@@ -178,7 +210,7 @@ export default function CreateUpload() {
 
       const payload = {
         type: selectedType,
-        categoryId: form.categoryId ? Number(form.categoryId) : null,
+        categoryId,
         title: form.title.trim() || null,
         caption: form.caption.trim() || null,
         description: form.description.trim() || null,
@@ -326,28 +358,20 @@ export default function CreateUpload() {
               <label className="mb-2 block text-sm font-medium text-slate600 dark:text-slate200">Category</label>
               <select
                 value={form.categoryId}
-                disabled={isLoading}
-                onChange={(event) => setForm((prev) => ({ ...prev, categoryId: event.target.value }))}
+                disabled={isLoading || categories.length === 0}
+                onChange={(event) => setForm((prev) => ({ ...prev, categoryId: normalizeCategoryId(event.target.value) }))}
                 className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-[#1F1F1F] dark:text-white"
               >
-                <option value="">Choose a category</option>
-                {categories.length > 1 ? categories.map((category) => (
+                <option value="">{categories.length ? "Choose a category" : "No categories available"}</option>
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label || category.name}
                   </option>
-                )) : <> 
-  <option value="technology">Technology</option>
-  <option value="health">Health & Wellness</option>
-  <option value="education">Education</option>
-  <option value="entertainment">Entertainment</option>
-  <option value="business">Business & Finance</option>
-  <option value="lifestyle">Lifestyle</option>
-  <option value="travel">Travel</option>
-  <option value="food">Food & Recipes</option>
-  <option value="fashion">Fashion & Beauty</option>
-  <option value="sports">Sports</option>
-</>}
+                ))}
               </select>
+              {!isLoading && categories.length === 0 ? (
+                <p className="mt-2 text-xs text-slate500 dark:text-slate200">Categories are unavailable right now. You can still save a draft without one.</p>
+              ) : null}
             </div>
           </div>
 

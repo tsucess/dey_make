@@ -1,5 +1,5 @@
-export const FALLBACK_AVATAR = "../public/default avatar.png";
-export const FALLBACK_THUMBNAIL = "./public/Trending image.png";
+export const FALLBACK_AVATAR = "/default avatar.jpg";
+export const FALLBACK_THUMBNAIL = "/Trending image.png";
 
 const compactNumberFormatter = new Intl.NumberFormat("en", {
   notation: "compact",
@@ -61,7 +61,11 @@ export function getProfileAvatar(profile) {
 }
 
 export function getProfileName(profile, fallback = "Unknown creator") {
-  return profile?.fullName.toLowerCase() || fallback;
+  if (typeof profile === "string" && profile.trim()) {
+    return profile.trim();
+  }
+
+  return profile?.fullName?.trim() || profile?.name?.trim() || profile?.username?.trim() || fallback;
 }
 
 export function getVideoTitle(video) {
