@@ -22,8 +22,6 @@ const accessibilityOptions = [
   "reducedMotion",
 ];
 
-const languageOptions = ["en", "en-GB", "fr", "es"];
-
 const defaultPreferences = {
   notificationSettings: {
     messages: true,
@@ -202,7 +200,7 @@ export default function Settings() {
     return () => {
       ignore = true;
     };
-  }, [setThemePreference]);
+  }, [setLocale, setThemePreference, syncUser, t, user]);
 
   function toggleSection(key) {
     setOpenSections((current) => ({ ...current, [key]: !current[key] }));

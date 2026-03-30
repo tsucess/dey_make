@@ -32,6 +32,8 @@ vi.mock('../services/api', async () => {
       getRelatedVideos: vi.fn(),
       getVideoComments: vi.fn(),
       recordView: vi.fn(),
+      subscribeToCreator: vi.fn(),
+      unsubscribeFromCreator: vi.fn(),
       startVideoLive: vi.fn(),
       stopVideoLive: vi.fn(),
     },
@@ -100,6 +102,38 @@ describe('VideoDetails', () => {
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('¡Dile al creador lo que piensas!')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay comentarios. Empieza la conversación.')).toBeInTheDocument();
+  });
+
+  it('links to the creator profile and lets viewers subscribe', async () => {
+    const user = userEvent.setup();
+
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo(),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+    api.subscribeToCreator.mockResolvedValue({
+      data: {
+        creator: {
+          id: 5,
+          subscriberCount: 34,
+          subscribed: true,
+        },
+      },
+    });
+
+    renderPage();
+
+    const creatorLink = await screen.findByRole('link', { name: /Creator Uno/i });
+    expect(creatorLink).toHaveAttribute('href', '/users/5');
+
+    await user.click(screen.getByRole('button', { name: 'Suscribirse' }));
+
+    await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(5));
+    expect(screen.getByText('34 suscriptores')).toBeInTheDocument();
   });
 
   it('shows a processing badge when the video is still being compressed', async () => {

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { useLanguage } from "../context/LanguageContext";
@@ -507,7 +507,7 @@ export default function VideoDetails() {
                         onClick={handleSubscribe}
                         className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("videoDetails.subscribe")}
+                        {video.currentUserState?.subscribed ? t("profile.unsubscribe") : t("profile.subscribe")}
                       </button>
                     ) : null}
                   </div>
@@ -532,13 +532,23 @@ export default function VideoDetails() {
                 </div>
 
                 <div className="rounded-3xl bg-gray-50 p-5 dark:bg-[#101010]">
-                  <div className="flex items-center gap-4">
-                    <img src={getProfileAvatar(video.author || video.creator)} alt={getProfileName(video.author || video.creator)} className="h-16 w-16 rounded-full object-cover" />
-                    <div className="min-w-0">
-                      <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(video.author || video.creator)}</p>
-                      <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(video.author?.subscriberCount || video.creator?.subscriberCount || 0, t("content.subscribers"))}</p>
+                  {creatorId ? (
+                    <Link to={`/users/${creatorId}`} className="flex items-center gap-4 rounded-2xl transition-opacity hover:opacity-80">
+                      <img src={getProfileAvatar(video.author || video.creator)} alt={getProfileName(video.author || video.creator)} className="h-16 w-16 rounded-full object-cover" />
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(video.author || video.creator)}</p>
+                        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(video.author?.subscriberCount || video.creator?.subscriberCount || 0, t("content.subscribers"))}</p>
+                      </div>
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <img src={getProfileAvatar(video.author || video.creator)} alt={getProfileName(video.author || video.creator)} className="h-16 w-16 rounded-full object-cover" />
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(video.author || video.creator)}</p>
+                        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(video.author?.subscriberCount || video.creator?.subscriberCount || 0, t("content.subscribers"))}</p>
+                      </div>
                     </div>
-                  </div>
+                  )}
                   <p className="mt-4 text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
                 </div>
               </div>

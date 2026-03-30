@@ -68,6 +68,10 @@ export default function App() {
           <Route path="/auth/callback" element={<OAuthCallback />} />
         </Route>
 
+        <Route element={<AppLayout />}>
+          <Route path="/users/:id" element={<Profile />} />
+        </Route>
+
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Homepage />} />

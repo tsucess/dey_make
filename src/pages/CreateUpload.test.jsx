@@ -115,7 +115,7 @@ describe('CreateUpload', () => {
     }));
   });
 
-  it('submits a live payload for video uploads', async () => {
+  it('prepares the live flow from the live intent route and submits a live payload', async () => {
     const user = userEvent.setup();
 
     api.getCategories.mockResolvedValue({
@@ -130,11 +130,15 @@ describe('CreateUpload', () => {
       },
     });
 
-    const { container } = renderPage();
+    const { container } = renderPage('/create?intent=live');
 
     await screen.findByText(/Signed in as Test Creator/i);
+    expect(screen.getByRole('heading', { name: /Set up your live stream/i })).toBeInTheDocument();
+    expect(screen.getByText(/start broadcasting to your subscribers/i)).toBeInTheDocument();
 
     const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).toHaveAttribute('accept', expect.stringContaining('video/'));
+
     const file = new File(['video'], 'live.mp4', { type: 'video/mp4' });
     fireEvent.change(fileInput, { target: { files: [file] } });
 

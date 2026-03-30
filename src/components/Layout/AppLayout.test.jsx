@@ -3,9 +3,14 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockUseTheme = vi.fn();
+const authState = { isAuthenticated: true };
 
 vi.mock('../../context/ThemeContext', () => ({
   useTheme: () => mockUseTheme(),
+}));
+
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => authState,
 }));
 
 vi.mock('../../context/LanguageContext', async () => {
@@ -40,6 +45,7 @@ function renderLayout(initialEntry = '/home') {
           <Route path="home" element={<LocationDisplay />} />
           <Route path="live" element={<LocationDisplay />} />
           <Route path="profile" element={<LocationDisplay />} />
+          <Route path="users/:id" element={<LocationDisplay />} />
           <Route path="search" element={<LocationDisplay />} />
           <Route path="settings" element={<LocationDisplay />} />
         </Route>
@@ -51,6 +57,7 @@ function renderLayout(initialEntry = '/home') {
 describe('AppLayout', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.isAuthenticated = true;
   });
 
   it('renders labeled homepage actions and navigates to search', async () => {
@@ -89,6 +96,18 @@ describe('AppLayout', () => {
     renderLayout('/live');
 
     expect(screen.getByRole('heading', { name: /live/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
+  });
+
+  it('hides authenticated navigation chrome on public profile routes', () => {
+    authState.isAuthenticated = false;
+    mockUseTheme.mockReturnValue({ isDark: false, toggleTheme: vi.fn() });
+
+    renderLayout('/users/42');
+
+    expect(screen.queryByText('Sidebar')).not.toBeInTheDocument();
+    expect(screen.queryByText('BottomNav')).not.toBeInTheDocument();
+    expect(screen.getByText('TopBar')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
   });
 });

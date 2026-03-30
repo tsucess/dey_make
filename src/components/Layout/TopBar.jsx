@@ -10,7 +10,7 @@ import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 
 export default function TopBar() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
@@ -251,39 +251,41 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-3 relative">
+        {isAuthenticated ? (
+          <>
+            {/* Create */}
+            <button onClick={toggleVisiblity}
+              className="flex items-center gap-1.5
+                         bg-orange100 font-inter hover:bg-[#e09510]
+                         text-black font-semibold text-sm
+                         px-6 py-2.5 rounded-full
+                         border-none cursor-pointer
+                         transition-colors"
+            >
+              <HiPlus className="w-4 h-4" />
+              {t("common.create")}
+            </button>
+            <CreateDropdown isVisible={isVisible}/>
 
-        {/* Create */}
-        
-        <button onClick={toggleVisiblity}
-          className="flex items-center gap-1.5
-                     bg-orange100 font-inter hover:bg-[#e09510]
-                     text-black font-semibold text-sm
-                     px-6 py-2.5 rounded-full
-                     border-none cursor-pointer
-                     transition-colors"
-        >
-          <HiPlus className="w-4 h-4" />
-          {t("common.create")}
-        </button>
-        <CreateDropdown isVisible={isVisible}/>
+            {/* Bell */}
+            <button aria-label={t("common.notifications")} className="w-9 h-9 flex items-center justify-center
+                               rounded-full border-none cursor-pointer
+                               bg-transparent
+                               hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
+                               transition-colors">
+              <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
+            </button>
 
-        {/* Bell */}
-        <button aria-label={t("common.notifications")} className="w-9 h-9 flex items-center justify-center
-                           rounded-full border-none cursor-pointer
-                           bg-transparent
-                           hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
-                           transition-colors">
-          <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
-        </button>
-
-        {/* Avatar */}
-        <Link to="/profile">
-          <img
-            src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
-            alt={user?.fullName || t("common.profile")}
-            className="w-10 h-10 rounded-full object-cover cursor-pointer"
-          />
-        </Link>
+            {/* Avatar */}
+            <Link to="/profile">
+              <img
+                src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
+                alt={user?.fullName || t("common.profile")}
+                className="w-10 h-10 rounded-full object-cover cursor-pointer"
+              />
+            </Link>
+          </>
+        ) : null}
       </div>
     </header>
   );

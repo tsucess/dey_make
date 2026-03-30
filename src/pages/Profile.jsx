@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -13,9 +13,15 @@ import {
   getVideoTitle,
 } from "../utils/content";
 
-function getProfileTabs(t) {
-  return [
+function getProfileTabs(t, isOwnProfile) {
+  const tabs = [
     { label: t("profile.tabs.posts"), feed: "posts" },
+  ];
+
+  if (!isOwnProfile) return tabs;
+
+  return [
+    ...tabs,
     { label: t("profile.tabs.liked"), feed: "liked" },
     { label: t("profile.tabs.saved"), feed: "saved" },
     { label: t("profile.tabs.drafts"), feed: "drafts" },
@@ -54,11 +60,13 @@ function FeedTile({ video, onOpen }) {
 }
 
 export default function Profile() {
+  const { id: routeProfileId } = useParams();
   const navigate = useNavigate();
-  const { syncUser } = useAuth();
+  const { user, isAuthenticated, syncUser } = useAuth();
   const { t } = useLanguage();
   const avatarInputRef = useRef(null);
-  const profileTabs = useMemo(() => getProfileTabs(t), [t]);
+  const isOwnProfile = !routeProfileId || String(user?.id) === String(routeProfileId);
+  const profileTabs = useMemo(() => getProfileTabs(t, isOwnProfile), [isOwnProfile, t]);
   const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
@@ -74,7 +82,7 @@ export default function Profile() {
 
   const activeConfig = useMemo(
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
-    [activeTab],
+    [activeTab, profileTabs],
   );
   const displayProfile = useMemo(
     () => (form.avatarUrl ? { ...(profile || {}), avatarUrl: form.avatarUrl } : profile),
@@ -82,6 +90,7 @@ export default function Profile() {
   );
   const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
+  const canSubscribe = !isOwnProfile && Boolean(profile?.id) && user?.id !== profile?.id;
 
   useEffect(() => {
     if (!feedback) return undefined;
@@ -98,6 +107,12 @@ export default function Profile() {
   }, [editing]);
 
   useEffect(() => {
+    if (!profileTabs.some((tab) => tab.feed === activeTab)) {
+      setActiveTab(profileTabs[0]?.feed || "posts");
+    }
+  }, [activeTab, profileTabs]);
+
+  useEffect(() => {
     let ignore = false;
 
     async function loadProfile() {
@@ -105,10 +120,11 @@ export default function Profile() {
       setError("");
 
       try {
-        const response = await api.getProfile();
-        const nextProfile = response?.data?.profile;
+        const response = isOwnProfile ? await api.getProfile() : await api.getUser(routeProfileId);
+        const nextProfile = response?.data?.profile || response?.data?.user;
 
         if (!ignore) {
+          setEditing(false);
           setProfile(nextProfile);
           setForm({
             fullName: nextProfile?.fullName || "",
@@ -130,7 +146,7 @@ export default function Profile() {
     return () => {
       ignore = true;
     };
-  }, [t]);
+  }, [isOwnProfile, routeProfileId, t]);
 
   useEffect(() => {
     let ignore = false;
@@ -139,7 +155,9 @@ export default function Profile() {
       setLoadingFeed(true);
 
       try {
-        const response = await api.getProfileFeed(activeConfig.feed);
+        const response = isOwnProfile
+          ? await api.getProfileFeed(activeConfig.feed)
+          : await api.getUserPosts(routeProfileId);
 
         if (!ignore) {
           setFeeds((current) => ({
@@ -161,9 +179,17 @@ export default function Profile() {
     return () => {
       ignore = true;
     };
-  }, [activeConfig.feed, activeConfig.label, t]);
+  }, [activeConfig.feed, activeConfig.label, isOwnProfile, routeProfileId, t]);
+
+  function requireAuth() {
+    if (isAuthenticated) return true;
+    navigate("/login");
+    return false;
+  }
 
   async function handleSaveProfile() {
+    if (!isOwnProfile) return;
+
     if (!form.fullName.trim()) {
       setError(t("profile.fullNameRequired"));
       return;
@@ -187,7 +213,7 @@ export default function Profile() {
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || "",
       });
-      syncUser(nextProfile);
+      syncUser?.(nextProfile);
       setEditing(false);
       setFeedback(t("profile.updated"));
     } catch (nextError) {
@@ -198,7 +224,8 @@ export default function Profile() {
   }
 
   async function handleShareProfile() {
-    const shareUrl = `${window.location.origin}/profile`;
+    const sharePath = profile?.id ? `/users/${profile.id}` : (isOwnProfile ? "/profile" : `/users/${routeProfileId}`);
+    const shareUrl = `${window.location.origin}${sharePath}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -209,6 +236,8 @@ export default function Profile() {
   }
 
   async function handleAvatarFileChange(event) {
+    if (!isOwnProfile) return;
+
     const selectedFile = event.target.files?.[0];
 
     if (!selectedFile) return;
@@ -245,7 +274,7 @@ export default function Profile() {
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || uploadedAvatarUrl,
       }));
-      syncUser(nextProfile);
+      syncUser?.(nextProfile);
       setFeedback(t("profile.pictureUpdated"));
     } catch (nextError) {
       setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpload")));
@@ -255,8 +284,36 @@ export default function Profile() {
     }
   }
 
+  async function handleSubscribe() {
+    if (!canSubscribe || !requireAuth()) return;
+
+    setSaving(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      const response = profile?.currentUserState?.subscribed
+        ? await api.unsubscribeFromCreator(profile.id)
+        : await api.subscribeToCreator(profile.id);
+      const creator = response?.data?.creator;
+
+      setProfile((current) => current ? {
+        ...current,
+        subscriberCount: creator?.subscriberCount ?? current.subscriberCount,
+        currentUserState: {
+          ...current.currentUserState,
+          subscribed: creator?.subscribed ?? current.currentUserState?.subscribed,
+        },
+      } : current);
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.unableToUpdateSubscription")));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function handleAvatarClick() {
-    if (editing) {
+    if (editing && isOwnProfile) {
       avatarInputRef.current?.click();
       return;
     }
@@ -265,7 +322,7 @@ export default function Profile() {
   }
 
   function handleOpenFeedItem(videoId) {
-    navigate(activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
+    navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
   }
 
   return (
@@ -314,11 +371,11 @@ export default function Profile() {
                     <p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
-                    {profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
+                    {isOwnProfile && profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
                   </div>
                 </div>
 
-                {editing ? (
+                {editing && isOwnProfile ? (
                   <div className="grid gap-4 md:grid-cols-2">
                     <input
                       type="text"
@@ -374,7 +431,7 @@ export default function Profile() {
                         {t("profile.cancel")}
                       </button>
                     </>
-                  ) : (
+                  ) : isOwnProfile ? (
                     <div className="flex gap-4 justify-center">
                       <button
                         type="button"
@@ -391,6 +448,30 @@ export default function Profile() {
                         {t("profile.shareProfile")}
                       </button>
                     </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 md:flex-row md:justify-center">
+                      {canSubscribe ? (
+                        <button
+                          type="button"
+                          onClick={handleSubscribe}
+                          disabled={saving}
+                          className="md:min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {saving
+                            ? t("profile.saving")
+                            : profile?.currentUserState?.subscribed
+                              ? t("profile.unsubscribe")
+                              : t("profile.subscribe")}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={handleShareProfile}
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                      >
+                        {t("profile.shareProfile")}
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -398,7 +479,7 @@ export default function Profile() {
           </div>
 
           <div className="mt-8 md:rounded-full md:bg-white300 p-2 dark:md:bg-black100 md:mt-10">
-            <div className="grid grid-cols-4 gap-2 md:grid-cols-4">
+            <div className={`grid gap-2 ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4 md:grid-cols-4"}`}>
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
 

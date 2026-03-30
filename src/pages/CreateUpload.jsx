@@ -50,7 +50,9 @@ export default function CreateUpload() {
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
   const draftId = searchParams.get("id");
+  const intent = searchParams.get("intent");
   const isEditingDraft = Boolean(draftId);
+  const isLiveIntent = intent === "live" && !isEditingDraft;
   const [selectedType, setSelectedType] = useState("image");
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState("");
@@ -85,6 +87,10 @@ export default function CreateUpload() {
   const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
   const previewUrl = selectedFilePreviewUrl || existingMediaUrl;
   const isLoading = loadingCategories || loadingDraft;
+
+  useEffect(() => {
+    if (isLiveIntent) setSelectedType("video");
+  }, [isLiveIntent]);
 
   useEffect(() => {
     let ignore = false;
@@ -286,8 +292,9 @@ export default function CreateUpload() {
         <div className="mx-auto max-w-5xl">
           <div className="flex justify-between items-start mb-8">
           <div className="space-y-1.5">
-          <h1 className="text-2xl font-semibold font-inter">{isEditingDraft ? t("upload.editDraft") : t("common.upload")}</h1>
+          <h1 className="text-2xl font-semibold font-inter">{isEditingDraft ? t("upload.editDraft") : isLiveIntent ? t("upload.liveTitle") : t("common.upload")}</h1>
           <p className="text-sm font-medium text-slate500 dark:text-slate200">{t("upload.signedInAs", { name: user?.fullName || user?.name || t("upload.creatorFallback") })}</p>
+          {isLiveIntent ? <p className="max-w-2xl text-sm text-slate500 dark:text-slate200">{t("upload.liveDescription")}</p> : null}
            </div>
            <button
             type="button"

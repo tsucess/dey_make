@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { HiSearch } from "react-icons/hi";
-import { useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import VideoCard from "../components/VideoCard";
+import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
@@ -48,24 +49,40 @@ function ResultSectionHeader({ title, totalLabel, actionLabel, onAction }) {
   );
 }
 
-function CreatorCard({ creator, onSearch, actionLabel }) {
+function CreatorCard({
+  creator,
+  canSubscribe,
+  subscribeBusy,
+  onToggleSubscribe,
+  subscribeLabel,
+  unsubscribeLabel,
+  viewProfileLabel,
+}) {
   return (
     <article className="rounded-[2rem] bg-[#F5F5F5] p-5 dark:bg-[#1A1A1A]">
-      <div className="flex items-center gap-4">
+      <Link to={`/users/${creator.id}`} className="flex items-center gap-4 rounded-2xl transition-opacity hover:opacity-80">
         <img src={getProfileAvatar(creator)} alt={getProfileName(creator)} className="h-14 w-14 rounded-full object-cover" />
         <div className="min-w-0">
           <h3 className="truncate text-base font-semibold text-black dark:text-white">{getProfileName(creator)}</h3>
           <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(creator?.subscriberCount || 0)}</p>
         </div>
-      </div>
+      </Link>
       {creator?.bio ? <p className="mt-4 line-clamp-3 text-sm text-slate500 dark:text-slate200">{creator.bio}</p> : null}
-      <button
-        type="button"
-        onClick={() => onSearch(getProfileName(creator))}
-        className="mt-4 rounded-full bg-orange100 px-4 py-2 text-sm font-semibold text-black"
-      >
-        {actionLabel}
-      </button>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Link to={`/users/${creator.id}`} className="rounded-full bg-white px-4 py-2 text-sm font-medium text-black dark:bg-[#111111] dark:text-white">
+          {viewProfileLabel}
+        </Link>
+        {canSubscribe ? (
+          <button
+            type="button"
+            onClick={() => onToggleSubscribe(creator.id)}
+            disabled={subscribeBusy}
+            className="rounded-full bg-orange100 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {creator?.currentUserState?.subscribed ? unsubscribeLabel : subscribeLabel}
+          </button>
+        ) : null}
+      </div>
     </article>
   );
 }
@@ -91,12 +108,15 @@ function CategoryCard({ category, onSearch, actionLabel }) {
 }
 
 export default function SearchResults() {
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const { t } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
   const [draftQuery, setDraftQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState(createEmptyResults);
+  const [busyCreatorId, setBusyCreatorId] = useState(null);
 
   const query = normalizeSearchQuery(searchParams.get("q") || "");
   const activeTab = resolveSearchTab(searchParams.get("tab"));
@@ -159,6 +179,53 @@ export default function SearchResults() {
     const nextPath = buildSearchPath(nextQuery, nextTab);
     const nextSearch = nextPath.replace("/search", "");
     setSearchParams(new URLSearchParams(nextSearch.replace(/^\?/, "")));
+  }
+
+  function requireAuth() {
+    if (isAuthenticated) return true;
+    navigate("/login");
+    return false;
+  }
+
+  function updateCreatorState(creatorId, creatorPayload) {
+    setResults((current) => ({
+      ...current,
+      data: {
+        ...current.data,
+        creators: (current.data?.creators || []).map((creator) => (
+          creator.id === creatorId
+            ? {
+                ...creator,
+                subscriberCount: creatorPayload?.subscriberCount ?? creator.subscriberCount,
+                currentUserState: {
+                  ...creator.currentUserState,
+                  subscribed: creatorPayload?.subscribed ?? creator.currentUserState?.subscribed,
+                },
+              }
+            : creator
+        )),
+      },
+    }));
+  }
+
+  async function handleToggleSubscribe(creatorId) {
+    if (!creatorId || creatorId === user?.id || !requireAuth()) return;
+
+    const creator = creators.find((entry) => entry.id === creatorId);
+    setBusyCreatorId(creatorId);
+    setError("");
+
+    try {
+      const response = creator?.currentUserState?.subscribed
+        ? await api.unsubscribeFromCreator(creatorId)
+        : await api.subscribeToCreator(creatorId);
+
+      updateCreatorState(creatorId, response?.data?.creator);
+    } catch (nextError) {
+      setError(firstError(nextError.errors, nextError.message || t("videoDetails.unableToUpdateSubscription")));
+    } finally {
+      setBusyCreatorId(null);
+    }
   }
 
   function handleSubmit(event) {
@@ -245,7 +312,16 @@ export default function SearchResults() {
               {creators.length ? (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {creators.map((creator) => (
-                    <CreatorCard key={creator.id} creator={creator} actionLabel={t("search.searchThisCreator")} onSearch={(nextQuery) => updateSearch(nextQuery, "creators")} />
+                    <CreatorCard
+                      key={creator.id}
+                      creator={creator}
+                      canSubscribe={creator.id !== user?.id}
+                      subscribeBusy={busyCreatorId === creator.id}
+                      onToggleSubscribe={handleToggleSubscribe}
+                      subscribeLabel={t("profile.subscribe")}
+                      unsubscribeLabel={t("profile.unsubscribe")}
+                      viewProfileLabel={t("search.viewProfile")}
+                    />
                   ))}
                 </div>
               ) : (
@@ -278,7 +354,16 @@ export default function SearchResults() {
             <ResultSectionHeader title={t("common.creators")} totalLabel={t("search.resultsCount", { count: meta.creators?.total || creators.length })} />
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
               {creators.map((creator) => (
-                <CreatorCard key={creator.id} creator={creator} actionLabel={t("search.searchThisCreator")} onSearch={(nextQuery) => updateSearch(nextQuery, "creators")} />
+                <CreatorCard
+                  key={creator.id}
+                  creator={creator}
+                  canSubscribe={creator.id !== user?.id}
+                  subscribeBusy={busyCreatorId === creator.id}
+                  onToggleSubscribe={handleToggleSubscribe}
+                  subscribeLabel={t("profile.subscribe")}
+                  unsubscribeLabel={t("profile.unsubscribe")}
+                  viewProfileLabel={t("search.viewProfile")}
+                />
               ))}
             </div>
           </section>
