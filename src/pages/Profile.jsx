@@ -401,7 +401,7 @@ export default function Profile() {
                     className={`md:rounded-full px-5 py-2 text-base font-medium font-inter transition-colors md:text-lg ${
                       isActive
                         ? "text-orange100 border-b-2 border-b-orange100 md:bg-orange100 md:text-black"
-                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100"
+                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100 dark:hover:md:bg-orange100 dark:md:hover:border-0"
                     }`}
                   >
                     {tab.label}

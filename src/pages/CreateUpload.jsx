@@ -364,7 +364,7 @@ export default function CreateUpload() {
                 value={form.categoryId}
                 disabled={isLoading || categories.length === 0}
                 onChange={(event) => setForm((prev) => ({ ...prev, categoryId: normalizeCategoryId(event.target.value) }))}
-                className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-[#1F1F1F] dark:text-white"
+                className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
               >
                 <option value="">{categories.length ? "Choose a category" : "No categories available"}</option>
                 {categories.map((category) => (
