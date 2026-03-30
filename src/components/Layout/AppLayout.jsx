@@ -1,7 +1,7 @@
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
 import { IoMdSettings } from "react-icons/io";
 import { IoMoonOutline, IoNotificationsOutline } from "react-icons/io5";
@@ -20,15 +20,27 @@ function getMobileTitle(pathname) {
   return "DeyMake";
 }
 
-function MobileActionButton({ children, onClick }) {
+const mobileActionClassName = "flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100";
+
+function MobileActionButton({ children, onClick, ariaLabel, title }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100"
+      aria-label={ariaLabel}
+      title={title ?? ariaLabel}
+      className={mobileActionClassName}
     >
       {children}
     </button>
+  );
+}
+
+function MobileActionLink({ children, to, ariaLabel, title }) {
+  return (
+    <Link to={to} aria-label={ariaLabel} title={title ?? ariaLabel} className={mobileActionClassName}>
+      {children}
+    </Link>
   );
 }
 
@@ -70,24 +82,29 @@ export default function AppLayout() {
           <div className="flex items-center gap-3">
             {isHomepage ? (
               <>
-                {/* <MobileActionButton onClick={toggleTheme}>
+                <MobileActionButton
+                  onClick={toggleTheme}
+                  ariaLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                >
                   {isDark ? <MdSunny className="h-5 w-5" /> : <IoMoonOutline className="h-5 w-5" />}
                 </MobileActionButton>
-                <MobileActionButton onClick={openSearch}>
+                <MobileActionButton onClick={openSearch} ariaLabel="Open search">
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
-                <MobileActionButton>
+                <MobileActionButton ariaLabel="Notifications">
                   <IoNotificationsOutline className="h-5 w-5" />
                 </MobileActionButton>
               </>
             ) : (
-              <MobileActionButton onClick={openSearch}>
+              <MobileActionButton onClick={openSearch} ariaLabel="Open search">
                 <HiOutlineSearch className="h-5 w-5" />
               </MobileActionButton>
             )}
-            {isProfile && <Link to='/settings'><MobileActionButton>
-                <IoMdSettings className="h-5 w-5"/>
-              </MobileActionButton> </Link>}
+            {isProfile ? (
+              <MobileActionLink to="/settings" ariaLabel="Open settings">
+                  <IoMdSettings className="h-5 w-5" />
+              </MobileActionLink>
+            ) : null}
           </div>
         </div>
 
