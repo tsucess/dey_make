@@ -100,6 +100,16 @@ export function getCategoryThumbnail(category) {
   return category?.thumbnailUrl || FALLBACK_THUMBNAIL;
 }
 
+export function getVideoProcessingStatus(video) {
+  const rawStatus = video?.processingStatus || video?.upload?.processingStatus;
+
+  if (typeof rawStatus !== "string") return "completed";
+
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+
+  return normalizedStatus || "completed";
+}
+
 export function mapVideoToCardProps(video) {
   return {
     id: video?.id,
@@ -109,5 +119,6 @@ export function mapVideoToCardProps(video) {
     avatarUrl: getProfileAvatar(video?.author || video?.creator),
     tags: getVideoTags(video),
     live: Boolean(video?.isLive),
+    processingStatus: getVideoProcessingStatus(video),
   };
 }

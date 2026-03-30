@@ -38,6 +38,7 @@ function renderLayout(initialEntry = '/home') {
       <Routes>
         <Route path="/" element={<AppLayout />}>
           <Route path="home" element={<LocationDisplay />} />
+          <Route path="live" element={<LocationDisplay />} />
           <Route path="profile" element={<LocationDisplay />} />
           <Route path="search" element={<LocationDisplay />} />
           <Route path="settings" element={<LocationDisplay />} />
@@ -80,5 +81,14 @@ describe('AppLayout', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent('/settings');
     });
+  });
+
+  it('renders the live page title and search action', () => {
+    mockUseTheme.mockReturnValue({ isDark: false, toggleTheme: vi.fn() });
+
+    renderLayout('/live');
+
+    expect(screen.getByRole('heading', { name: /live/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /open search/i })).toBeInTheDocument();
   });
 });

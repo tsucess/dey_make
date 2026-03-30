@@ -5,6 +5,7 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import AppLayout from "./components/Layout/AppLayout";
 import Homepage from "./pages/Homepage";
+import LivePage from "./pages/LivePage";
 import Leaderboard from "./pages/Leaderboard";
 import CreateUpload from "./pages/CreateUpload";
 import Messages from "./pages/Messages";
@@ -70,6 +71,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Homepage />} />
+            <Route path="/live" element={<LivePage />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />

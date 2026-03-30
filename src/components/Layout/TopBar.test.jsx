@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../context/LanguageContext';
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => ({
@@ -29,11 +30,13 @@ function LocationDisplay() {
 
 function renderTopBar(initialEntry = '/home') {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route path="*" element={<><TopBar /><LocationDisplay /></>} />
-      </Routes>
-    </MemoryRouter>,
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path="*" element={<><TopBar /><LocationDisplay /></>} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>,
   );
 }
 

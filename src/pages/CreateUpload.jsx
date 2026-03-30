@@ -397,6 +397,14 @@ export default function CreateUpload() {
             </button>
             <button
               type="button"
+              onClick={() => handleSubmit("live")}
+              disabled={Boolean(submitting) || selectedType !== "video"}
+              className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold font-inter text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {submitting === "live" ? t("upload.actions.goingLive") : t("upload.actions.goLive")}
+            </button>
+            <button
+              type="button"
               onClick={() => handleSubmit("publish")}
               disabled={Boolean(submitting)}
               className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:cursor-not-allowed disabled:opacity-60"

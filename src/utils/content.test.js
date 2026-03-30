@@ -4,6 +4,7 @@ import {
   FALLBACK_THUMBNAIL,
   buildShareUrl,
   formatCompactNumber,
+  getVideoProcessingStatus,
   getProfileAvatar,
   getProfileName,
   getVideoThumbnail,
@@ -36,6 +37,7 @@ describe('content helpers', () => {
       title: 'Launch day',
       thumbnailUrl: 'https://cdn.example/thumb.jpg',
       isLive: true,
+      processingStatus: 'processing',
       category: { label: 'Technology' },
       creator: { username: 'rise', avatarUrl: 'https://cdn.example/avatar.jpg' },
     })).toEqual({
@@ -46,7 +48,14 @@ describe('content helpers', () => {
       avatarUrl: 'https://cdn.example/avatar.jpg',
       tags: ['Technology'],
       live: true,
+      processingStatus: 'processing',
     });
+  });
+
+  it('normalizes video processing status safely', () => {
+    expect(getVideoProcessingStatus({ processingStatus: ' Processing ' })).toBe('processing');
+    expect(getVideoProcessingStatus({ upload: { processingStatus: 'failed' } })).toBe('failed');
+    expect(getVideoProcessingStatus({})).toBe('completed');
   });
 
   it('builds a share url from the current origin', () => {

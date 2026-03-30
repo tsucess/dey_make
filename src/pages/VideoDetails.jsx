@@ -11,6 +11,7 @@ import {
   formatCountLabel,
   formatRelativeTime,
   formatSubscriberLabel,
+  getVideoProcessingStatus,
   getProfileAvatar,
   getProfileName,
   getVideoThumbnail,
@@ -36,12 +37,17 @@ function ActionButton({ children, active, disabled, onClick }) {
 
 function RelatedVideoCard({ video, onOpen }) {
   const { t } = useLanguage();
+  const processingStatus = getVideoProcessingStatus(video);
+  const showProcessingBadge = processingStatus !== "completed";
 
   return (
     <button type="button" onClick={() => onOpen(video.id)} className="overflow-hidden rounded-3xl bg-white300 text-left dark:bg-black100">
       <div className="relative aspect-video overflow-hidden">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
-        {video.isLive ? <span className="absolute left-3 top-3 rounded-full bg-red-500 px-2 py-1 text-[10px] font-semibold text-white">{t("content.liveBadge")}</span> : null}
+        <div className="absolute left-3 top-3 flex flex-col gap-2">
+          {video.isLive ? <span className="rounded-full bg-red-500 px-2 py-1 text-[10px] font-semibold text-white">{t("content.liveBadge")}</span> : null}
+          {showProcessingBadge ? <span className="rounded-full bg-amber-500 px-2 py-1 text-[10px] font-semibold text-black">{processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge")}</span> : null}
+        </div>
       </div>
       <div className="space-y-1 px-4 py-4">
         <p className="line-clamp-2 text-sm font-medium text-black dark:text-white">{getVideoTitle(video)}</p>
@@ -152,7 +158,11 @@ export default function VideoDetails() {
   const [submittingReplyId, setSubmittingReplyId] = useState(null);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
-  const canSubscribeToAuthor = Boolean(video?.author?.id) && user?.id !== video?.author?.id;
+  const creatorId = video?.author?.id || video?.creator?.id;
+  const canSubscribeToAuthor = Boolean(creatorId) && user?.id !== creatorId;
+  const canManageLive = Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
+  const processingStatus = getVideoProcessingStatus(video);
+  const showProcessingBadge = processingStatus !== "completed";
 
   useEffect(() => {
     let ignore = false;
@@ -243,15 +253,15 @@ export default function VideoDetails() {
   }
 
   async function handleSubscribe() {
-    if (!video?.author?.id || user?.id === video.author.id || !requireAuth()) return;
+    if (!creatorId || user?.id === creatorId || !requireAuth()) return;
 
-    setBusyAction(`subscribe-${video.author.id}`);
+    setBusyAction(`subscribe-${creatorId}`);
     setError("");
 
     try {
       const response = video.currentUserState?.subscribed
-        ? await api.unsubscribeFromCreator(video.author.id)
-        : await api.subscribeToCreator(video.author.id);
+        ? await api.unsubscribeFromCreator(creatorId)
+        : await api.subscribeToCreator(creatorId);
       const creator = response?.data?.creator;
 
       setVideo((current) => current ? {
@@ -265,6 +275,27 @@ export default function VideoDetails() {
       } : current);
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || t("videoDetails.unableToUpdateSubscription")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handleLiveToggle() {
+    if (!video || !canManageLive || !requireAuth()) return;
+
+    const wasLive = Boolean(video.isLive);
+    const actionKey = `${wasLive ? "stop" : "start"}-live-${video.id}`;
+    setBusyAction(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      const response = wasLive ? await api.stopVideoLive(video.id) : await api.startVideoLive(video.id);
+
+      if (response?.data?.video) setVideo(response.data.video);
+      setFeedback(t(wasLive ? "videoDetails.liveStopped" : "videoDetails.liveStarted"));
+    } catch (nextError) {
+      setError(firstError(nextError.errors, nextError.message || t("videoDetails.unableToUpdateLive")));
     } finally {
       setBusyAction("");
     }
@@ -424,7 +455,10 @@ export default function VideoDetails() {
           <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
             <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
           </button>
-          {video.isLive ? <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">{t("videoDetails.liveNow")}</span> : null}
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {showProcessingBadge ? <span className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold tracking-wide text-black">{processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge")}</span> : null}
+            {video.isLive ? <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">{t("videoDetails.liveNow")}</span> : null}
+          </div>
         </div>
 
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
@@ -453,16 +487,30 @@ export default function VideoDetails() {
                     </div>
                   </div>
 
-                  {canSubscribeToAuthor ? (
-                    <button
-                      type="button"
-                      disabled={busyAction === `subscribe-${video.author?.id}`}
-                      onClick={handleSubscribe}
-                      className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("videoDetails.subscribe")}
-                    </button>
-                  ) : null}
+                  <div className="flex flex-wrap gap-3">
+                    {canManageLive ? (
+                      <button
+                        type="button"
+                        disabled={busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`}
+                        onClick={handleLiveToggle}
+                        className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`
+                          ? t(video.isLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive")
+                          : t(video.isLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
+                      </button>
+                    ) : null}
+                    {canSubscribeToAuthor ? (
+                      <button
+                        type="button"
+                        disabled={busyAction === `subscribe-${creatorId}`}
+                        onClick={handleSubscribe}
+                        className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("videoDetails.subscribe")}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">

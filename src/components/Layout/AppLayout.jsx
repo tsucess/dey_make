@@ -12,6 +12,7 @@ import { buildSearchPath } from "../../utils/search";
 
 function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/home")) return t("app.name");
+  if (pathname.startsWith("/live")) return t("common.live");
   if (pathname.startsWith("/leaderboard")) return t("common.leaderboard");
   if (pathname.startsWith("/messages")) return t("common.messages");
   if (pathname.startsWith("/profile")) return t("common.profile");

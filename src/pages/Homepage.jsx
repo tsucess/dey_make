@@ -37,7 +37,7 @@ function SectionState({ message, actionLabel, onAction }) {
 }
 
 function ViewMoreBtn({ label }) {
-  return <button className="flex items-center font-medium text-sm text-black200 dark:text-white font-inter gap-1.5">
+  return <button type="button" className="flex items-center font-medium text-sm text-black200 dark:text-white font-inter gap-1.5">
     {label} <MdArrowForwardIos />
   </button>
 }
@@ -157,6 +157,7 @@ function MobileFeaturedCard({ video }) {
 
 export default function Homepage() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const allCategory = useMemo(() => ({ id: ALL_CATEGORY_ID, slug: ALL_CATEGORY_ID, label: t("homepage.allCategory") }), [t]);
   const [categories, setCategories] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
@@ -172,6 +173,10 @@ export default function Homepage() {
     () => categoryOptions.find((category) => category.slug === activeCategory) || allCategory,
     [activeCategory, allCategory, categoryOptions],
   );
+
+  function openLivePage() {
+    navigate("/live");
+  }
 
 
   useEffect(() => {
@@ -293,6 +298,31 @@ export default function Homepage() {
             <SectionState message={t("homepage.noVideosInCategory", { category: selectedCategory.label.toLowerCase() })} />
           )}
         </div>
+
+        <div className="mt-8">
+          <div className="mb-6 flex items-center justify-between">
+            <MobileSectionHeader title={t("homepage.liveStreams")} />
+            <button
+              type="button"
+              onClick={openLivePage}
+              className="flex items-center gap-1.5 text-sm font-medium text-black200 dark:text-white"
+            >
+              {t("livePage.browseLive")} <MdArrowForwardIos />
+            </button>
+          </div>
+
+          {loading ? (
+            <SectionState message={t("homepage.loadingLiveStreams")} />
+          ) : liveVideos.length ? (
+            <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
+              {liveVideos.slice(0, 6).map((video) => (
+                <MobileTrendingCard key={video.id} video={video} showViews={false} />
+              ))}
+            </div>
+          ) : (
+            <SectionState message={t("homepage.noLiveStreamsActive")} />
+          )}
+        </div>
       </div>
 
       <div className="hidden w-full px-6 py-5 md:block">
@@ -357,7 +387,16 @@ export default function Homepage() {
         </section>
 
         <section className="mb-8 space-y-4">
-          <h2 className=" text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{t("homepage.liveStreams")}</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-lg font-medium font-bricolage text-black dark:text-white md:text-2xl">{t("homepage.liveStreams")}</h2>
+            <button
+              type="button"
+              onClick={openLivePage}
+              className="flex items-center gap-1.5 text-sm font-medium text-black200 dark:text-white"
+            >
+              {t("livePage.browseLive")} <MdArrowForwardIos />
+            </button>
+          </div>
           {loading ? (
             <SectionState message={t("homepage.loadingLiveStreams")} />
           ) : liveVideos.length ? (
