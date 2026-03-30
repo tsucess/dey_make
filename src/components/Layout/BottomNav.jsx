@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 
 const navItems = [
   {
     to: "/home",
-    label: "Home",
+    labelKey: "common.home",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -14,7 +15,7 @@ const navItems = [
   },
   {
     to: "/leaderboard",
-    label: "Leaderboard",
+    labelKey: "common.leaderboard",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -26,7 +27,7 @@ const navItems = [
   },
   {
     to: "/create",
-    label: "Create",
+    labelKey: "common.create",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -38,7 +39,7 @@ const navItems = [
   },
   {
     to: "/messages",
-    label: "Messages",
+    labelKey: "common.messages",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -48,7 +49,7 @@ const navItems = [
   },
   {
     to: "/profile",
-    label: "Profile",
+    labelKey: "common.profile",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
         stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -60,11 +61,16 @@ const navItems = [
 ];
 
 export default function BottomNav() {
+  const { t } = useLanguage();
+
   return (
     <nav
       className="fixed w-full h-22 bottom-0 left-0 z-50 flex items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-4 py-3  backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
     >
-      {navItems.map(({ to, label, icon }) => (
+      {navItems.map(({ to, labelKey, icon }) => {
+        const label = t(labelKey);
+
+        return (
         <NavLink
           key={to}
           to={to}
@@ -84,7 +90,8 @@ export default function BottomNav() {
         >
           {icon}
         </NavLink>
-      ))}
+        );
+      })}
     </nav>
   );
 }

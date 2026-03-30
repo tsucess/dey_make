@@ -13,11 +13,14 @@ import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
+import { useLanguage } from "./context/LanguageContext";
 
 function FullPageLoader() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
-      Loading...
+      {t("app.loading")}
     </div>
   );
 }

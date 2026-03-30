@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 function EyeIcon() {
   return (
@@ -30,6 +31,7 @@ export default function InputField({
   onChange,
   name,
 }) {
+  const { t } = useLanguage();
   const [showPassword, setShowPassword] = useState(false);
   const isPassword = type === "password";
   const inputType = isPassword ? (showPassword ? "text" : "password") : type;
@@ -54,7 +56,7 @@ export default function InputField({
           className="absolute right-4 top-1/2 -translate-y-1/2
                      flex items-center bg-transparent
                      border-none cursor-pointer"
-          aria-label="Toggle password"
+          aria-label={t("auth.togglePassword")}
         >
           {showPassword ? <EyeOffIcon /> : <EyeIcon />}
         </button>

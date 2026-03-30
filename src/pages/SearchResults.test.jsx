@@ -3,6 +3,19 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../locales/translations');
+  const t = actual.createTranslator('en');
+
+  return {
+    useLanguage: () => ({
+      locale: 'en',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
+
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');
 

@@ -3,11 +3,28 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const { syncUserSpy } = vi.hoisted(() => ({
+  syncUserSpy: vi.fn(),
+}));
+
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    syncUser: vi.fn(),
+    syncUser: syncUserSpy,
   }),
 }));
+
+vi.mock('../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../locales/translations');
+  const t = actual.createTranslator('en');
+
+  return {
+    useLanguage: () => ({
+      locale: 'en',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
 
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');

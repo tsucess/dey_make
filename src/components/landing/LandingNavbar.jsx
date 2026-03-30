@@ -2,16 +2,17 @@ import { useState } from "react";
 import ThemeToggle from "../ThemeToggle";
 import Logo from "../Logo";
 import { IoClose } from "react-icons/io5";
-
-const navItems = [
-  { label: "About", href: "#about" },
-  { label: "Why DeyMake", href: "#why-deymake" },
-  { label: "Creators", href: "#creators" },
-  { label: "FAQ", href: "#faq" },
-];
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function LandingNavbar({ onSignUp }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { t } = useLanguage();
+  const navItems = [
+    { label: t("landing.navbar.about"), href: "#about" },
+    { label: t("landing.navbar.whyDeyMake"), href: "#why-deymake" },
+    { label: t("landing.navbar.creators"), href: "#creators" },
+    { label: t("landing.navbar.faq"), href: "#faq" },
+  ];
 
   return (
     <nav className="bg-white100/20 dark:bg-slate100 
@@ -48,7 +49,7 @@ export default function LandingNavbar({ onSignUp }) {
                        rounded-lg border-none cursor-pointer
                        transition-colors hidden md:block"
           >
-            Join waitlist
+            {t("landing.navbar.joinWaitlist")}
           </button>
 
           {/* Hamburger */}
@@ -56,6 +57,7 @@ export default function LandingNavbar({ onSignUp }) {
             onClick={() => setMenuOpen((o) => !o)}
             className="md:hidden flex flex-col gap-1.25 p-1
                        bg-transparent border-none cursor-pointer"
+            aria-label={t("landing.navbar.openMenu")}
           >
             <span className="w-5 h-0.75 bg-slate100 block dark:bg-white" />
             <span className="w-5 h-0.75 bg-slate100 block dark:bg-white" />
@@ -75,7 +77,7 @@ export default function LandingNavbar({ onSignUp }) {
     transition-all duration-300 ease-in-out ${menuOpen ?  "translate-x-0 opacity-100" : "-translate-x-full opacity-0"}`}
         >
           <div className="flex justify-between items-center">
-            <button onClick={() => setMenuOpen(false)}><IoClose className="text-slate100 dark:text-white w-8 h-8"/>
+            <button onClick={() => setMenuOpen(false)} aria-label={t("landing.navbar.closeMenu")}><IoClose className="text-slate100 dark:text-white w-8 h-8"/>
 </button>
             <div ><ThemeToggle/></div>
           </div>
@@ -83,6 +85,7 @@ export default function LandingNavbar({ onSignUp }) {
             <a
               key={item.label}
               href={item.href}
+              onClick={() => setMenuOpen(false)}
               
               className="text-sm font-medium font-inter text-slate100 
                          dark:text-white hover:text-[#f5a623]
@@ -99,7 +102,7 @@ export default function LandingNavbar({ onSignUp }) {
                        rounded-lg border-none cursor-pointer
                        transition-colors self-start"
           >
-            Join waitlist
+            {t("landing.navbar.joinWaitlist")}
           </button>
         </div>
       )}

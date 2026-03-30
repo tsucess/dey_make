@@ -5,6 +5,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import { MdArrowForwardIos } from "react-icons/md";
 import CategoryCard from "../components/CategoryCard";
 import VideoCard from "../components/VideoCard";
+import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
   formatCompactNumber,
@@ -16,7 +17,7 @@ import {
   mapVideoToCardProps,
 } from "../utils/content";
 
-const ALL_CATEGORY = { id: "all", slug: "all", label: "All" };
+const ALL_CATEGORY_ID = "all";
 
 function SectionState({ message, actionLabel, onAction }) {
   return (
@@ -35,19 +36,19 @@ function SectionState({ message, actionLabel, onAction }) {
   );
 }
 
-function ViewMoreBtn(){
+function ViewMoreBtn({ label }) {
   return <button className="flex items-center font-medium text-sm text-black200 dark:text-white font-inter gap-1.5">
-    View more <MdArrowForwardIos />
+    {label} <MdArrowForwardIos />
   </button>
 }
 
-function ShowMoreDivider() {
+function ShowMoreDivider({ label }) {
   return (
     <div className="mt-4 flex w-full items-center gap-3">
       <div className="h-px flex-1 bg-slate500" />
       <div className="flex items-center gap-1">
       <span className="px-1 text-sm font-medium font-inter text-black dark:text-white">
-        Show more
+        {label}
       </span>
       <MdKeyboardArrowDown  className="text-black dark:text-white w-4 h-4"/>
       </div>
@@ -56,26 +57,25 @@ function ShowMoreDivider() {
   );
 }
 
-function MobileSectionHeader({ title, subtitle }) {
+function MobileSectionHeader({ title }) {
   return (
     <div className="flex items-center justify-between gap-3">
       <div>
         <h2 className="text-2xl font-semibold font-bricolage text-slate100 dark:text-white">
           {title}
         </h2>
-        {/* {subtitle ? <p className="mt-1 text-xs text-slate400 dark:text-slate200">{subtitle}</p> : null} */}
       </div>
     </div>
   );
 }
 
-function MoreButton() {
+function MoreButton({ ariaLabel }) {
   return (
     <button
       type="button"
       onClick={(event) => event.stopPropagation()}
       className="cursor-pointer border-none bg-transparent text-black dark:text-gray-400"
-      aria-label="More options"
+      aria-label={ariaLabel}
     >
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
         <circle cx="12" cy="5" r="1" />
@@ -88,6 +88,7 @@ function MoreButton() {
 
 function MobileTrendingCard({ video, showViews }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const creator = video.author || video.creator;
   const title = getVideoTitle(video);
 
@@ -119,7 +120,7 @@ function MobileTrendingCard({ video, showViews }) {
               </p>
             </div>
           </div>
-          <MoreButton />
+          <MoreButton ariaLabel={t("homepage.moreOptions")} />
         </div>
       </div>
     </div>
@@ -128,6 +129,7 @@ function MobileTrendingCard({ video, showViews }) {
 
 function MobileFeaturedCard({ video }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const creator = video.author || video.creator;
 
   return (
@@ -147,25 +149,28 @@ function MobileFeaturedCard({ video }) {
             </p>
           </div>
         </div>
-        <MoreButton />
+        <MoreButton ariaLabel={t("homepage.moreOptions")} />
       </div>
     </article>
   );
 }
 
 export default function Homepage() {
-  const [categories, setCategories] = useState([ALL_CATEGORY]);
+  const { t } = useLanguage();
+  const allCategory = useMemo(() => ({ id: ALL_CATEGORY_ID, slug: ALL_CATEGORY_ID, label: t("homepage.allCategory") }), [t]);
+  const [categories, setCategories] = useState([]);
   const [trendingVideos, setTrendingVideos] = useState([]);
   const [liveVideos, setLiveVideos] = useState([]);
   const [featuredVideos, setFeaturedVideos] = useState([]);
-  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY.slug);
+  const [activeCategory, setActiveCategory] = useState(ALL_CATEGORY_ID);
   const [loading, setLoading] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [error, setError] = useState("");
+  const categoryOptions = useMemo(() => [allCategory, ...categories], [allCategory, categories]);
 
   const selectedCategory = useMemo(
-    () => categories.find((category) => category.slug === activeCategory) || ALL_CATEGORY,
-    [activeCategory, categories],
+    () => categoryOptions.find((category) => category.slug === activeCategory) || allCategory,
+    [activeCategory, allCategory, categoryOptions],
   );
 
 
@@ -186,14 +191,12 @@ export default function Homepage() {
         if (ignore) return;
 
         const homeData = homeResponse?.data || {};
-        const nextCategories = [ALL_CATEGORY, ...(homeData.categories || [])];
-
-        setCategories(nextCategories);
+        setCategories(homeData.categories || []);
         setTrendingVideos(trendingResponse?.data?.videos || homeData.trending || []);
         setLiveVideos(liveResponse?.data?.videos || homeData.liveStreams || []);
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load homepage data."));
+          setError(firstError(nextError.errors, nextError.message || t("homepage.unableToLoad")));
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -205,7 +208,7 @@ export default function Homepage() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     let ignore = false;
@@ -214,14 +217,14 @@ export default function Homepage() {
       setLoadingFeed(true);
 
       try {
-        const response = await api.getVideos(activeCategory === ALL_CATEGORY.slug ? undefined : activeCategory);
+        const response = await api.getVideos(activeCategory === ALL_CATEGORY_ID ? undefined : activeCategory);
 
         if (!ignore) {
           setFeaturedVideos(response?.data?.videos || []);
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load videos for this category."));
+          setError(firstError(nextError.errors, nextError.message || t("homepage.unableToLoadCategory")));
         }
       } finally {
         if (!ignore) setLoadingFeed(false);
@@ -233,7 +236,7 @@ export default function Homepage() {
     return () => {
       ignore = true;
     };
-  }, [activeCategory]);
+  }, [activeCategory, t]);
 
   return (
     <div className="min-h-full w-full bg-white dark:bg-slate100">
@@ -241,12 +244,12 @@ export default function Homepage() {
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
 <div className="flex justify-between items-center mb-6">
-  <MobileSectionHeader title="Trending" subtitle="Live and popular content powered by the backend" />
-  <ViewMoreBtn/>
+  <MobileSectionHeader title={t("homepage.trending")} />
+  <ViewMoreBtn label={t("homepage.viewMore")} />
 </div>
         
         {loading ? (
-          <SectionState message="Loading trending videos..." />
+          <SectionState message={t("homepage.loadingTrendingVideos")} />
         ) : trendingVideos.length ? (
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
             {trendingVideos.slice(0, 6).map((video, index) => (
@@ -254,17 +257,17 @@ export default function Homepage() {
             ))}
           </div>
         ) : (
-          <SectionState message="No trending videos yet." />
+          <SectionState message={t("homepage.noTrendingVideos")} />
         )}
 
         <div className="mt-8">
           <div className="flex justify-between items-center mb-6">
-  <MobileSectionHeader title="Categories you'd like" subtitle="Filtering uses the videos endpoint" />
-  <ViewMoreBtn/>
+  <MobileSectionHeader title={t("homepage.categoriesYouWouldLike")} />
+  <ViewMoreBtn label={t("homepage.viewMore")} />
 </div>
           
           <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide">
-            {categories.map((category) => (
+            {categoryOptions.map((category) => (
               <button
                 key={category.id}
                 type="button"
@@ -283,11 +286,11 @@ export default function Homepage() {
 
         <div className="mt-5 space-y-7">
           {loadingFeed ? (
-            <SectionState message="Loading category videos..." />
+            <SectionState message={t("homepage.loadingCategoryVideos")} />
           ) : featuredVideos.length ? (
             featuredVideos.slice(0, 3).map((video) => <MobileFeaturedCard key={video.id} video={video} />)
           ) : (
-            <SectionState message={`No videos available in ${selectedCategory.label.toLowerCase()} yet.`} />
+            <SectionState message={t("homepage.noVideosInCategory", { category: selectedCategory.label.toLowerCase() })} />
           )}
         </div>
       </div>
@@ -296,9 +299,9 @@ export default function Homepage() {
         {error ? <div className="mb-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
         <section className="mb-8 space-y-4">
-          <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">Trending</h2>
+          <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{t("homepage.trending")}</h2>
           {loading ? (
-            <SectionState message="Loading trending videos..." />
+            <SectionState message={t("homepage.loadingTrendingVideos")} />
           ) : trendingVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {trendingVideos.slice(0, 12).map((video) => (
@@ -306,18 +309,18 @@ export default function Homepage() {
               ))}
             </div>
           ) : (
-            <SectionState message="No trending videos available yet." />
+            <SectionState message={t("homepage.noTrendingVideosAvailable")} />
           )}
-          <ShowMoreDivider />
+          <ShowMoreDivider label={t("common.showMore")} />
         </section>
 
         <section className="mb-8 space-y-4">
           <h2 className="text-lg font-medium font-bricolage text-black dark:text-white md:text-2xl">
-            Categories we think you'll like
+            {t("homepage.categoriesWeThinkYouWillLike")}
           </h2>
           <div className="grid w-full grid-cols-3 gap-3 lg:grid-cols-4 xl:grid-cols-6">
-            { categories
-              .filter((category) => category.slug !== ALL_CATEGORY.slug)
+            { categoryOptions
+              .filter((category) => category.slug !== ALL_CATEGORY_ID)
               .slice(0, 6)
               .map((category) => (
                 <CategoryCard
@@ -330,18 +333,17 @@ export default function Homepage() {
                 />
               ))}
           </div>
-          <ShowMoreDivider />
+          <ShowMoreDivider label={t("common.showMore")} />
         </section>
 
         <section className="mb-8">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{selectedCategory.label} videos</h2>
-              {/* <p className="text-sm text-slate400 dark:text-slate200">Loaded via the category-aware videos endpoint</p> */}
+              <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{t("homepage.selectedCategoryVideos", { category: selectedCategory.label })}</h2>
             </div>
           </div>
           {loadingFeed ? (
-            <SectionState message="Loading category videos..." />
+            <SectionState message={t("homepage.loadingCategoryVideos")} />
           ) : featuredVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {featuredVideos.slice(0, 8).map((video) => (
@@ -349,15 +351,15 @@ export default function Homepage() {
               ))}
             </div>
           ) : (
-            <SectionState message={`No videos available in ${selectedCategory.label.toLowerCase()} yet.`} />
+            <SectionState message={t("homepage.noVideosInCategory", { category: selectedCategory.label.toLowerCase() })} />
           )}
-          <ShowMoreDivider />
+          <ShowMoreDivider label={t("common.showMore")} />
         </section>
 
         <section className="mb-8 space-y-4">
-          <h2 className=" text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">Live streams</h2>
+          <h2 className=" text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{t("homepage.liveStreams")}</h2>
           {loading ? (
-            <SectionState message="Loading live streams..." />
+            <SectionState message={t("homepage.loadingLiveStreams")} />
           ) : liveVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {liveVideos.slice(0, 8).map((video) => (
@@ -365,7 +367,7 @@ export default function Homepage() {
               ))}
             </div>
           ) : (
-            <SectionState message="No live streams are active right now." />
+            <SectionState message={t("homepage.noLiveStreamsActive")} />
           )}
         </section>
       </div>

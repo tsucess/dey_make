@@ -8,6 +8,19 @@ vi.mock('../../context/ThemeContext', () => ({
   useTheme: () => mockUseTheme(),
 }));
 
+vi.mock('../../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../../locales/translations');
+  const t = actual.createTranslator('en');
+
+  return {
+    useLanguage: () => ({
+      locale: 'en',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
+
 vi.mock('./Sidebar', () => ({ default: () => <div>Sidebar</div> }));
 vi.mock('./TopBar', () => ({ default: () => <div>TopBar</div> }));
 vi.mock('./BottomNav', () => ({ default: () => <div>BottomNav</div> }));

@@ -6,11 +6,13 @@ import SocialButtonRow from "../components/SocialButton";
 import OrDivider from "../components/OrDivider";
 import NetworkIllustration from "../components/NetworkIllustration";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { ApiError, firstError } from "../services/api";
 
 export default function SignUp({ onNavigateToLogin, onSuccess }) {
   const navigate = useNavigate();
   const { register } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({ fullName: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [agreed, setAgreed] = useState(false);
@@ -28,26 +30,26 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
   const validate = () => {
     const newErrors = {};
     if (!form.fullName.trim()) {
-      newErrors.fullName = "Full name is required.";
+      newErrors.fullName = t("auth.validation.fullNameRequired");
     } else if (form.fullName.trim().length < 2) {
-      newErrors.fullName = "Name must be at least 2 characters.";
+      newErrors.fullName = t("auth.validation.nameMin");
     }
     if (!form.email.trim()) {
-      newErrors.email = "Email is required.";
+      newErrors.email = t("auth.validation.emailRequired");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Please enter a valid email address.";
+      newErrors.email = t("auth.validation.validEmail");
     }
     if (!form.password) {
-      newErrors.password = "Password is required.";
+      newErrors.password = t("auth.validation.passwordRequired");
     } else if (form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters.";
+      newErrors.password = t("auth.validation.passwordMin");
     } else if (!/[A-Z]/.test(form.password)) {
-      newErrors.password = "Password must contain at least one uppercase letter.";
+      newErrors.password = t("auth.validation.passwordUpper");
     } else if (!/[0-9]/.test(form.password)) {
-      newErrors.password = "Password must contain at least one number.";
+      newErrors.password = t("auth.validation.passwordNumber");
     }
     if (!agreed) {
-      newErrors.agreed = "You must agree to the terms and conditions.";
+      newErrors.agreed = t("auth.validation.agreeRequired");
     }
     return newErrors;
   };
@@ -79,7 +81,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
         });
         setSubmitError(firstError(error.errors, error.message));
       } else {
-        setSubmitError("Unable to create your account right now. Please try again.");
+        setSubmitError(t("auth.unableToCreateAccount"));
       }
     } finally {
       setIsSubmitting(false);
@@ -93,7 +95,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
 
       <h2 className="text-lg font-semibold mb-3
                      text-gray-800 dark:text-white md:hidden">
-        Sign Up
+        {t("auth.signUp")}
       </h2>
 
       <form onSubmit={handleSubmit} noValidate className="pt-8 pb-2">
@@ -108,7 +110,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
           <input
             type="text"
             name="fullName"
-            placeholder="Full name"
+            placeholder={t("auth.fullName")}
             value={form.fullName}
             onChange={handleChange}
             className={`w-full px-4 py-3 rounded-md text-sm
@@ -131,7 +133,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder={t("auth.email")}
             value={form.email}
             onChange={handleChange}
             className={`w-full px-4 py-3 rounded-md text-sm
@@ -155,7 +157,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="Password"
+              placeholder={t("auth.password")}
               value={form.password}
               onChange={handleChange}
               className={`w-full px-4 py-3 rounded-md text-sm
@@ -172,6 +174,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
               className="absolute right-4 top-1/2 -translate-y-1/2
                          text-slate500 dark:text-slate500
                          bg-transparent border-none cursor-pointer"
+              aria-label={t("auth.togglePassword")}
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -198,15 +201,15 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
             />
             <span className="text-[0.78rem] leading-relaxed
                              text-slate400 dark:text-slate200">
-              By clicking on the sign up button, you agree to our{" "}
+              {t("auth.agreeIntro")}{" "}
               <a href="#terms"
                 className="text-orange100 underline hover:opacity-80">
-                terms and conditions
+                {t("auth.termsAndConditions")}
               </a>
-              {" "}and{" "}
+              {" "}{t("auth.and")}{" "}
               <a href="#privacy"
                 className="text-orange100 underline hover:opacity-80">
-                privacy policies
+                {t("auth.privacyPolicies")}
               </a>
             </span>
           </label>
@@ -225,7 +228,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                      text-slate100 font-semibold text-sm rounded-md
                      transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Creating Account..." : "Sign Up"}
+          {isSubmitting ? t("auth.creatingAccount") : t("auth.signUp")}
         </button>
       </form>
 
@@ -234,7 +237,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
 
       <p className="text-center mt-4 text-sm
                     text-black200 dark:text-slate200">
-        Already have an account?{" "}
+        {t("auth.alreadyHaveAccount")}{" "}
         <button
           type="button"
           onClick={navigateToLogin}
@@ -243,7 +246,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                      bg-transparent border-none
                      hover:text-orange100 transition-colors"
         >
-          Log In
+          {t("auth.logIn")}
         </button>
       </p>
     </AuthLayout>

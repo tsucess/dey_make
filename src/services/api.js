@@ -1,3 +1,5 @@
+import { getActiveLocale, LANGUAGE_STORAGE_KEY, resolveLocale } from "../locales/translations";
+
 const DEFAULT_API_BASE_URL = "https://api.deymake.com/api/v1";
 const LOCAL_API_FALLBACK = "http://127.0.0.1:8000";
 
@@ -57,6 +59,14 @@ export function setStoredToken(token) {
   else localStorage.removeItem(TOKEN_STORAGE_KEY);
 }
 
+function getPreferredRequestLocale(body, headers = {}) {
+  const headerLocale = headers["X-Locale"] || headers["x-locale"] || headers["Accept-Language"] || headers["accept-language"];
+  const bodyLocale = body && typeof body === "object" && !(body instanceof FormData) ? body.language : undefined;
+  const storedLocale = typeof window === "undefined" ? null : window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+
+  return resolveLocale(headerLocale || bodyLocale || getActiveLocale() || storedLocale);
+}
+
 async function request(path, options = {}) {
   const {
     method = "GET",
@@ -65,10 +75,13 @@ async function request(path, options = {}) {
     token = getStoredToken(),
   } = options;
   const isFormData = body instanceof FormData;
+  const locale = getPreferredRequestLocale(body, headers);
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
     headers: {
       Accept: "application/json",
+      ...(locale ? { "Accept-Language": locale, "X-Locale": locale } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
       ...headers,

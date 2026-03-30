@@ -1,8 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
+import { useLanguage } from "../context/LanguageContext";
 
 export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+
   return (
     <div
       className="flex flex-col cursor-pointer group w-full"
@@ -17,7 +20,7 @@ export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = 
           <div className="absolute top-2 left-2 bg-red-500 text-white
                            text-[10px] font-bold px-2 py-0.5 flex gap-1 items-center">
                             <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-            LIVE
+            {t("content.liveBadge")}
           </div>
         )}
       </div>

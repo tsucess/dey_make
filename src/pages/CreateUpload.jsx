@@ -5,12 +5,13 @@ import { IoCloudUploadOutline, IoImageOutline, IoVideocamOutline } from "react-i
 import { MdOutlineGifBox } from "react-icons/md";
 import Logo from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 
-const uploadTypes = [
-  { id: "image", label: "Images", helper: "PNG, JPG", icon: IoImageOutline, accept: "image/png,image/jpeg" },
-  { id: "gif", label: "GIFs", helper: "800×600 or 400×300", icon: MdOutlineGifBox, accept: "image/gif" },
-  { id: "video", label: "Videos", helper: "MP4, MOV, AVI", icon: IoVideocamOutline, accept: "video/mp4,video/quicktime,video/x-msvideo,video/*" },
+const uploadTypeOptions = [
+  { id: "image", icon: IoImageOutline, accept: "image/png,image/jpeg" },
+  { id: "gif", icon: MdOutlineGifBox, accept: "image/gif" },
+  { id: "video", icon: IoVideocamOutline, accept: "video/mp4,video/quicktime,video/x-msvideo,video/*" },
 ];
 
 function detectUploadType(file) {
@@ -46,6 +47,7 @@ export default function CreateUpload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const fileInputRef = useRef(null);
   const draftId = searchParams.get("id");
   const isEditingDraft = Boolean(draftId);
@@ -67,10 +69,21 @@ export default function CreateUpload() {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
 
+  const uploadTypes = useMemo(() => uploadTypeOptions.map((type) => ({
+    ...type,
+    label: t(`upload.types.${type.id}.label`),
+    helper: t(`upload.types.${type.id}.helper`),
+  })), [t]);
+  const textFields = useMemo(() => ([
+    { key: "title", placeholder: t("upload.fields.title") },
+    { key: "caption", placeholder: t("upload.fields.caption") },
+    { key: "description", placeholder: t("upload.fields.description") },
+    { key: "location", placeholder: t("upload.fields.location") },
+    { key: "people", placeholder: t("upload.fields.people") },
+  ]), [t]);
   const currentType = uploadTypes.find((type) => type.id === selectedType);
   const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
   const previewUrl = selectedFilePreviewUrl || existingMediaUrl;
-  const canGoLive = selectedType === "video";
   const isLoading = loadingCategories || loadingDraft;
 
   useEffect(() => {
@@ -83,7 +96,7 @@ export default function CreateUpload() {
         const response = await api.getCategories();
         if (!ignore) setCategories(response?.data?.categories || []);
       } catch (nextError) {
-        if (!ignore) setError(firstError(nextError.errors, nextError.message || "Unable to load categories."));
+        if (!ignore) setError(firstError(nextError.errors, nextError.message || t("upload.unableToLoadCategories")));
       } finally {
         if (!ignore) setLoadingCategories(false);
       }
@@ -94,7 +107,7 @@ export default function CreateUpload() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (!categories.length) return;
@@ -127,7 +140,7 @@ export default function CreateUpload() {
         const nextVideo = response?.data?.video;
 
         if (!nextVideo?.id || !nextVideo.isDraft) {
-          throw new Error("This draft is no longer available.");
+          throw new Error(t("upload.unavailableDraft"));
         }
 
         if (!ignore) {
@@ -145,7 +158,7 @@ export default function CreateUpload() {
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError?.errors, nextError?.message || "Unable to load draft."));
+          setError(firstError(nextError?.errors, nextError?.message || t("upload.unableToLoadDraft")));
         }
       } finally {
         if (!ignore) setLoadingDraft(false);
@@ -157,7 +170,7 @@ export default function CreateUpload() {
     return () => {
       ignore = true;
     };
-  }, [draftId]);
+  }, [draftId, t]);
 
   useEffect(() => () => {
     if (selectedFilePreviewUrl) URL.revokeObjectURL(selectedFilePreviewUrl);
@@ -181,17 +194,17 @@ export default function CreateUpload() {
     setFeedback("");
 
     if (!selectedFile && !existingMediaUrl) {
-      setError("Choose a file before continuing.");
+      setError(t("upload.errors.chooseFile"));
       return;
     }
 
     if (selectedFile && detectedType && detectedType !== selectedType) {
-      setError(`The selected file is a ${detectedType}. Switch the upload type or choose another file.`);
+      setError(t("upload.errors.fileTypeMismatch", { type: t(`upload.types.${detectedType}.singular`) }));
       return;
     }
 
     if (action === "live" && selectedType !== "video") {
-      setError("Only video uploads can go live.");
+      setError(t("upload.errors.onlyVideosGoLive"));
       return;
     }
 
@@ -243,10 +256,10 @@ export default function CreateUpload() {
 
       setFeedback(
         action === "draft"
-          ? "Draft saved successfully."
+          ? t("upload.success.draftSaved")
           : action === "live"
-            ? "Your live video is now available."
-            : "Upload published successfully.",
+            ? t("upload.success.liveAvailable")
+            : t("upload.success.published"),
       );
 
       if (action === "draft" && nextVideo?.id) {
@@ -256,7 +269,7 @@ export default function CreateUpload() {
 
       navigate(`/video/${nextVideo.id}`);
     } catch (nextError) {
-      setError(firstError(nextError.errors, nextError.message || "Unable to complete upload."));
+      setError(firstError(nextError.errors, nextError.message || t("upload.errors.unableToComplete")));
     } finally {
       setSubmitting("");
     }
@@ -273,13 +286,13 @@ export default function CreateUpload() {
         <div className="mx-auto max-w-5xl">
           <div className="flex justify-between items-start mb-8">
           <div className="space-y-1.5">
-          <h1 className="text-2xl font-semibold font-inter">{isEditingDraft ? "Edit draft" : "Upload"}</h1>
-          <p className="text-sm font-medium text-slate500 dark:text-slate200">Signed in as {user?.fullName || user?.name || "creator"}</p>
+          <h1 className="text-2xl font-semibold font-inter">{isEditingDraft ? t("upload.editDraft") : t("common.upload")}</h1>
+          <p className="text-sm font-medium text-slate500 dark:text-slate200">{t("upload.signedInAs", { name: user?.fullName || user?.name || t("upload.creatorFallback") })}</p>
            </div>
            <button
             type="button"
             onClick={() => navigate(-1)}
-            aria-label="Close upload page"
+            aria-label={t("upload.closePage")}
             className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate50 dark:bg-black100 dark:text-slate200"
           >
             <HiX className="h-5 w-5" />
@@ -328,26 +341,20 @@ export default function CreateUpload() {
               selectedType === "video" ? (
                 <video src={previewUrl} className="h-full w-full rounded-3xl object-cover" controls />
               ) : (
-                <img src={previewUrl} alt="Upload preview" className="h-full w-full rounded-3xl object-cover" />
+                <img src={previewUrl} alt={t("upload.previewAlt")} className="h-full w-full rounded-3xl object-cover" />
               )
             ) : (
               <>
                 <IoCloudUploadOutline className="mb-4 h-20 w-20 text-slate200 dark:text-slate300" />
-                <span className="text-3xl font-medium font-inter md:text-4xl">Drag & drop to upload</span>
-                <span className="mt-1 text-sm font-medium text-orange100">or browse</span>
+                <span className="text-3xl font-medium font-inter md:text-4xl">{t("upload.dropzone.dragAndDrop")}</span>
+                <span className="mt-1 text-sm font-medium text-orange100">{t("upload.dropzone.orBrowse")}</span>
               </>
             )}
-            {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">Selected: {selectedFile.name}</span> : previewUrl ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">Current draft media loaded</span> : null}
+            {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.selected", { name: selectedFile.name })}</span> : previewUrl ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.currentDraftMediaLoaded")}</span> : null}
           </button>
 
           <div className="space-y-4 md:space-y-5">
-            {[
-              { key: "title", placeholder: "Add a title" },
-              { key: "caption", placeholder: "Add a caption" },
-              { key: "description", placeholder: "Add a description" },
-              { key: "location", placeholder: "Location" },
-              { key: "people", placeholder: "Tag people (comma-separated user IDs)" },
-            ].map(({ key, placeholder }) => (
+            {textFields.map(({ key, placeholder }) => (
               <input
                 key={key}
                 type="text"
@@ -359,14 +366,14 @@ export default function CreateUpload() {
             ))}
 
             <div className="rounded-3xl bg-white300 px-6 py-5 dark:bg-black100">
-              <label className="mb-2 block text-sm font-medium text-slate600 dark:text-slate200">Category</label>
+              <label className="mb-2 block text-sm font-medium text-slate600 dark:text-slate200">{t("upload.category.label")}</label>
               <select
                 value={form.categoryId}
                 disabled={isLoading || categories.length === 0}
                 onChange={(event) => setForm((prev) => ({ ...prev, categoryId: normalizeCategoryId(event.target.value) }))}
                 className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-[#1F1F1F] dark:text-white"
               >
-                <option value="">{categories.length ? "Choose a category" : "No categories available"}</option>
+                <option value="">{categories.length ? t("upload.category.choose") : t("upload.category.unavailable")}</option>
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
                     {category.label || category.name}
@@ -374,7 +381,7 @@ export default function CreateUpload() {
                 ))}
               </select>
               {!isLoading && categories.length === 0 ? (
-                <p className="mt-2 text-xs text-slate500 dark:text-slate200">Categories are unavailable right now. You can still save a draft without one.</p>
+                <p className="mt-2 text-xs text-slate500 dark:text-slate200">{t("upload.category.help")}</p>
               ) : null}
             </div>
           </div>
@@ -386,7 +393,7 @@ export default function CreateUpload() {
               disabled={Boolean(submitting)}
               className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
             >
-              {submitting === "draft" ? (isEditingDraft ? "Updating..." : "Saving...") : (isEditingDraft ? "Update draft" : "Save draft")}
+              {submitting === "draft" ? (isEditingDraft ? t("upload.actions.updating") : t("upload.actions.saving")) : (isEditingDraft ? t("upload.actions.updateDraft") : t("upload.actions.saveDraft"))}
             </button>
             <button
               type="button"
@@ -394,16 +401,8 @@ export default function CreateUpload() {
               disabled={Boolean(submitting)}
               className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {submitting === "publish" ? "Uploading..." : "Upload"}
+              {submitting === "publish" ? t("upload.actions.uploading") : t("upload.actions.upload")}
             </button>
-            {/* <button
-              type="button"
-              onClick={() => handleSubmit("live")}
-              disabled={Boolean(submitting) || !canGoLive}
-              className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting === "live" ? "Going live..." : "Go live"}
-            </button> */}
           </div>
         </div>
       </div>

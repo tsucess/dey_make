@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import { api, firstError } from "../services/api";
 import { IoIosArrowBack } from "react-icons/io";
@@ -8,25 +9,20 @@ import { MdArrowCircleLeft } from "react-icons/md";
 import { useAuth } from "../context/AuthContext";
 
 const notificationOptions = [
-  ["messages", "Messages", "Get notified when someone sends you a new message"],
-  ["comments", "Comments", "Know when viewers comment on your videos"],
-  ["likes", "Likes", "Track likes on your content"],
-  ["subscriptions", "Subscriptions", "See when creators you follow go active"],
+  "messages",
+  "comments",
+  "likes",
+  "subscriptions",
 ];
 
-const displayOptions = [["autoplay", "Autoplay videos", "Automatically play video content in your feed"]];
+const displayOptions = ["autoplay"];
 
 const accessibilityOptions = [
-  ["captions", "Captions", "Show captions by default when they are available"],
-  ["reducedMotion", "Reduced motion", "Limit animation and motion-heavy transitions"],
+  "captions",
+  "reducedMotion",
 ];
 
-const languageOptions = [
-  ["en", "🇺🇸 English"],
-  ["en-GB", "🇬🇧 English (UK)"],
-  ["fr", "🇫🇷 French"],
-  ["es", "🇪🇸 Spanish"],
-];
+const languageOptions = ["en", "en-GB", "fr", "es"];
 
 const defaultPreferences = {
   notificationSettings: {
@@ -108,7 +104,7 @@ function SettingRow({ label, description, control }) {
   );
 }
 
-function SelectField({ label, value, onChange }) {
+function SelectField({ label, value, onChange, options }) {
   return (
     <div className="py-3 md:py-[0.95rem]">
       <label className="mb-2 block text-[0.96rem] font-medium font-inter text-slate100 dark:text-white md:text-base">
@@ -120,7 +116,7 @@ function SelectField({ label, value, onChange }) {
           onChange={onChange}
           className="w-full appearance-none rounded-md border border-black/12 bg-[#F3F3F3] px-4 py-[0.72rem] pr-10 text-[0.85rem] text-slate100 outline-none transition-colors focus:border-orange100 dark:border-white/12 dark:bg-[#4A4747] dark:text-white"
         >
-          {languageOptions.map(([optionValue, optionLabel]) => (
+          {options.map(([optionValue, optionLabel]) => (
             <option key={optionValue} value={optionValue}>
               {optionLabel}
             </option>
@@ -150,6 +146,8 @@ function ThemePill({ label, active, onClick }) {
 
 export default function Settings() {
   const { theme, setThemePreference } = useTheme();
+  const { logout, user, syncUser } = useAuth();
+  const { setLocale, t, supportedLocales } = useLanguage();
   const [openSections, setOpenSections] = useState({
     notifications: true,
     language: true,
@@ -162,7 +160,7 @@ export default function Settings() {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
 
-  const navigate = useNavigate(); // ✅ correct place
+  const navigate = useNavigate();
 
   function goBack() {
     navigate(-1);
@@ -182,10 +180,17 @@ export default function Settings() {
         if (!ignore) {
           setValues(nextValues);
           setThemePreference(nextValues.displayPreferences.theme);
+          setLocale(nextValues.language);
+          if (user) {
+            syncUser({
+              ...user,
+              preferences: nextValues,
+            });
+          }
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load settings."));
+          setError(firstError(nextError.errors, nextError.message || t("settings.unableToLoad")));
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -203,21 +208,42 @@ export default function Settings() {
     setOpenSections((current) => ({ ...current, [key]: !current[key] }));
   }
 
-  async function persistChanges(nextValues, payload, label) {
+  async function persistChanges(nextValues, payload, sectionKey) {
     const previousValues = values;
+    const previousUser = user;
     setValues(nextValues);
-    setSavingSection(label);
+    setSavingSection(sectionKey);
     setError("");
+    setFeedback("");
+    setThemePreference(nextValues.displayPreferences.theme);
+    setLocale(nextValues.language);
+
+    if (user) {
+      syncUser({
+        ...user,
+        preferences: nextValues,
+      });
+    }
 
     try {
       const response = await api.updatePreferences(payload);
       const normalized = normalizePreferences(response?.data?.preferences);
       setValues(normalized);
       setThemePreference(normalized.displayPreferences.theme);
-      setFeedback(`${label} updated successfully.`);
+      setLocale(normalized.language);
+      if (previousUser) {
+        syncUser({
+          ...previousUser,
+          preferences: normalized,
+        });
+      }
+      setFeedback(t("settings.updated", { section: t(`settings.sections.${sectionKey}`) }));
     } catch (nextError) {
       setValues(previousValues);
-      setError(firstError(nextError.errors, nextError.message || "Unable to update settings."));
+      setThemePreference(previousValues.displayPreferences.theme);
+      setLocale(previousValues.language);
+      if (previousUser) syncUser(previousUser);
+      setError(firstError(nextError.errors, nextError.message || t("settings.unableToUpdate")));
     } finally {
       setSavingSection("");
     }
@@ -232,7 +258,7 @@ export default function Settings() {
       },
     };
 
-    persistChanges(nextValues, { notificationSettings: nextValues.notificationSettings }, "Notifications");
+    persistChanges(nextValues, { notificationSettings: nextValues.notificationSettings }, "notifications");
   }
 
   function changeLanguage(event) {
@@ -241,7 +267,7 @@ export default function Settings() {
       language: event.target.value,
     };
 
-    persistChanges(nextValues, { language: nextValues.language }, "Language");
+    persistChanges(nextValues, { language: nextValues.language }, "language");
   }
 
   function toggleDisplay(key) {
@@ -253,7 +279,7 @@ export default function Settings() {
       },
     };
 
-    persistChanges(nextValues, { displayPreferences: nextValues.displayPreferences }, "Display");
+    persistChanges(nextValues, { displayPreferences: nextValues.displayPreferences }, "display");
   }
 
   function changeTheme(nextTheme) {
@@ -265,8 +291,7 @@ export default function Settings() {
       },
     };
 
-    setThemePreference(nextTheme);
-    persistChanges(nextValues, { displayPreferences: nextValues.displayPreferences }, "Display");
+    persistChanges(nextValues, { displayPreferences: nextValues.displayPreferences }, "display");
   }
 
   function toggleAccessibility(key) {
@@ -278,36 +303,34 @@ export default function Settings() {
       },
     };
 
-    persistChanges(nextValues, { accessibilityPreferences: nextValues.accessibilityPreferences }, "Accessibility");
+    persistChanges(nextValues, { accessibilityPreferences: nextValues.accessibilityPreferences }, "accessibility");
   }
-
-  const { logout } = useAuth();
 
   return (
     <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-10 md:py-8">
-<button onClick={goBack} className="bg-white300 w-10 h-10 rounded-full flex items-center justify-center mb-6 md:hidden"><IoIosArrowBack className="text-slate900 w-5 h-5"/></button>
+<button type="button" onClick={goBack} className="bg-white300 w-10 h-10 rounded-full flex items-center justify-center mb-6 md:hidden"><IoIosArrowBack className="text-slate900 w-5 h-5"/></button>
       <div className="mx-auto w-full">
-        <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">Settings</h1>
+        <h1 className="mb-6 hidden md:text-3xl font-medium font-bricolage text-slate100 dark:text-white md:block">{t("settings.title")}</h1>
 
         {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
-        {savingSection ? <p className="mb-4 text-sm text-slate500 dark:text-slate200">Saving {savingSection.toLowerCase()}...</p> : null}
+        {savingSection ? <p className="mb-4 text-sm text-slate500 dark:text-slate200">{t("settings.saving", { section: t(`settings.sections.${savingSection}`) })}</p> : null}
 
         {loading ? (
           <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-            Loading your preferences...
+            {t("settings.loadingPreferences")}
           </div>
         ) : (
           <div className="divide-y divide-black/12 dark:divide-white/12 bg-white300 dark:bg-black100 rounded-2xl p-6">
             <section>
-              <SectionHeader title="Notifications" isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
+              <SectionHeader title={t("settings.sections.notifications")} isOpen={openSections.notifications} onClick={() => toggleSection("notifications")} />
               {openSections.notifications ? (
                 <div className="pb-4 md:pb-5">
-                  {notificationOptions.map(([key, label, description]) => (
+                  {notificationOptions.map((key) => (
                     <SettingRow
                       key={key}
-                      label={label}
-                      description={description}
+                      label={t(`settings.notifications.${key}.label`)}
+                      description={t(`settings.notifications.${key}.description`)}
                       control={<ToggleSwitch enabled={values.notificationSettings[key]} onToggle={() => toggleNotification(key)} />}
                     />
                   ))}
@@ -316,35 +339,40 @@ export default function Settings() {
             </section>
 
             <section>
-              <SectionHeader title="Language" isOpen={openSections.language} onClick={() => toggleSection("language")} />
+              <SectionHeader title={t("settings.sections.language")} isOpen={openSections.language} onClick={() => toggleSection("language")} />
               {openSections.language ? (
                 <div className="pb-4 md:pb-5">
-                  <SelectField label="App language" value={values.language} onChange={changeLanguage} />
+                  <SelectField
+                    label={t("settings.appLanguage")}
+                    value={values.language}
+                    onChange={changeLanguage}
+                    options={supportedLocales.map((optionValue) => [optionValue, t(`settings.languageNames.${optionValue}`)])}
+                  />
                 </div>
               ) : null}
             </section>
 
             <section>
-              <SectionHeader title="Display" isOpen={openSections.display} onClick={() => toggleSection("display")} />
+              <SectionHeader title={t("settings.sections.display")} isOpen={openSections.display} onClick={() => toggleSection("display")} />
               {openSections.display ? (
                 <div className="space-y-3 pb-4 md:pb-5">
                   <div className="py-3">
-                    <p className="text-[0.96rem] font-medium font-inter text-slate100 dark:text-white md:text-[1.02rem]">Theme preference</p>
+                    <p className="text-[0.96rem] font-medium font-inter text-slate100 dark:text-white md:text-[1.02rem]">{t("settings.themePreference")}</p>
                     <p className="mt-1 text-[0.78rem] leading-[1.35] text-slate300 dark:text-slate200 md:text-[0.84rem]">
-                      Keep your frontend theme preference in sync with backend preferences.
+                      {t("settings.themeDescription")}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <ThemePill label="Light" active={theme === "light"} onClick={() => changeTheme("light")} />
-                      <ThemePill label="Dark" active={theme === "dark"} onClick={() => changeTheme("dark")} />
-                      <ThemePill label="System" active={theme === "system"} onClick={() => changeTheme("system")} />
+                      <ThemePill label={t("common.light")} active={theme === "light"} onClick={() => changeTheme("light")} />
+                      <ThemePill label={t("common.dark")} active={theme === "dark"} onClick={() => changeTheme("dark")} />
+                      <ThemePill label={t("common.system")} active={theme === "system"} onClick={() => changeTheme("system")} />
                     </div>
                   </div>
 
-                  {displayOptions.map(([key, label, description]) => (
+                  {displayOptions.map((key) => (
                     <SettingRow
                       key={key}
-                      label={label}
-                      description={description}
+                      label={t(`settings.display.${key}.label`)}
+                      description={t(`settings.display.${key}.description`)}
                       control={<ToggleSwitch enabled={values.displayPreferences[key]} onToggle={() => toggleDisplay(key)} />}
                     />
                   ))}
@@ -353,14 +381,14 @@ export default function Settings() {
             </section>
 
             <section>
-              <SectionHeader title="Accessibility" isOpen={openSections.accessibility} onClick={() => toggleSection("accessibility")} />
+              <SectionHeader title={t("settings.sections.accessibility")} isOpen={openSections.accessibility} onClick={() => toggleSection("accessibility")} />
               {openSections.accessibility ? (
                 <div className="pb-4 md:pb-5">
-                  {accessibilityOptions.map(([key, label, description]) => (
+                  {accessibilityOptions.map((key) => (
                     <SettingRow
                       key={key}
-                      label={label}
-                      description={description}
+                      label={t(`settings.accessibility.${key}.label`)}
+                      description={t(`settings.accessibility.${key}.description`)}
                       control={<ToggleSwitch enabled={values.accessibilityPreferences[key]} onToggle={() => toggleAccessibility(key)} />}
                     />
                   ))}
@@ -370,7 +398,7 @@ export default function Settings() {
           </div>
         )}
       </div>
-       <button onClick={logout} className="text-red300 font-inter text-sm flex gap-1 mt-5 items-center-safe md:hidden"><MdArrowCircleLeft className="w-4 h-4"/> Logout</button>
+       <button type="button" onClick={logout} className="text-red300 font-inter text-sm flex gap-1 mt-5 items-center-safe md:hidden"><MdArrowCircleLeft className="w-4 h-4"/> {t("common.logout")}</button>
 
     </div>
   );

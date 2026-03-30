@@ -9,6 +9,19 @@ vi.mock('../context/AuthContext', () => ({
   }),
 }));
 
+vi.mock('../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../locales/translations');
+  const t = actual.createTranslator('en');
+
+  return {
+    useLanguage: () => ({
+      locale: 'en',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
+
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');
 

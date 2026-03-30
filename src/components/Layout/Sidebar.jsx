@@ -1,28 +1,33 @@
 import { NavLink } from "react-router-dom";
 import { RiLogoutCircleLine } from "react-icons/ri";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   HiHome, HiChartBar, HiChatAlt2,
   HiCog, HiUser
 } from "react-icons/hi";
 
-const navItems = [
-  { to: "/home",        icon: HiHome,     label: "Homepage"    },
-  { to: "/leaderboard", icon: HiChartBar, label: "Leaderboard" },
-  { to: "/messages",    icon: HiChatAlt2, label: "Message"     },
-  { to: "/settings",    icon: HiCog,      label: "Settings"    },
-  { to: "/profile",     icon: HiUser,     label: "Profile"     },
-];
+function getNavItems(t) {
+  return [
+    { to: "/home", icon: HiHome, label: t("common.homepage") },
+    { to: "/leaderboard", icon: HiChartBar, label: t("common.leaderboard") },
+    { to: "/messages", icon: HiChatAlt2, label: t("common.messages") },
+    { to: "/settings", icon: HiCog, label: t("common.settings") },
+    { to: "/profile", icon: HiUser, label: t("common.profile") },
+  ];
+}
 
 export default function Sidebar() {
   const { logout } = useAuth();
+  const { t } = useLanguage();
+  const navItems = getNavItems(t);
 
   return (
     <aside className="flex flex-col w-67.5 min-h-screen
                       bg-orange100 shrink-0">
       <div className="px-5 pt-6 pb-4">
         {/* Logo always dark text on yellow sidebar */}
-        <img src="/logo-app.png" alt="DeyMake" className="w-47 h-16.5"/>
+        <img src="/logo-app.png" alt={t("app.name")} className="w-47 h-16.5"/>
       </div>
 
       <nav className="flex flex-col flex-1 mt-2">
@@ -53,7 +58,7 @@ export default function Sidebar() {
                          w-full text-left"
         onClick={logout}>
         <RiLogoutCircleLine className="w-6 h-6"/>
-        Logout
+        {t("common.logout")}
       </button>
     </aside>
   );

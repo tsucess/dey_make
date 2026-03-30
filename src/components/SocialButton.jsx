@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { api } from "../services/api";
+import { useLanguage } from "../context/LanguageContext";
 
 function GoogleIcon() {
   return (
@@ -22,7 +23,8 @@ function FacebookIcon() {
 
 function SocialBtn({ provider, onClick }) {
   const [isStarting, setIsStarting] = useState(false);
-  const label = provider === "google" ? "Google" : "Facebook";
+  const { t } = useLanguage();
+  const label = provider === "google" ? t("social.google") : t("social.facebook");
 
   const handleClick = () => {
     setIsStarting(true);
@@ -45,8 +47,8 @@ function SocialBtn({ provider, onClick }) {
                  disabled:cursor-not-allowed disabled:opacity-60"
     >
       {provider === "google" ? <GoogleIcon /> : <FacebookIcon />}
-      <span className="hidden md:inline">{isStarting ? `Connecting to ${label}...` : `Continue with ${label}`}</span>
-      <span className="md:hidden">{isStarting ? "Connecting..." : label}</span>
+      <span className="hidden md:inline">{isStarting ? t("social.connectingTo", { provider: label }) : t("social.continueWith", { provider: label })}</span>
+      <span className="md:hidden">{isStarting ? t("social.connecting") : label}</span>
     </button>
   );
 }
