@@ -464,9 +464,9 @@ export default function VideoDetails() {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
-          <div className="space-y-6">
-            <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
+        <div className="flex flex-col md:flex-row gap-6">
+          <div className="space-y-6 flex-1">
+            <section className="overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
               <div className="relative aspect-video bg-black">
                 {video.type === "video" ? (
                   <video src={video.mediaUrl} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls className="h-full w-full object-cover" />
@@ -571,7 +571,7 @@ export default function VideoDetails() {
             </section>
           </div>
 
-          <aside className="flex flex-col gap-4 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+          <aside className="w-full md:w-60 flex flex-col gap-4 rounded-4xl bg-transparent p-5 shadow-sm md:shadow-none dark:bg-[#171717] md:py-4 md:px-0">
             <div className="flex items-center justify-between gap-3">
               <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
               <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
