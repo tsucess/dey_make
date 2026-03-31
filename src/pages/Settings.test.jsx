@@ -3,7 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { setThemePreferenceSpy, setLocaleSpy, syncUserSpy } = vi.hoisted(() => ({
+const { authState, setThemePreferenceSpy, setLocaleSpy, syncUserSpy } = vi.hoisted(() => ({
+  authState: {
+    user: { id: 1, fullName: 'Ada', preferences: {} },
+  },
   setThemePreferenceSpy: vi.fn(),
   setLocaleSpy: vi.fn(),
   syncUserSpy: vi.fn(),
@@ -19,7 +22,7 @@ vi.mock('../context/ThemeContext', () => ({
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     logout: vi.fn(),
-    user: { id: 1, fullName: 'Ada', preferences: {} },
+    user: authState.user,
     syncUser: syncUserSpy,
   }),
 }));
@@ -46,6 +49,20 @@ vi.mock('../services/api', async () => {
     api: {
       getPreferences: vi.fn(),
       updatePreferences: vi.fn(),
+      getDeveloperOverview: vi.fn(),
+      createDeveloperApiKey: vi.fn(),
+      deleteDeveloperApiKey: vi.fn(),
+      createDeveloperWebhook: vi.fn(),
+      updateDeveloperWebhook: vi.fn(),
+      rotateDeveloperWebhookSecret: vi.fn(),
+      deleteDeveloperWebhook: vi.fn(),
+      getCreatorPlans: vi.fn(),
+      getCreatorMemberships: vi.fn(),
+      getMyMemberships: vi.fn(),
+      createCreatorPlan: vi.fn(),
+      updateCreatorPlan: vi.fn(),
+      deleteCreatorPlan: vi.fn(),
+      cancelMembership: vi.fn(),
     },
   };
 });
@@ -56,6 +73,7 @@ import Settings from './Settings';
 describe('Settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.user = { id: 1, fullName: 'Ada', preferences: {} };
   });
 
   it('loads preferences and persists notification changes', async () => {
@@ -146,5 +164,95 @@ describe('Settings', () => {
     await waitFor(() => expect(api.updatePreferences).toHaveBeenCalledWith({ language: 'yo' }));
     expect(setLocaleSpy).toHaveBeenCalledWith('yo');
     await screen.findByText('Language updated successfully.');
+  });
+
+  it('loads the developer portal and creates an API key', async () => {
+    const user = userEvent.setup();
+
+    api.getPreferences.mockResolvedValue({
+      data: {
+        preferences: {
+          notificationSettings: { messages: true, comments: true, likes: true, subscriptions: true },
+          language: 'en',
+          displayPreferences: { theme: 'system', autoplay: true },
+          accessibilityPreferences: { captions: false, reducedMotion: false },
+        },
+      },
+    });
+    api.getDeveloperOverview
+      .mockResolvedValueOnce({
+        data: {
+          developer: {
+            availableEvents: ['membership.created'],
+            apiKeys: [
+              {
+                id: 10,
+                name: 'Existing key',
+                abilities: ['videos.read'],
+                createdAt: '2026-03-31T10:00:00Z',
+                lastUsedAt: null,
+              },
+            ],
+            webhooks: [],
+            summary: { apiKeysCount: 1, webhooksCount: 0, activeWebhooksCount: 0 },
+          },
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          developer: {
+            availableEvents: ['membership.created'],
+            apiKeys: [
+              {
+                id: 10,
+                name: 'Existing key',
+                abilities: ['videos.read'],
+                createdAt: '2026-03-31T10:00:00Z',
+                lastUsedAt: null,
+              },
+              {
+                id: 11,
+                name: 'Deploy key',
+                abilities: ['videos.read', 'webhooks.manage'],
+                createdAt: '2026-03-31T11:00:00Z',
+                lastUsedAt: null,
+              },
+            ],
+            webhooks: [],
+            summary: { apiKeysCount: 2, webhooksCount: 0, activeWebhooksCount: 0 },
+          },
+        },
+      });
+    api.createDeveloperApiKey.mockResolvedValue({
+      message: 'API key created successfully.',
+      data: {
+        plainTextToken: 'plain-token-value',
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Settings />
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole('combobox');
+    await user.click(screen.getByRole('button', { name: 'Developer portal' }));
+
+    expect(await screen.findByText('Existing key')).toBeInTheDocument();
+
+    const [keyNameInput, scopesInput] = screen.getAllByRole('textbox');
+
+    await user.type(keyNameInput, 'Deploy key');
+    await user.type(scopesInput, 'videos.read, webhooks.manage');
+    await user.click(screen.getByRole('button', { name: 'Create API key' }));
+
+    await waitFor(() => expect(api.createDeveloperApiKey).toHaveBeenCalledWith({
+      name: 'Deploy key',
+      abilities: ['videos.read', 'webhooks.manage'],
+    }));
+
+    expect(await screen.findByText('plain-token-value')).toBeInTheDocument();
+    expect(await screen.findByText('Deploy key')).toBeInTheDocument();
   });
 });

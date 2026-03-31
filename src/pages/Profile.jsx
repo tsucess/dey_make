@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { useAuth } from "../context/AuthContext";
@@ -60,6 +60,27 @@ function FeedTile({ video, onOpen }) {
   );
 }
 
+function normalizePlan(plan = {}) {
+  return {
+    ...plan,
+    benefits: Array.isArray(plan.benefits) ? plan.benefits : [],
+    priceAmount: Number(plan.priceAmount) || 0,
+    activeMemberCount: Number(plan.activeMemberCount) || 0,
+    currentUserMembership: plan.currentUserMembership || null,
+  };
+}
+
+function formatMoney(amount, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "USD",
+    }).format((Number(amount) || 0) / 100);
+  } catch {
+    return `${currency || "USD"} ${amount || 0}`;
+  }
+}
+
 export default function Profile() {
   const { id: routeProfileId } = useParams();
   const navigate = useNavigate();
@@ -75,11 +96,14 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
+  const [loadingMemberships, setLoadingMemberships] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [membershipActionId, setMembershipActionId] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isAvatarPreviewOpen, setIsAvatarPreviewOpen] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [membershipPlans, setMembershipPlans] = useState([]);
 
   const activeConfig = useMemo(
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
@@ -92,6 +116,24 @@ export default function Profile() {
   const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
   const canSubscribe = !isOwnProfile && Boolean(profile?.id) && user?.id !== profile?.id;
+
+  const loadMembershipPlans = useCallback(async (creatorId, { silent = false } = {}) => {
+    if (!creatorId) {
+      setMembershipPlans([]);
+      return;
+    }
+
+    if (!silent) setLoadingMemberships(true);
+
+    try {
+      const response = await api.getCreatorPlans(creatorId);
+      setMembershipPlans((response?.data?.plans || []).map(normalizePlan));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToLoad")));
+    } finally {
+      if (!silent) setLoadingMemberships(false);
+    }
+  }, [t]);
 
   useEffect(() => {
     if (!feedback) return undefined;
@@ -181,6 +223,40 @@ export default function Profile() {
       ignore = true;
     };
   }, [activeConfig.feed, activeConfig.label, isOwnProfile, routeProfileId, t]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function fetchPlans() {
+      if (isOwnProfile || !routeProfileId) {
+        setMembershipPlans([]);
+        setLoadingMemberships(false);
+        return;
+      }
+
+      setLoadingMemberships(true);
+
+      try {
+        const response = await api.getCreatorPlans(routeProfileId);
+
+        if (!ignore) {
+          setMembershipPlans((response?.data?.plans || []).map(normalizePlan));
+        }
+      } catch (nextError) {
+        if (!ignore) {
+          setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToLoad")));
+        }
+      } finally {
+        if (!ignore) setLoadingMemberships(false);
+      }
+    }
+
+    fetchPlans();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isOwnProfile, routeProfileId, t]);
 
   function requireAuth() {
     if (isAuthenticated) return true;
@@ -310,6 +386,28 @@ export default function Profile() {
       setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.unableToUpdateSubscription")));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleMembershipAction(plan) {
+    if (!plan?.id || !requireAuth()) return;
+
+    setMembershipActionId(plan.id);
+    setError("");
+    setFeedback("");
+
+    try {
+      const isActiveMembership = plan.currentUserMembership?.status === "active";
+      const response = isActiveMembership
+        ? await api.cancelMembership(plan.currentUserMembership.id)
+        : await api.subscribeToPlan(plan.id);
+
+      await loadMembershipPlans(profile?.id || routeProfileId, { silent: true });
+      setFeedback(response?.message || (isActiveMembership ? t("profile.memberships.cancelled") : t("profile.memberships.joinedFeedback")));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpdate")));
+    } finally {
+      setMembershipActionId(null);
     }
   }
 
@@ -475,6 +573,86 @@ export default function Profile() {
                     </div>
                   )}
                 </div>
+
+                {!isOwnProfile ? (
+                  <section className="rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-semibold text-black dark:text-white">{t("profile.memberships.heading")}</h2>
+                      </div>
+                    </div>
+
+                    {loadingMemberships ? (
+                      <div className="mt-4 rounded-2xl bg-white px-4 py-5 text-sm text-slate600 dark:bg-slate100 dark:text-slate200">
+                        {t("profile.memberships.loading")}
+                      </div>
+                    ) : membershipPlans.length ? (
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        {membershipPlans.map((plan) => {
+                          const isJoined = plan.currentUserMembership?.status === "active";
+                          const isBusy = membershipActionId === plan.id;
+
+                          return (
+                            <article key={plan.id} className="rounded-3xl bg-white px-5 py-5 shadow-sm dark:bg-slate100/70">
+                              <div className="flex items-start justify-between gap-3">
+                                <div>
+                                  <h3 className="text-lg font-semibold text-black dark:text-white">{plan.name}</h3>
+                                  <p className="mt-1 text-sm text-slate600 dark:text-slate200">
+                                    {t("settings.memberships.priceLabel", {
+                                      amount: formatMoney(plan.priceAmount, plan.currency),
+                                      period: t(`settings.memberships.billingPeriods.${plan.billingPeriod}`),
+                                    })}
+                                  </p>
+                                </div>
+                                <span className="rounded-full bg-orange100/15 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-200">
+                                  {t("profile.memberships.activeMembers")}: {plan.activeMemberCount}
+                                </span>
+                              </div>
+
+                              {plan.description ? (
+                                <p className="mt-3 text-sm text-slate700 dark:text-slate200">{plan.description}</p>
+                              ) : null}
+
+                              {plan.benefits.length ? (
+                                <div className="mt-4">
+                                  <p className="text-sm font-medium text-black dark:text-white">{t("profile.memberships.benefits")}</p>
+                                  <ul className="mt-2 space-y-2 text-sm text-slate700 dark:text-slate200">
+                                    {plan.benefits.map((benefit) => (
+                                      <li key={benefit} className="flex gap-2">
+                                        <span aria-hidden="true">•</span>
+                                        <span>{benefit}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
+
+                              <div className="mt-5 flex items-center justify-between gap-3">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMembershipAction(plan)}
+                                  disabled={isBusy}
+                                  className={`rounded-full px-6 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${isJoined ? "border border-red-200 text-red-600" : "bg-orange100 text-black"}`}
+                                >
+                                  {isBusy ? t("profile.saving") : isJoined ? t("profile.memberships.cancel") : t("profile.memberships.join")}
+                                </button>
+                                {plan.currentUserMembership ? (
+                                  <span className="text-xs font-medium text-slate500 dark:text-slate300">
+                                    {t(`settings.memberships.statuses.${plan.currentUserMembership.status}`)}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </article>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="mt-4 rounded-2xl bg-white px-4 py-5 text-sm text-slate600 dark:bg-slate100 dark:text-slate200">
+                        {t("profile.memberships.empty")}
+                      </div>
+                    )}
+                  </section>
+                ) : null}
               </div>
             )}
           </div>

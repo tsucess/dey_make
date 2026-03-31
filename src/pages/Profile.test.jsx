@@ -41,10 +41,13 @@ vi.mock('../services/api', async () => {
       getProfileFeed: vi.fn(),
       getUser: vi.fn(),
       getUserPosts: vi.fn(),
+      getCreatorPlans: vi.fn(),
       updateProfile: vi.fn(),
       uploadFile: vi.fn(),
       subscribeToCreator: vi.fn(),
       unsubscribeFromCreator: vi.fn(),
+      subscribeToPlan: vi.fn(),
+      cancelMembership: vi.fn(),
     },
   };
 });
@@ -170,5 +173,114 @@ describe('Profile', () => {
 
     await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(5));
     expect(screen.getByRole('button', { name: /Subscribed/i })).toBeInTheDocument();
+  });
+
+  it('shows public membership plans and lets a viewer join then cancel a plan', async () => {
+    const user = userEvent.setup();
+
+    api.getUser.mockResolvedValue({
+      data: {
+        user: {
+          id: 5,
+          fullName: 'Grace Hopper',
+          bio: 'Compiler trailblazer',
+          subscriberCount: 4100,
+          avatarUrl: '',
+          currentUserState: { subscribed: false },
+        },
+      },
+    });
+    api.getUserPosts.mockResolvedValue({
+      data: {
+        videos: [{ id: 7, title: 'COBOL for creators', thumbnailUrl: 'https://cdn.example/cobol.jpg', views: 88 }],
+      },
+    });
+    api.getCreatorPlans
+      .mockResolvedValueOnce({
+        data: {
+          plans: [
+            {
+              id: 21,
+              name: 'Gold Circle',
+              description: 'Members-only community access',
+              priceAmount: 1500,
+              currency: 'USD',
+              billingPeriod: 'monthly',
+              benefits: ['Private chat', 'Early access'],
+              activeMemberCount: 3,
+              currentUserMembership: null,
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          plans: [
+            {
+              id: 21,
+              name: 'Gold Circle',
+              description: 'Members-only community access',
+              priceAmount: 1500,
+              currency: 'USD',
+              billingPeriod: 'monthly',
+              benefits: ['Private chat', 'Early access'],
+              activeMemberCount: 4,
+              currentUserMembership: { id: 91, status: 'active' },
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          plans: [
+            {
+              id: 21,
+              name: 'Gold Circle',
+              description: 'Members-only community access',
+              priceAmount: 1500,
+              currency: 'USD',
+              billingPeriod: 'monthly',
+              benefits: ['Private chat', 'Early access'],
+              activeMemberCount: 3,
+              currentUserMembership: { id: 91, status: 'cancelled' },
+            },
+          ],
+        },
+      });
+    api.subscribeToPlan.mockResolvedValue({
+      message: 'Membership created successfully.',
+      data: {
+        membership: {
+          id: 91,
+          status: 'active',
+        },
+      },
+    });
+    api.cancelMembership.mockResolvedValue({
+      message: 'Membership cancelled successfully.',
+      data: {
+        membership: {
+          id: 91,
+          status: 'cancelled',
+        },
+      },
+    });
+
+    renderPage('/users/5');
+
+    expect(await screen.findByText('Membership plans')).toBeInTheDocument();
+    expect(await screen.findByText('Gold Circle')).toBeInTheDocument();
+    expect(screen.getByText('Private chat')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Join plan' }));
+
+    await waitFor(() => expect(api.subscribeToPlan).toHaveBeenCalledWith(21));
+    expect(await screen.findByRole('button', { name: 'Cancel membership' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Cancel membership' }));
+
+    await waitFor(() => expect(api.cancelMembership).toHaveBeenCalledWith(91));
+    expect(await screen.findByText('Cancelled')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Join plan' })).toBeInTheDocument();
   });
 });
