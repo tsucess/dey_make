@@ -1,5 +1,6 @@
-
+import { motion } from "motion/react"
 import { useLanguage } from "../../context/LanguageContext";
+import { fadeUp } from "../../utils/animation";
 
 export default function CreativesBanner({ onSignUp }) {
   const { t } = useLanguage();
@@ -26,12 +27,12 @@ export default function CreativesBanner({ onSignUp }) {
               <br />
               {t("landing.banner.titleLineTwo")}
             </h2>
-            <p
+            <motion.p variants={fadeUp}
               className="text-base font-inter text-slate100 leading-relaxed max-w-sm"
               
             >
               {t("landing.banner.description")}
-            </p>
+            </motion.p>
             <button
               onClick={onSignUp}
               className="font-semibold text-base px-6 md:px-16 py-3.5 rounded-xl
@@ -43,7 +44,19 @@ export default function CreativesBanner({ onSignUp }) {
           </div>
 
           {/* Phone — always light since it's on yellow bg */}
-          <img src="/creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
+          <motion.img initial={{ opacity: 0, scale: 0.9 }}
+  whileInView={{ opacity: 1, scale: 1 }}
+  animate={{ y: [0, -8, 0] }}
+  transition={{
+    duration: 0.7, // for entrance
+    ease: "easeOut",
+    y: {
+      duration: 3,
+      repeat: Infinity,
+      ease: "easeInOut"
+    }
+  }}
+   src="/creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
         </div>
       </div>
     </section>
