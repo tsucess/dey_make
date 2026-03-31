@@ -41,12 +41,19 @@ vi.mock('../services/api', async () => {
 import { api } from '../services/api';
 import CreateUpload from './CreateUpload';
 
+function buildMediaStream() {
+  return {
+    getTracks: () => [{ stop: vi.fn() }, { stop: vi.fn() }],
+  };
+}
+
 function renderPage(initialEntry = '/create') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/create" element={<CreateUpload />} />
         <Route path="/video/:id" element={<div>Video page</div>} />
+        <Route path="/live/:id" element={<div>Live page</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -57,6 +64,17 @@ describe('CreateUpload', () => {
     vi.clearAllMocks();
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:preview');
     globalThis.URL.revokeObjectURL = vi.fn();
+    Object.defineProperty(globalThis.navigator, 'mediaDevices', {
+      configurable: true,
+      value: {
+        getUserMedia: vi.fn().mockResolvedValue(buildMediaStream()),
+      },
+    });
+    Object.defineProperty(HTMLMediaElement.prototype, 'srcObject', {
+      configurable: true,
+      writable: true,
+      value: null,
+    });
   });
 
   it('disables category selection when categories are unavailable', async () => {
@@ -123,10 +141,9 @@ describe('CreateUpload', () => {
         categories: [{ id: 2, label: 'Music' }],
       },
     });
-    api.uploadFile.mockResolvedValue({ data: { upload: { id: 55 } } });
     api.createVideo.mockResolvedValue({
       data: {
-        video: { id: 88, isDraft: false, isLive: true, mediaUrl: 'https://cdn.example/live.mp4' },
+        video: { id: 88, isDraft: false, isLive: true, mediaUrl: null },
       },
     });
 
@@ -134,24 +151,20 @@ describe('CreateUpload', () => {
 
     await screen.findByText(/Signed in as Test Creator/i);
     expect(screen.getByRole('heading', { name: /Set up your live stream/i })).toBeInTheDocument();
-    expect(screen.getByText(/start broadcasting to your subscribers/i)).toBeInTheDocument();
-
-    const fileInput = container.querySelector('input[type="file"]');
-    expect(fileInput).toHaveAttribute('accept', expect.stringContaining('video/'));
-
-    const file = new File(['video'], 'live.mp4', { type: 'video/mp4' });
-    fireEvent.change(fileInput, { target: { files: [file] } });
-
-    await waitFor(() => expect(screen.getByRole('button', { name: /Go live/i })).not.toBeDisabled());
+    expect(screen.getByText(/Turn on your camera/i)).toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).toBeNull();
+    await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
+    expect(await screen.findByLabelText(/Live camera preview/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Save draft/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Upload$/i })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Go live/i }));
 
     await waitFor(() => expect(api.createVideo).toHaveBeenCalledTimes(1));
 
-    expect(api.uploadFile).toHaveBeenCalledTimes(1);
+    expect(api.uploadFile).not.toHaveBeenCalled();
     expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
       type: 'video',
-      uploadId: 55,
       isDraft: false,
       isLive: true,
     }));

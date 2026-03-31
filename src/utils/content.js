@@ -79,13 +79,26 @@ export function getVideoTags(video) {
   return [video?.category?.label || video?.category?.name].filter(Boolean);
 }
 
-export function buildVideoLink(id) {
-  return `/video/${id}`;
+function resolveVideoRouteOptions(videoOrId, options = {}) {
+  if (typeof options === "boolean") {
+    return { id: videoOrId?.id ?? videoOrId, isLive: options };
+  }
+
+  return {
+    id: videoOrId?.id ?? videoOrId,
+    isLive: options.isLive ?? Boolean(videoOrId?.isLive),
+  };
 }
 
-export function buildShareUrl(id) {
-  if (typeof window === "undefined") return buildVideoLink(id);
-  return `${window.location.origin}${buildVideoLink(id)}`;
+export function buildVideoLink(videoOrId, options = {}) {
+  const { id, isLive } = resolveVideoRouteOptions(videoOrId, options);
+  return `${isLive ? "/live" : "/video"}/${id}`;
+}
+
+export function buildShareUrl(videoOrId, options = {}) {
+  const path = buildVideoLink(videoOrId, options);
+  if (typeof window === "undefined") return path;
+  return `${window.location.origin}${path}`;
 }
 
 export function getVideoThumbnail(video) {

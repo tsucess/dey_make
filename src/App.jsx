@@ -76,6 +76,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Homepage />} />
             <Route path="/live" element={<LivePage />} />
+            <Route path="/live/:id" element={<VideoDetails />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />

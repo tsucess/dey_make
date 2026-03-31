@@ -55,7 +55,7 @@ function CreatorCard({
   subscribeBusy,
   onToggleSubscribe,
   subscribeLabel,
-  unsubscribeLabel,
+  subscribedLabel,
   viewProfileLabel,
 }) {
   return (
@@ -79,7 +79,7 @@ function CreatorCard({
             disabled={subscribeBusy}
             className="rounded-full bg-orange100 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {creator?.currentUserState?.subscribed ? unsubscribeLabel : subscribeLabel}
+            {creator?.currentUserState?.subscribed ? subscribedLabel : subscribeLabel}
           </button>
         ) : null}
       </div>
@@ -319,7 +319,7 @@ export default function SearchResults() {
                       subscribeBusy={busyCreatorId === creator.id}
                       onToggleSubscribe={handleToggleSubscribe}
                       subscribeLabel={t("profile.subscribe")}
-                      unsubscribeLabel={t("profile.unsubscribe")}
+                      subscribedLabel={t("videoDetails.subscribed")}
                       viewProfileLabel={t("search.viewProfile")}
                     />
                   ))}
@@ -361,7 +361,7 @@ export default function SearchResults() {
                   subscribeBusy={busyCreatorId === creator.id}
                   onToggleSubscribe={handleToggleSubscribe}
                   subscribeLabel={t("profile.subscribe")}
-                  unsubscribeLabel={t("profile.unsubscribe")}
+                  subscribedLabel={t("videoDetails.subscribed")}
                   viewProfileLabel={t("search.viewProfile")}
                 />
               ))}

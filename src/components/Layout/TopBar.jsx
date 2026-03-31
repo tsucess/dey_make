@@ -5,7 +5,7 @@ import { IoNotificationsOutline } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { api, firstError } from "../../services/api";
-import { formatSubscriberLabel, getProfileAvatar, getProfileName, getVideoTitle } from "../../utils/content";
+import { buildVideoLink, formatSubscriberLabel, getProfileAvatar, getProfileName, getVideoTitle } from "../../utils/content";
 import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 
@@ -43,8 +43,8 @@ export default function TopBar() {
     closeLookup();
   }
 
-  function selectVideo(videoId) {
-    navigate(`/video/${videoId}`);
+  function selectVideo(video) {
+    navigate(buildVideoLink(video));
     closeLookup();
   }
 
@@ -180,7 +180,7 @@ export default function TopBar() {
                         <button
                           key={video.id}
                           type="button"
-                          onClick={() => selectVideo(video.id)}
+                          onClick={() => selectVideo(video)}
                           className="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors hover:bg-[#F5F5F5] dark:hover:bg-white/5"
                         >
                           <img src={getProfileAvatar(video.author || video.creator)} alt="" className="h-10 w-10 rounded-2xl object-cover" />

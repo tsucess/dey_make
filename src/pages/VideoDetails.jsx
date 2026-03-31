@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { useLanguage } from "../context/LanguageContext";
@@ -7,6 +7,7 @@ import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import {
   buildShareUrl,
+  buildVideoLink,
   formatCompactNumber,
   formatCountLabel,
   formatRelativeTime,
@@ -17,6 +18,49 @@ import {
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+
+function stopMediaStream(stream) {
+  stream?.getTracks?.().forEach((track) => track.stop());
+}
+
+const LIVE_SIGNAL_POLL_INTERVAL_MS = 1500;
+const LIVE_PEER_CONFIGURATION = {
+  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
+};
+
+function clearLivePoll(ref) {
+  if (ref.current) {
+    window.clearInterval(ref.current);
+    ref.current = null;
+  }
+}
+
+function closePeerConnection(connection) {
+  if (!connection) return;
+
+  try {
+    connection.onicecandidate = null;
+    connection.ontrack = null;
+    connection.onconnectionstatechange = null;
+    connection.close?.();
+  } catch {
+    // Ignore cleanup errors.
+  }
+}
+
+function serializeIceCandidate(candidate) {
+  if (!candidate) return null;
+
+  if (typeof candidate.toJSON === "function") {
+    return candidate.toJSON();
+  }
+
+  return {
+    candidate: candidate.candidate,
+    sdpMid: candidate.sdpMid ?? null,
+    sdpMLineIndex: candidate.sdpMLineIndex ?? null,
+  };
+}
 
 function ActionButton({ children, active, disabled, onClick }) {
   return (
@@ -140,10 +184,19 @@ function CommentCard({
 
 export default function VideoDetails() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { isAuthenticated, user } = useAuth();
   const viewRecordedRef = useRef(new Set());
+  const livePreviewRef = useRef(null);
+  const livePlaybackRef = useRef(null);
+  const viewerPeerConnectionRef = useRef(null);
+  const viewerSignalCursorRef = useRef(0);
+  const viewerPollRef = useRef(null);
+  const broadcasterSignalCursorRef = useRef(0);
+  const broadcasterPollRef = useRef(null);
+  const broadcasterConnectionsRef = useRef(new Map());
   const [video, setVideo] = useState(null);
   const [relatedVideos, setRelatedVideos] = useState([]);
   const [comments, setComments] = useState([]);
@@ -158,11 +211,373 @@ export default function VideoDetails() {
   const [submittingReplyId, setSubmittingReplyId] = useState(null);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [localLiveStream, setLocalLiveStream] = useState(null);
+  const [remoteLiveStream, setRemoteLiveStream] = useState(null);
+  const [livePreviewStatus, setLivePreviewStatus] = useState("idle");
+  const [liveConnectionStatus, setLiveConnectionStatus] = useState("idle");
   const creatorId = video?.author?.id || video?.creator?.id;
   const canSubscribeToAuthor = Boolean(creatorId) && user?.id !== creatorId;
   const canManageLive = Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
   const processingStatus = getVideoProcessingStatus(video);
   const showProcessingBadge = processingStatus !== "completed";
+  const isLiveWatchRoute = location.pathname.startsWith("/live/");
+  const shouldUseLocalLivePreview = Boolean(video?.isLive && canManageLive && video?.type === "video");
+  const shouldReceiveRemoteLiveStream = Boolean(video?.isLive && isLiveWatchRoute && !canManageLive && video?.type === "video" && isAuthenticated);
+  const shouldBroadcastLiveStream = Boolean(video?.isLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
+
+  useEffect(() => {
+    if (livePreviewRef.current) {
+      livePreviewRef.current.srcObject = localLiveStream || null;
+    }
+  }, [localLiveStream]);
+
+  useEffect(() => {
+    if (livePlaybackRef.current) {
+      livePlaybackRef.current.srcObject = remoteLiveStream || null;
+    }
+  }, [remoteLiveStream]);
+
+  useEffect(() => () => {
+    stopMediaStream(localLiveStream);
+  }, [localLiveStream]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!shouldUseLocalLivePreview) {
+      setLocalLiveStream((current) => {
+        stopMediaStream(current);
+        return null;
+      });
+      setLivePreviewStatus("idle");
+      return;
+    }
+
+    async function connectCamera() {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        if (!ignore) setLivePreviewStatus("error");
+        return;
+      }
+
+      if (!ignore) setLivePreviewStatus("requesting");
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        if (ignore) {
+          stopMediaStream(stream);
+          return;
+        }
+
+        setLocalLiveStream((current) => {
+          stopMediaStream(current);
+          return stream;
+        });
+        setLivePreviewStatus("ready");
+      } catch {
+        if (!ignore) {
+          setLocalLiveStream((current) => {
+            stopMediaStream(current);
+            return null;
+          });
+          setLivePreviewStatus("error");
+        }
+      }
+    }
+
+    connectCamera();
+
+    return () => {
+      ignore = true;
+    };
+  }, [shouldUseLocalLivePreview]);
+
+  useEffect(() => {
+    let ignore = false;
+    clearLivePoll(viewerPollRef);
+    viewerSignalCursorRef.current = 0;
+    setRemoteLiveStream(null);
+    closePeerConnection(viewerPeerConnectionRef.current);
+    viewerPeerConnectionRef.current = null;
+
+    if (!shouldReceiveRemoteLiveStream || !video?.id) {
+      setLiveConnectionStatus("idle");
+      return undefined;
+    }
+
+    if (typeof RTCPeerConnection === "undefined") {
+      setLiveConnectionStatus("error");
+      return undefined;
+    }
+
+    const peerConnection = new RTCPeerConnection(LIVE_PEER_CONFIGURATION);
+    const pendingCandidates = [];
+    const fallbackRemoteStream = typeof MediaStream === "undefined" ? null : new MediaStream();
+
+    viewerPeerConnectionRef.current = peerConnection;
+    setLiveConnectionStatus("connecting");
+
+    if (typeof peerConnection.addTransceiver === "function") {
+      try {
+        peerConnection.addTransceiver("video", { direction: "recvonly" });
+      } catch {
+        // Ignore unsupported transceiver directions.
+      }
+
+      try {
+        peerConnection.addTransceiver("audio", { direction: "recvonly" });
+      } catch {
+        // Ignore unsupported transceiver directions.
+      }
+    }
+
+    peerConnection.ontrack = (event) => {
+      if (ignore) return;
+
+      const nextStream = event.streams?.[0];
+
+      if (nextStream) {
+        setRemoteLiveStream(nextStream);
+        setLiveConnectionStatus("ready");
+        return;
+      }
+
+      if (fallbackRemoteStream && event.track) {
+        fallbackRemoteStream.addTrack(event.track);
+        setRemoteLiveStream(fallbackRemoteStream);
+        setLiveConnectionStatus("ready");
+      }
+    };
+
+    peerConnection.onicecandidate = (event) => {
+      if (!event.candidate) return;
+
+      api.sendLiveSignal(video.id, {
+        type: "candidate",
+        candidate: serializeIceCandidate(event.candidate),
+      }).catch(() => {});
+    };
+
+    peerConnection.onconnectionstatechange = () => {
+      if (ignore) return;
+
+      if (peerConnection.connectionState === "connected") {
+        setLiveConnectionStatus("ready");
+      } else if (["failed", "disconnected"].includes(peerConnection.connectionState)) {
+        setLiveConnectionStatus("error");
+      }
+    };
+
+    async function flushPendingCandidates() {
+      while (pendingCandidates.length) {
+        const candidate = pendingCandidates.shift();
+
+        try {
+          await peerConnection.addIceCandidate(candidate);
+        } catch {
+          // Ignore individual ICE candidate failures.
+        }
+      }
+    }
+
+    async function pollSignals() {
+      try {
+        const response = await api.getLiveSignals(video.id, { after: viewerSignalCursorRef.current });
+        if (ignore) return;
+
+        const signals = response?.data?.signals || [];
+        viewerSignalCursorRef.current = response?.data?.latestSignalId ?? viewerSignalCursorRef.current;
+
+        for (const signal of signals) {
+          if (signal.type === "answer" && signal.payload?.sdp) {
+            await peerConnection.setRemoteDescription({
+              type: "answer",
+              sdp: signal.payload.sdp,
+            });
+            await flushPendingCandidates();
+          }
+
+          if (signal.type === "candidate" && signal.payload?.candidate) {
+            if (peerConnection.remoteDescription?.type) {
+              await peerConnection.addIceCandidate(signal.payload.candidate);
+            } else {
+              pendingCandidates.push(signal.payload.candidate);
+            }
+          }
+        }
+      } catch {
+        if (!ignore) setLiveConnectionStatus("error");
+      }
+    }
+
+    async function connectToLive() {
+      try {
+        const offer = await peerConnection.createOffer();
+        if (ignore) return;
+
+        await peerConnection.setLocalDescription(offer);
+        await api.sendLiveSignal(video.id, {
+          type: "offer",
+          sdp: offer?.sdp || peerConnection.localDescription?.sdp || "",
+        });
+        if (ignore) return;
+
+        await pollSignals();
+        if (ignore) return;
+
+        viewerPollRef.current = window.setInterval(pollSignals, LIVE_SIGNAL_POLL_INTERVAL_MS);
+      } catch {
+        if (!ignore) setLiveConnectionStatus("error");
+      }
+    }
+
+    connectToLive();
+
+    return () => {
+      ignore = true;
+      clearLivePoll(viewerPollRef);
+      viewerSignalCursorRef.current = 0;
+      setRemoteLiveStream(null);
+      closePeerConnection(peerConnection);
+
+      if (viewerPeerConnectionRef.current === peerConnection) {
+        viewerPeerConnectionRef.current = null;
+      }
+    };
+  }, [shouldReceiveRemoteLiveStream, video?.id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    function closeBroadcasterConnections() {
+      broadcasterConnectionsRef.current.forEach((entry) => closePeerConnection(entry.peerConnection));
+      broadcasterConnectionsRef.current.clear();
+    }
+
+    clearLivePoll(broadcasterPollRef);
+    broadcasterSignalCursorRef.current = 0;
+    closeBroadcasterConnections();
+
+    if (!shouldBroadcastLiveStream || !video?.id) {
+      return undefined;
+    }
+
+    if (typeof RTCPeerConnection === "undefined") {
+      return undefined;
+    }
+
+    function createBroadcasterConnection(recipientId) {
+      const peerConnection = new RTCPeerConnection(LIVE_PEER_CONFIGURATION);
+      const entry = { peerConnection, pendingCandidates: [] };
+
+      broadcasterConnectionsRef.current.set(recipientId, entry);
+
+      localLiveStream.getTracks().forEach((track) => {
+        try {
+          peerConnection.addTrack(track, localLiveStream);
+        } catch {
+          // Ignore duplicate track attachment failures.
+        }
+      });
+
+      peerConnection.onicecandidate = (event) => {
+        if (!event.candidate) return;
+
+        api.sendLiveSignal(video.id, {
+          recipientId,
+          type: "candidate",
+          candidate: serializeIceCandidate(event.candidate),
+        }).catch(() => {});
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        if (["closed", "failed", "disconnected"].includes(peerConnection.connectionState)) {
+          closePeerConnection(peerConnection);
+          broadcasterConnectionsRef.current.delete(recipientId);
+        }
+      };
+
+      return entry;
+    }
+
+    async function flushPendingCandidates(entry) {
+      while (entry.pendingCandidates.length) {
+        const candidate = entry.pendingCandidates.shift();
+
+        try {
+          await entry.peerConnection.addIceCandidate(candidate);
+        } catch {
+          // Ignore individual ICE candidate failures.
+        }
+      }
+    }
+
+    async function handleBroadcasterSignal(signal) {
+      const senderId = signal.senderId;
+      if (!senderId) return;
+
+      if (signal.type === "offer" && signal.payload?.sdp) {
+        const existing = broadcasterConnectionsRef.current.get(senderId);
+
+        if (existing) {
+          closePeerConnection(existing.peerConnection);
+          broadcasterConnectionsRef.current.delete(senderId);
+        }
+
+        const entry = createBroadcasterConnection(senderId);
+        await entry.peerConnection.setRemoteDescription({
+          type: "offer",
+          sdp: signal.payload.sdp,
+        });
+
+        const answer = await entry.peerConnection.createAnswer();
+        await entry.peerConnection.setLocalDescription(answer);
+        await api.sendLiveSignal(video.id, {
+          recipientId: senderId,
+          type: "answer",
+          sdp: answer?.sdp || entry.peerConnection.localDescription?.sdp || "",
+        });
+        await flushPendingCandidates(entry);
+      }
+
+      if (signal.type === "candidate" && signal.payload?.candidate) {
+        const entry = broadcasterConnectionsRef.current.get(senderId);
+        if (!entry) return;
+
+        if (entry.peerConnection.remoteDescription?.type) {
+          await entry.peerConnection.addIceCandidate(signal.payload.candidate);
+        } else {
+          entry.pendingCandidates.push(signal.payload.candidate);
+        }
+      }
+    }
+
+    async function pollSignals() {
+      try {
+        const response = await api.getLiveSignals(video.id, { after: broadcasterSignalCursorRef.current });
+        if (ignore) return;
+
+        const signals = response?.data?.signals || [];
+        broadcasterSignalCursorRef.current = response?.data?.latestSignalId ?? broadcasterSignalCursorRef.current;
+
+        for (const signal of signals) {
+          await handleBroadcasterSignal(signal);
+        }
+      } catch {
+        // Ignore polling errors and retry on the next poll.
+      }
+    }
+
+    pollSignals();
+    broadcasterPollRef.current = window.setInterval(pollSignals, LIVE_SIGNAL_POLL_INTERVAL_MS);
+
+    return () => {
+      ignore = true;
+      clearLivePoll(broadcasterPollRef);
+      broadcasterSignalCursorRef.current = 0;
+      closeBroadcasterConnections();
+    };
+  }, [localLiveStream, shouldBroadcastLiveStream, video?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -238,11 +653,21 @@ export default function VideoDetails() {
     setFeedback("");
 
     try {
-      const response = await {
-        like: currentState.liked ? api.unlikeVideo(video.id) : api.likeVideo(video.id),
-        dislike: currentState.disliked ? api.undislikeVideo(video.id) : api.dislikeVideo(video.id),
-        save: currentState.saved ? api.unsaveVideo(video.id) : api.saveVideo(video.id),
-      }[action];
+      let response;
+
+      switch (action) {
+        case "like":
+          response = currentState.liked ? await api.unlikeVideo(video.id) : await api.likeVideo(video.id);
+          break;
+        case "dislike":
+          response = currentState.disliked ? await api.undislikeVideo(video.id) : await api.dislikeVideo(video.id);
+          break;
+        case "save":
+          response = currentState.saved ? await api.unsaveVideo(video.id) : await api.saveVideo(video.id);
+          break;
+        default:
+          response = null;
+      }
 
       if (response?.data?.video) setVideo(response.data.video);
     } catch (nextError) {
@@ -309,7 +734,7 @@ export default function VideoDetails() {
 
     try {
       const response = await api.shareVideo(video.id);
-      const shareUrl = buildShareUrl(video.id);
+      const shareUrl = buildShareUrl(video, isLiveWatchRoute);
 
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -427,10 +852,22 @@ export default function VideoDetails() {
       || Object.values(repliesByComment).flat().find((reply) => reply.id === commentId);
 
     try {
-      const response = await {
-        like: targetComment?.currentUserState?.liked ? api.unlikeComment(commentId) : api.likeComment(commentId),
-        dislike: targetComment?.currentUserState?.disliked ? api.undislikeComment(commentId) : api.dislikeComment(commentId),
-      }[action];
+      let response;
+
+      switch (action) {
+        case "like":
+          response = targetComment?.currentUserState?.liked
+            ? await api.unlikeComment(commentId)
+            : await api.likeComment(commentId);
+          break;
+        case "dislike":
+          response = targetComment?.currentUserState?.disliked
+            ? await api.undislikeComment(commentId)
+            : await api.dislikeComment(commentId);
+          break;
+        default:
+          response = null;
+      }
 
       mergeCommentUpdate(response?.data?.comment);
     } catch (nextError) {
@@ -448,6 +885,136 @@ export default function VideoDetails() {
     return <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center text-sm text-slate600 dark:bg-[#121212] dark:text-slate200">{t("videoDetails.videoNotFound")}</div>;
   }
 
+  const creatorProfile = video.author || video.creator;
+  const isLiveWatchLayout = Boolean(video.isLive && isLiveWatchRoute);
+  const showRemoteLivePlayer = Boolean(shouldReceiveRemoteLiveStream && remoteLiveStream);
+  const livePlaceholderMessage = shouldUseLocalLivePreview && livePreviewStatus === "requesting"
+    ? t("videoDetails.loadingLivePreview")
+    : shouldUseLocalLivePreview && livePreviewStatus === "error"
+      ? t("videoDetails.livePreviewUnavailable")
+      : shouldReceiveRemoteLiveStream && liveConnectionStatus === "connecting"
+        ? t("videoDetails.connectingLiveStream")
+        : shouldReceiveRemoteLiveStream && liveConnectionStatus === "error"
+          ? t("videoDetails.liveStreamUnavailable")
+          : t("videoDetails.livePlaceholderBody");
+
+  const creatorControls = (
+    <>
+      {canManageLive ? (
+        <button
+          type="button"
+          disabled={busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`}
+          onClick={handleLiveToggle}
+          className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`
+            ? t(video.isLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive")
+            : t(video.isLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
+        </button>
+      ) : null}
+      {canSubscribeToAuthor ? (
+        <button
+          type="button"
+          disabled={busyAction === `subscribe-${creatorId}`}
+          onClick={handleSubscribe}
+          className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("profile.subscribe")}
+        </button>
+      ) : null}
+    </>
+  );
+
+  const actionButtons = (
+    <>
+      <ActionButton active={video.currentUserState?.liked} disabled={busyAction === `like-${video.id}`} onClick={() => handleVideoAction("like")}>
+        <span className="inline-flex items-center gap-2"><FaRegThumbsUp /> {formatCompactNumber(video.likes || 0)}</span>
+      </ActionButton>
+      <ActionButton active={video.currentUserState?.disliked} disabled={busyAction === `dislike-${video.id}`} onClick={() => handleVideoAction("dislike")}>
+        <span className="inline-flex items-center gap-2"><FaRegThumbsDown /> {formatCompactNumber(video.dislikes || 0)}</span>
+      </ActionButton>
+      <ActionButton active={video.currentUserState?.saved} disabled={busyAction === `save-${video.id}`} onClick={() => handleVideoAction("save")}>
+        <span className="inline-flex items-center gap-2"><FaRegBookmark /> {t("videoDetails.save")}</span>
+      </ActionButton>
+      <ActionButton disabled={busyAction === `share-${video.id}`} onClick={handleShare}>
+        <span className="inline-flex items-center gap-2"><HiShare /> {t("videoDetails.share")}</span>
+      </ActionButton>
+      <ActionButton disabled={busyAction === `report-${video.id}`} onClick={handleReport}>
+        <span className="inline-flex items-center gap-2"><FaRegFlag /> {t("videoDetails.report")}</span>
+      </ActionButton>
+    </>
+  );
+
+  const creatorIdentity = creatorId ? (
+    <Link to={`/users/${creatorId}`} className="flex items-center gap-4 rounded-2xl transition-opacity hover:opacity-80">
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-16 w-16 rounded-full object-cover" />
+      <div className="min-w-0">
+        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
+      </div>
+    </Link>
+  ) : (
+    <div className="flex items-center gap-4">
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-16 w-16 rounded-full object-cover" />
+      <div className="min-w-0">
+        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
+      </div>
+    </div>
+  );
+
+  const commentsSection = (
+    <section className={`flex flex-col gap-4 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6 ${isLiveWatchLayout ? "max-h-[75vh] overflow-hidden" : ""}`}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
+        <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
+      </div>
+
+      <div className="flex gap-3">
+        <img src={getProfileAvatar(user)} alt={getProfileName(user, t("videoDetails.you"))} className="h-11 w-11 rounded-full object-cover" />
+        <div className="flex-1 space-y-3">
+          <textarea
+            value={commentBody}
+            onChange={(event) => setCommentBody(event.target.value)}
+            rows={3}
+            placeholder={t("videoDetails.commentPlaceholder")}
+            className="w-full resize-none rounded-3xl bg-white300 px-4 py-3 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
+          />
+          <button
+            type="button"
+            disabled={submittingComment || !commentBody.trim()}
+            onClick={handleSubmitComment}
+            className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submittingComment ? t("videoDetails.posting") : t("videoDetails.postComment")}
+          </button>
+        </div>
+      </div>
+
+      <div className={`${isLiveWatchLayout ? "flex-1 space-y-4 overflow-y-auto pr-1" : "space-y-4"}`}>
+        {comments.length ? (
+          comments.map((comment) => (
+            <CommentCard
+              key={comment.id}
+              comment={comment}
+              replies={repliesByComment[comment.id] || []}
+              repliesExpanded={Boolean(expandedReplies[comment.id])}
+              loadingReplies={loadingRepliesId === comment.id}
+              replying={submittingReplyId === comment.id}
+              replyDraft={replyDrafts[comment.id] || ""}
+              onChangeReplyDraft={(commentId, value) => setReplyDrafts((current) => ({ ...current, [commentId]: value }))}
+              onSubmitReply={handleSubmitReply}
+              onToggleReplies={handleToggleReplies}
+              onToggleReaction={handleCommentReaction}
+            />
+          ))
+        ) : (
+          <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">{t("videoDetails.noComments")}</div>
+        )}
+      </div>
+    </section>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
       <div className="mx-auto max-w-7xl space-y-4">
@@ -464,19 +1031,49 @@ export default function VideoDetails() {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr),360px]">
+        <div className={`grid gap-6 ${isLiveWatchLayout ? "xl:grid-cols-[minmax(0,1.2fr),400px]" : "xl:grid-cols-[minmax(0,1fr),360px]"}`}>
           <div className="space-y-6">
             <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
               <div className="relative aspect-video bg-black">
                 {video.type === "video" ? (
-                  <video src={video.mediaUrl} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls className="h-full w-full object-cover" />
+                  shouldUseLocalLivePreview && localLiveStream ? (
+                    <video
+                      ref={livePreviewRef}
+                      aria-label={t("videoDetails.liveCameraPreview")}
+                      className="h-full w-full object-cover"
+                      autoPlay
+                      muted
+                      playsInline
+                    />
+                  ) : showRemoteLivePlayer ? (
+                    <video
+                      ref={livePlaybackRef}
+                      aria-label={t("videoDetails.liveStreamPlayback")}
+                      className="h-full w-full object-cover"
+                      autoPlay
+                      playsInline
+                      controls
+                    />
+                  ) : video.isLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !video.mediaUrl) ? (
+                    <div className="flex h-full items-center justify-center px-6 text-center text-white">
+                      <div className="max-w-lg">
+                        <p className="text-xs font-semibold uppercase tracking-[0.35em] text-red-300">{t("videoDetails.liveNow")}</p>
+                        <h2 className="mt-4 text-2xl font-semibold">{t("videoDetails.livePlaceholderTitle")}</h2>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-300">{livePlaceholderMessage}</p>
+                      </div>
+                    </div>
+                  ) : video.mediaUrl ? (
+                    <video src={video.mediaUrl} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls className="h-full w-full object-cover" />
+                  ) : (
+                    <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
+                  )
                 ) : (
                   <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
                 )}
               </div>
 
               <div className="space-y-5 px-5 py-5 md:px-6 md:py-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <div className={`flex flex-col gap-4 ${isLiveWatchLayout ? "" : "lg:flex-row lg:items-start lg:justify-between"}`}>
                   <div className="space-y-2">
                     <h1 className="text-2xl font-semibold text-black dark:text-white">{getVideoTitle(video)}</h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
@@ -487,138 +1084,58 @@ export default function VideoDetails() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-3">
-                    {canManageLive ? (
-                      <button
-                        type="button"
-                        disabled={busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`}
-                        onClick={handleLiveToggle}
-                        className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`
-                          ? t(video.isLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive")
-                          : t(video.isLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
-                      </button>
-                    ) : null}
-                    {canSubscribeToAuthor ? (
-                      <button
-                        type="button"
-                        disabled={busyAction === `subscribe-${creatorId}`}
-                        onClick={handleSubscribe}
-                        className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {video.currentUserState?.subscribed ? t("profile.unsubscribe") : t("profile.subscribe")}
-                      </button>
-                    ) : null}
-                  </div>
+                  {!isLiveWatchLayout ? <div className="flex flex-wrap gap-3">{creatorControls}</div> : null}
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <ActionButton active={video.currentUserState?.liked} disabled={busyAction === `like-${video.id}`} onClick={() => handleVideoAction("like")}>
-                    <span className="inline-flex items-center gap-2"><FaRegThumbsUp /> {formatCompactNumber(video.likes || 0)}</span>
-                  </ActionButton>
-                  <ActionButton active={video.currentUserState?.disliked} disabled={busyAction === `dislike-${video.id}`} onClick={() => handleVideoAction("dislike")}>
-                    <span className="inline-flex items-center gap-2"><FaRegThumbsDown /> {formatCompactNumber(video.dislikes || 0)}</span>
-                  </ActionButton>
-                  <ActionButton active={video.currentUserState?.saved} disabled={busyAction === `save-${video.id}`} onClick={() => handleVideoAction("save")}>
-                    <span className="inline-flex items-center gap-2"><FaRegBookmark /> {t("videoDetails.save")}</span>
-                  </ActionButton>
-                  <ActionButton disabled={busyAction === `share-${video.id}`} onClick={handleShare}>
-                    <span className="inline-flex items-center gap-2"><HiShare /> {t("videoDetails.share")}</span>
-                  </ActionButton>
-                  <ActionButton disabled={busyAction === `report-${video.id}`} onClick={handleReport}>
-                    <span className="inline-flex items-center gap-2"><FaRegFlag /> {t("videoDetails.report")}</span>
-                  </ActionButton>
-                </div>
+                {!isLiveWatchLayout ? (
+                  <>
+                    <div className="flex flex-wrap gap-3">{actionButtons}</div>
 
-                <div className="rounded-3xl bg-gray-50 p-5 dark:bg-[#101010]">
-                  {creatorId ? (
-                    <Link to={`/users/${creatorId}`} className="flex items-center gap-4 rounded-2xl transition-opacity hover:opacity-80">
-                      <img src={getProfileAvatar(video.author || video.creator)} alt={getProfileName(video.author || video.creator)} className="h-16 w-16 rounded-full object-cover" />
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(video.author || video.creator)}</p>
-                        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(video.author?.subscriberCount || video.creator?.subscriberCount || 0, t("content.subscribers"))}</p>
-                      </div>
-                    </Link>
-                  ) : (
-                    <div className="flex items-center gap-4">
-                      <img src={getProfileAvatar(video.author || video.creator)} alt={getProfileName(video.author || video.creator)} className="h-16 w-16 rounded-full object-cover" />
-                      <div className="min-w-0">
-                        <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(video.author || video.creator)}</p>
-                        <p className="text-sm text-slate500 dark:text-slate200">{formatSubscriberLabel(video.author?.subscriberCount || video.creator?.subscriberCount || 0, t("content.subscribers"))}</p>
-                      </div>
+                    <div className="rounded-3xl bg-gray-50 p-5 dark:bg-[#101010]">
+                      {creatorIdentity}
+                      <p className="mt-4 text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
                     </div>
-                  )}
-                  <p className="mt-4 text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
-                </div>
+                  </>
+                ) : null}
               </div>
             </section>
 
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.moreVideos")}</h2>
-                <p className="text-sm text-slate500 dark:text-slate200">{t("videoDetails.relatedCount", { count: relatedVideos.length })}</p>
-              </div>
-              {relatedVideos.length ? (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                  {relatedVideos.map((relatedVideo) => (
-                    <RelatedVideoCard key={relatedVideo.id} video={relatedVideo} onOpen={(videoId) => navigate(`/video/${videoId}`)} />
-                  ))}
+            {!isLiveWatchLayout ? (
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.moreVideos")}</h2>
+                  <p className="text-sm text-slate500 dark:text-slate200">{t("videoDetails.relatedCount", { count: relatedVideos.length })}</p>
                 </div>
-              ) : (
-                <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">{t("videoDetails.noRelatedVideos")}</div>
-              )}
-            </section>
+                {relatedVideos.length ? (
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {relatedVideos.map((relatedVideo) => (
+                      <RelatedVideoCard key={relatedVideo.id} video={relatedVideo} onOpen={(nextVideo) => navigate(buildVideoLink(nextVideo))} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">{t("videoDetails.noRelatedVideos")}</div>
+                )}
+              </section>
+            ) : null}
           </div>
 
-          <aside className="flex flex-col gap-4 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
-              <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
-            </div>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : ""}>
+            {isLiveWatchLayout ? (
+              <section className="space-y-5 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  {creatorIdentity}
+                  <div className="flex flex-wrap gap-3">{creatorControls}</div>
+                </div>
 
-            <div className="flex gap-3">
-              <img src={getProfileAvatar(user)} alt={getProfileName(user, t("videoDetails.you"))} className="h-11 w-11 rounded-full object-cover" />
-              <div className="flex-1 space-y-3">
-                <textarea
-                  value={commentBody}
-                  onChange={(event) => setCommentBody(event.target.value)}
-                  rows={3}
-                  placeholder={t("videoDetails.commentPlaceholder")}
-                  className="w-full resize-none rounded-3xl bg-white300 px-4 py-3 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
-                />
-                <button
-                  type="button"
-                  disabled={submittingComment || !commentBody.trim()}
-                  onClick={handleSubmitComment}
-                  className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {submittingComment ? t("videoDetails.posting") : t("videoDetails.postComment")}
-                </button>
-              </div>
-            </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {actionButtons}
+                </div>
 
-            <div className="space-y-4">
-              {comments.length ? (
-                comments.map((comment) => (
-                  <CommentCard
-                    key={comment.id}
-                    comment={comment}
-                    replies={repliesByComment[comment.id] || []}
-                    repliesExpanded={Boolean(expandedReplies[comment.id])}
-                    loadingReplies={loadingRepliesId === comment.id}
-                    replying={submittingReplyId === comment.id}
-                    replyDraft={replyDrafts[comment.id] || ""}
-                    onChangeReplyDraft={(commentId, value) => setReplyDrafts((current) => ({ ...current, [commentId]: value }))}
-                    onSubmitReply={handleSubmitReply}
-                    onToggleReplies={handleToggleReplies}
-                    onToggleReaction={handleCommentReaction}
-                  />
-                ))
-              ) : (
-                <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">{t("videoDetails.noComments")}</div>
-              )}
-            </div>
+                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
+              </section>
+            ) : null}
+
+            {commentsSection}
           </aside>
         </div>
       </div>

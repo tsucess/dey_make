@@ -150,6 +150,6 @@ describe('SearchResults', () => {
     await user.click(screen.getByRole('button', { name: /subscribe/i }));
 
     await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(3));
-    expect(screen.getByRole('button', { name: /unsubscribe/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /subscribed/i })).toBeInTheDocument();
   });
 });

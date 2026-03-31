@@ -45,6 +45,7 @@ function renderPage() {
     <MemoryRouter initialEntries={['/live']}>
       <Routes>
         <Route path="/live" element={<LivePage />} />
+        <Route path="/live/:id" element={<div>Live room</div>} />
         <Route path="/home" element={<div>Home page</div>} />
       </Routes>
     </MemoryRouter>,
@@ -57,6 +58,8 @@ describe('LivePage', () => {
   });
 
   it('renders active live streams from the API', async () => {
+    const user = userEvent.setup();
+
     api.getLiveVideos.mockResolvedValue({
       data: {
         videos: [buildVideo()],
@@ -71,6 +74,10 @@ describe('LivePage', () => {
     expect(screen.getByText('1 active streams')).toBeInTheDocument();
     expect(screen.getByText('Live Set')).toBeInTheDocument();
     expect(screen.getAllByText('Creator Uno')).toHaveLength(1);
+
+    await user.click(screen.getByText('Live Set'));
+
+    expect(await screen.findByText('Live room')).toBeInTheDocument();
   });
 
   it('offers a way back home when no live streams are active', async () => {

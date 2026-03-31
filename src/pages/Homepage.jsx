@@ -8,6 +8,7 @@ import VideoCard from "../components/VideoCard";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
+  buildVideoLink,
   formatCompactNumber,
   formatSubscriberLabel,
   getProfileAvatar,
@@ -93,7 +94,7 @@ function MobileTrendingCard({ video, showViews }) {
   const title = getVideoTitle(video);
 
   return (
-    <div onClick={() => navigate(`/video/${video.id}`)} className="flex w-42 shrink-0 cursor-pointer flex-col">
+    <div onClick={() => navigate(buildVideoLink(video))} className="flex w-42 shrink-0 cursor-pointer flex-col">
       <div className="relative aspect-[0.88] w-full overflow-hidden rounded-[1.75rem] bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
         {showViews ? (
@@ -133,7 +134,7 @@ function MobileFeaturedCard({ video }) {
   const creator = video.author || video.creator;
 
   return (
-    <article className="cursor-pointer" onClick={() => navigate(`/video/${video.id}`)}>
+    <article className="cursor-pointer" onClick={() => navigate(buildVideoLink(video))}>
       <div className="aspect-[1.18] overflow-hidden rounded-4xl bg-gray-200 dark:bg-[#2d2d2d]">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
       </div>

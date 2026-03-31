@@ -7,6 +7,7 @@ import Logo from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
+import { buildVideoLink } from "../utils/content";
 
 const uploadTypeOptions = [
   { id: "image", icon: IoImageOutline, accept: "image/png,image/jpeg" },
@@ -43,12 +44,17 @@ function parseCategoryId(value) {
   return Number.isInteger(numericValue) && numericValue > 0 ? numericValue : null;
 }
 
+function stopMediaStream(stream) {
+  stream?.getTracks?.().forEach((track) => track.stop());
+}
+
 export default function CreateUpload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
+  const livePreviewRef = useRef(null);
   const draftId = searchParams.get("id");
   const intent = searchParams.get("intent");
   const isEditingDraft = Boolean(draftId);
@@ -56,6 +62,9 @@ export default function CreateUpload() {
   const [selectedType, setSelectedType] = useState("image");
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState("");
+  const [liveCameraStream, setLiveCameraStream] = useState(null);
+  const [liveCameraStatus, setLiveCameraStatus] = useState("idle");
+  const [liveCameraError, setLiveCameraError] = useState("");
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState({
     title: "",
@@ -91,6 +100,78 @@ export default function CreateUpload() {
   useEffect(() => {
     if (isLiveIntent) setSelectedType("video");
   }, [isLiveIntent]);
+
+  useEffect(() => {
+    if (!isLiveIntent) {
+      setLiveCameraStream((current) => {
+        stopMediaStream(current);
+        return null;
+      });
+      setLiveCameraStatus("idle");
+      setLiveCameraError("");
+      return;
+    }
+
+    let ignore = false;
+
+    async function connectCamera() {
+      if (!navigator?.mediaDevices?.getUserMedia) {
+        if (!ignore) {
+          setLiveCameraStatus("error");
+          setLiveCameraError(t("upload.camera.unavailable"));
+        }
+        return;
+      }
+
+      if (!ignore) {
+        setLiveCameraStatus("requesting");
+        setLiveCameraError("");
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+        if (ignore) {
+          stopMediaStream(stream);
+          return;
+        }
+
+        setSelectedType("video");
+        setSelectedFile(null);
+        setExistingMediaUrl("");
+        setLiveCameraStream((current) => {
+          stopMediaStream(current);
+          return stream;
+        });
+        setLiveCameraStatus("ready");
+      } catch {
+        if (!ignore) {
+          setLiveCameraStream((current) => {
+            stopMediaStream(current);
+            return null;
+          });
+          setLiveCameraStatus("error");
+          setLiveCameraError(t("upload.camera.unavailable"));
+        }
+      }
+    }
+
+    connectCamera();
+
+    return () => {
+      ignore = true;
+    };
+  }, [isLiveIntent, t]);
+
+  useEffect(() => {
+    if (livePreviewRef.current) {
+      livePreviewRef.current.srcObject = liveCameraStream || null;
+    }
+  }, [liveCameraStream]);
+
+  useEffect(() => () => {
+    stopMediaStream(liveCameraStream);
+  }, [liveCameraStream]);
 
   useEffect(() => {
     let ignore = false;
@@ -195,11 +276,17 @@ export default function CreateUpload() {
   async function handleSubmit(action) {
     const detectedType = detectUploadType(selectedFile);
     const categoryId = parseCategoryId(form.categoryId);
+    const isLiveCameraFlow = isLiveIntent && action === "live";
 
     setError("");
     setFeedback("");
 
-    if (!selectedFile && !existingMediaUrl) {
+    if (isLiveCameraFlow && !liveCameraStream) {
+      setError(t("upload.errors.cameraRequired"));
+      return;
+    }
+
+    if (!isLiveCameraFlow && !selectedFile && !existingMediaUrl) {
       setError(t("upload.errors.chooseFile"));
       return;
     }
@@ -273,7 +360,7 @@ export default function CreateUpload() {
         return;
       }
 
-      navigate(`/video/${nextVideo.id}`);
+      navigate(buildVideoLink(nextVideo, action === "live"));
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || t("upload.errors.unableToComplete")));
     } finally {
@@ -308,57 +395,118 @@ export default function CreateUpload() {
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-          <div className="mb-8 grid gap-4 md:mb-10 md:grid-cols-3 md:gap-6">
-            {uploadTypes.map(({ id, label, helper, icon: Icon }) => (
+          {isLiveIntent ? (
+            <div className="mb-8 overflow-hidden rounded-[2rem] border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
+              <div className="flex h-72 items-center justify-center bg-black md:h-80">
+                {liveCameraStream ? (
+                  <video
+                    ref={livePreviewRef}
+                    aria-label={t("upload.camera.previewLabel")}
+                    className="h-full w-full object-cover"
+                    autoPlay
+                    muted
+                    playsInline
+                  />
+                ) : (
+                  <div className="px-6 text-center text-white">
+                    <IoVideocamOutline className="mx-auto mb-4 h-16 w-16 text-red-300" />
+                    <p className="text-lg font-semibold">{t("upload.camera.sourceTitle")}</p>
+                    <p className="mt-2 text-sm text-slate-300">
+                      {liveCameraStatus === "requesting" ? t("upload.camera.requesting") : liveCameraError || t("upload.camera.help")}
+                    </p>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-3 px-6 py-5 text-sm text-slate600 dark:text-slate200 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-medium text-black dark:text-white">{t("upload.camera.sourceTitle")}</p>
+                  <p className="mt-1">{liveCameraStatus === "ready" ? t("upload.camera.ready") : t("upload.camera.help")}</p>
+                </div>
+                {liveCameraStatus === "error" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLiveCameraStatus("idle");
+                      setLiveCameraError("");
+                      setError("");
+                      setSelectedFile(null);
+                      setExistingMediaUrl("");
+                      setSelectedType("video");
+                      navigator.mediaDevices?.getUserMedia && navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+                        .then((stream) => {
+                          setLiveCameraStream((current) => {
+                            stopMediaStream(current);
+                            return stream;
+                          });
+                          setLiveCameraStatus("ready");
+                        })
+                        .catch(() => {
+                          setLiveCameraStatus("error");
+                          setLiveCameraError(t("upload.camera.unavailable"));
+                        });
+                    }}
+                    className="rounded-full bg-red-500 px-5 py-3 font-semibold text-white transition-colors hover:bg-red-600"
+                  >
+                    {t("upload.camera.retry")}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 grid gap-4 md:mb-10 md:grid-cols-3 md:gap-6">
+                {uploadTypes.map(({ id, label, helper, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSelectedType(id)}
+                    className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                      selectedType === id
+                        ? "border-orange100 bg-orange200/10"
+                        : "border-transparent bg-white dark:bg-transparent"
+                    }`}
+                  >
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange100 text-black">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-medium font-inter">{label}</span>
+                      <span className="block text-xs text-slate50 dark:text-slate900">{helper}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={currentType?.accept}
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
               <button
-                key={id}
                 type="button"
-                onClick={() => setSelectedType(id)}
-                className={`flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-colors ${
-                  selectedType === id
-                    ? "border-orange100 bg-orange200/10"
-                    : "border-transparent bg-white dark:bg-transparent"
-                }`}
+                onClick={() => fileInputRef.current?.click()}
+                className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-80"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-orange100 text-black">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span>
-                  <span className="block text-sm font-medium font-inter">{label}</span>
-                  <span className="block text-xs text-slate50 dark:text-slate900">{helper}</span>
-                </span>
+                {previewUrl ? (
+                  selectedType === "video" ? (
+                    <video src={previewUrl} className="h-full w-full rounded-3xl object-cover" controls />
+                  ) : (
+                    <img src={previewUrl} alt={t("upload.previewAlt")} className="h-full w-full rounded-3xl object-cover" />
+                  )
+                ) : (
+                  <>
+                    <IoCloudUploadOutline className="mb-4 h-20 w-20 text-slate200 dark:text-slate300" />
+                    <span className="text-3xl font-medium font-inter md:text-4xl">{t("upload.dropzone.dragAndDrop")}</span>
+                    <span className="mt-1 text-sm font-medium text-orange100">{t("upload.dropzone.orBrowse")}</span>
+                  </>
+                )}
+                {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.selected", { name: selectedFile.name })}</span> : previewUrl ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.currentDraftMediaLoaded")}</span> : null}
               </button>
-            ))}
-          </div>
-
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={currentType?.accept}
-            className="hidden"
-            onChange={handleFileChange}
-          />
-
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-80"
-          >
-            {previewUrl ? (
-              selectedType === "video" ? (
-                <video src={previewUrl} className="h-full w-full rounded-3xl object-cover" controls />
-              ) : (
-                <img src={previewUrl} alt={t("upload.previewAlt")} className="h-full w-full rounded-3xl object-cover" />
-              )
-            ) : (
-              <>
-                <IoCloudUploadOutline className="mb-4 h-20 w-20 text-slate200 dark:text-slate300" />
-                <span className="text-3xl font-medium font-inter md:text-4xl">{t("upload.dropzone.dragAndDrop")}</span>
-                <span className="mt-1 text-sm font-medium text-orange100">{t("upload.dropzone.orBrowse")}</span>
-              </>
-            )}
-            {selectedFile ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.selected", { name: selectedFile.name })}</span> : previewUrl ? <span className="mt-4 text-sm text-slate400 dark:text-slate200">{t("upload.dropzone.currentDraftMediaLoaded")}</span> : null}
-          </button>
+            </>
+          )}
 
           <div className="space-y-4 md:space-y-5">
             {textFields.map(({ key, placeholder }) => (
@@ -394,30 +542,43 @@ export default function CreateUpload() {
           </div>
 
           <div className="mt-10 flex gap-3 flex-row justify-end">
-            <button
-              type="button"
-              onClick={() => handleSubmit("draft")}
-              disabled={Boolean(submitting)}
-              className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
-            >
-              {submitting === "draft" ? (isEditingDraft ? t("upload.actions.updating") : t("upload.actions.saving")) : (isEditingDraft ? t("upload.actions.updateDraft") : t("upload.actions.saveDraft"))}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSubmit("live")}
-              disabled={Boolean(submitting) || selectedType !== "video"}
-              className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold font-inter text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting === "live" ? t("upload.actions.goingLive") : t("upload.actions.goLive")}
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSubmit("publish")}
-              disabled={Boolean(submitting)}
-              className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {submitting === "publish" ? t("upload.actions.uploading") : t("upload.actions.upload")}
-            </button>
+            {isLiveIntent ? (
+              <button
+                type="button"
+                onClick={() => handleSubmit("live")}
+                disabled={Boolean(submitting) || liveCameraStatus !== "ready"}
+                className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold font-inter text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting === "live" ? t("upload.actions.goingLive") : t("upload.actions.goLive")}
+              </button>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleSubmit("draft")}
+                  disabled={Boolean(submitting)}
+                  className="rounded-full bg-white300 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-slate150 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
+                >
+                  {submitting === "draft" ? (isEditingDraft ? t("upload.actions.updating") : t("upload.actions.saving")) : (isEditingDraft ? t("upload.actions.updateDraft") : t("upload.actions.saveDraft"))}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmit("live")}
+                  disabled={Boolean(submitting) || selectedType !== "video"}
+                  className="rounded-full bg-red-500 px-8 py-4 text-sm font-semibold font-inter text-white transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting === "live" ? t("upload.actions.goingLive") : t("upload.actions.goLive")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSubmit("publish")}
+                  disabled={Boolean(submitting)}
+                  className="rounded-full bg-orange100 px-8 py-4 text-sm font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting === "publish" ? t("upload.actions.uploading") : t("upload.actions.upload")}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

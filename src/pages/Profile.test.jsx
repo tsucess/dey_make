@@ -169,6 +169,6 @@ describe('Profile', () => {
     await user.click(screen.getByRole('button', { name: /Subscribe/i }));
 
     await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(5));
-    expect(screen.getByRole('button', { name: /Unsubscribe/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Subscribed/i })).toBeInTheDocument();
   });
 });

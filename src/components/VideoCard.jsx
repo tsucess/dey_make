@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
+import { buildVideoLink, FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
 import { useLanguage } from "../context/LanguageContext";
 
 export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live, processingStatus = "completed" }) {
@@ -11,7 +11,7 @@ export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = 
   return (
     <div
       className="flex flex-col cursor-pointer group w-full"
-      onClick={() => navigate(`/video/${id}`)}
+      onClick={() => navigate(buildVideoLink(id, live))}
     >
       <div className="relative w-full h-60.5 aspect-video rounded-xl overflow-hidden
                       bg-gray-200 dark:bg-gray-700">

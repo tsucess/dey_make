@@ -92,6 +92,8 @@ describe('Messages', () => {
 
     render(<Messages />);
 
+    expect(await screen.findByText('Bandeja')).toBeInTheDocument();
+    expect(screen.getByText('Creadores sugeridos')).toBeInTheDocument();
     await screen.findByPlaceholderText(/Mensaje para Bob Builder/i);
 
     await user.type(screen.getByPlaceholderText(/Mensaje para Bob Builder/i), 'Hi Bob');

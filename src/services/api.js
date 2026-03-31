@@ -122,6 +122,8 @@ export const api = {
   publishVideo: (id) => request(`/videos/${id}/publish`, { method: "POST" }),
   startVideoLive: (id) => request(`/videos/${id}/live/start`, { method: "POST" }),
   stopVideoLive: (id) => request(`/videos/${id}/live/stop`, { method: "POST" }),
+  sendLiveSignal: (id, payload) => request(`/videos/${id}/live/signals`, { method: "POST", body: payload }),
+  getLiveSignals: (id, options = {}) => request(`/videos/${id}/live/signals${buildQueryString({ after: options.after })}`),
   getProfile: () => request("/me/profile"),
   updateProfile: (payload) => request("/me/profile", { method: "PATCH", body: payload }),
   getProfileFeed: (feed) => request(`/me/${feed}`),

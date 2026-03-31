@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FALLBACK_AVATAR,
   FALLBACK_THUMBNAIL,
+  buildVideoLink,
   buildShareUrl,
   formatCompactNumber,
   getVideoProcessingStatus,
@@ -60,5 +61,7 @@ describe('content helpers', () => {
 
   it('builds a share url from the current origin', () => {
     expect(buildShareUrl(42)).toBe(`${window.location.origin}/video/42`);
+    expect(buildShareUrl(42, true)).toBe(`${window.location.origin}/live/42`);
+    expect(buildVideoLink({ id: 7, isLive: true })).toBe('/live/7');
   });
 });

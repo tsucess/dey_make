@@ -45,4 +45,20 @@ describe('Leaderboard', () => {
     expect(await screen.findByText('Actualmente ocupas')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay entradas en la tabla.')).toBeInTheDocument();
   });
+
+  it('shows the authenticated user rank when the API returns it', async () => {
+    api.getLeaderboard.mockResolvedValue({
+      data: {
+        podium: [],
+        standings: [{ userId: 2, rank: 4, trend: 'steady', score: 40, videosCount: 2, user: { fullName: 'Creator Four', avatarUrl: '' } }],
+        currentUserRank: { userId: 2, rank: 4, trend: 'steady', score: 40, videosCount: 2, user: { fullName: 'Creator Four', avatarUrl: '' } },
+      },
+    });
+
+    render(<Leaderboard />);
+
+    await waitFor(() => expect(api.getLeaderboard).toHaveBeenCalledWith('daily'));
+    expect(await screen.findByText('4')).toBeInTheDocument();
+    expect(screen.queryByText('—')).not.toBeInTheDocument();
+  });
 });
