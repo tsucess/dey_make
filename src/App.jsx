@@ -5,6 +5,7 @@ import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
 import AppLayout from "./components/Layout/AppLayout";
 import Homepage from "./pages/Homepage";
+import LivePage from "./pages/LivePage";
 import Leaderboard from "./pages/Leaderboard";
 import CreateUpload from "./pages/CreateUpload";
 import Messages from "./pages/Messages";
@@ -13,11 +14,14 @@ import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
+import { useLanguage } from "./context/LanguageContext";
 
 function FullPageLoader() {
+  const { t } = useLanguage();
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
-      Loading...
+      {t("app.loading")}
     </div>
   );
 }
@@ -64,9 +68,14 @@ export default function App() {
           <Route path="/auth/callback" element={<OAuthCallback />} />
         </Route>
 
+        <Route element={<AppLayout />}>
+          <Route path="/users/:id" element={<Profile />} />
+        </Route>
+
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Homepage />} />
+            <Route path="/live" element={<LivePage />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />

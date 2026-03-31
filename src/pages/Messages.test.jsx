@@ -2,6 +2,19 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../locales/translations');
+  const t = actual.createTranslator('es');
+
+  return {
+    useLanguage: () => ({
+      locale: 'es',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
+
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
     user: { fullName: 'Test Creator' },
@@ -79,10 +92,10 @@ describe('Messages', () => {
 
     render(<Messages />);
 
-    await screen.findByPlaceholderText(/Message Bob Builder/i);
+    await screen.findByPlaceholderText(/Mensaje para Bob Builder/i);
 
-    await user.type(screen.getByPlaceholderText(/Message Bob Builder/i), 'Hi Bob');
-    await user.click(screen.getByRole('button', { name: 'Send' }));
+    await user.type(screen.getByPlaceholderText(/Mensaje para Bob Builder/i), 'Hi Bob');
+    await user.click(screen.getByRole('button', { name: 'Enviar' }));
 
     await waitFor(() => expect(api.sendConversationMessage).toHaveBeenCalledWith(10, 'Hi Bob'));
 
@@ -117,12 +130,12 @@ describe('Messages', () => {
     render(<Messages />);
 
     await screen.findByText('Nora Network');
-    await user.click(screen.getByRole('button', { name: 'Message' }));
+    await user.click(screen.getByRole('button', { name: 'Mensaje' }));
 
     await waitFor(() => expect(api.createConversation).toHaveBeenCalledWith({ userId: 7 }));
 
-    await screen.findByText('Conversation with Nora Network is ready.');
-    expect(screen.getByText(/No messages yet. Say hello to Nora Network./i)).toBeInTheDocument();
+    await screen.findByText('La conversación con Nora Network está lista.');
+    expect(screen.getByText(/Aún no hay mensajes\. Saluda a Nora Network\./i)).toBeInTheDocument();
   });
 
   it('polls only for new messages and merges them into the active conversation', async () => {

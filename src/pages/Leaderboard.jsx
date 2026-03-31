@@ -1,28 +1,35 @@
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
 import { IoMdArrowDropright } from "react-icons/io";
+import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
-import { formatCompactNumber, getProfileAvatar, getProfileName } from "../utils/content";
+import { formatCountLabel, getProfileAvatar, getProfileName } from "../utils/content";
 
-const tabs = [
-  { label: "Daily", value: "daily" },
-  { label: "Weekly", value: "weekly" },
-  { label: "Monthly", value: "monthly" },
-];
+function getTabs(t) {
+  return [
+    { label: t("leaderboard.tabs.daily"), value: "daily" },
+    { label: t("leaderboard.tabs.weekly"), value: "weekly" },
+    { label: t("leaderboard.tabs.monthly"), value: "monthly" },
+  ];
+}
 
 function ViewsBadge({ views }) {
+  const { t } = useLanguage();
+
   return (
     <div className="inline-flex items-center gap-1 rounded-full bg-black/52 backdrop-blur-xs backdrop-brightness-90 border-y border-y-white px-3 py-1 text-[11px] font-medium font-inter text-white md:text-sm dark:bg-[#555555]">
       <IoMdArrowDropright className="h-6 w-6 text-white" />
-      <span>{formatCompactNumber(views)}views</span>
+      <span>{formatCountLabel(views, t("content.views"))}</span>
     </div>
   );
 }
 
 function TrendIndicator({ trend }) {
+  const { t } = useLanguage();
+
   if (trend === "steady") {
     return (
-      <span className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate300 bg-white text-xs font-bold text-slate500 md:h-7 md:w-7 dark:border-slate500 dark:bg-[#343434] dark:text-slate200">
+      <span aria-label={t("leaderboard.steady")} className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-slate300 bg-white text-xs font-bold text-slate500 md:h-7 md:w-7 dark:border-slate500 dark:bg-[#343434] dark:text-slate200">
         •
       </span>
     );
@@ -35,7 +42,7 @@ function TrendIndicator({ trend }) {
       className={`flex h-6 w-6 items-center justify-center rounded-full border-2 bg-white md:h-7 md:w-7 ${
         isUp ? "border-green100 text-green100" : "border-red100 text-red100"
       }`}
-      aria-label={isUp ? "Trending up" : "Trending down"}
+      aria-label={isUp ? t("leaderboard.trendingUp") : t("leaderboard.trendingDown")}
     >
       {isUp ? <MdArrowDropUp className="h-5 w-5" /> : <MdArrowDropDown className="h-5 w-5" />}
     </span>
@@ -44,20 +51,25 @@ function TrendIndicator({ trend }) {
 
 function podiumAsset(rank) {
   if (rank === 1) {
-    return { image: "/podium1.png", alt: "First place podium", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" };
+    return { image: "/podium1.png", widthClass: "w-[170px] sm:w-[210px] md:w-[245px]" };
   }
 
   if (rank === 2) {
-    return { image: "/podium2.svg", alt: "Second place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" };
+    return { image: "/podium2.svg", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" };
   }
 
-  return { image: "/podium3.svg", alt: "Third place podium", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" };
+  return { image: "/podium3.svg", widthClass: "w-[150px] sm:w-[185px] md:w-[215px]" };
 }
 
 function PodiumCard({ item }) {
+  const { t } = useLanguage();
   const isWinner = item.rank === 1;
   const asset = podiumAsset(item.rank);
-  console.log(item)
+  const alt = {
+    1: t("leaderboard.podium.first"),
+    2: t("leaderboard.podium.second"),
+    3: t("leaderboard.podium.third"),
+  }[item.rank] || t("leaderboard.podium.third");
 
   return (
     <div className={`flex flex-col items-center ${item.rank === 1 ? 'order-2' : item.rank === 2 ? 'order-1' : 'order-3'}`}>
@@ -72,12 +84,14 @@ function PodiumCard({ item }) {
       <div className="mt-1">
         <ViewsBadge views={item.score} />
       </div>
-      <img src={asset.image} alt={asset.alt} className={`mt-3 h-auto max-w-full ${asset.widthClass}`} />
+      <img src={asset.image} alt={alt} className={`mt-3 h-auto max-w-full ${asset.widthClass}`} />
     </div>
   );
 }
 
 function StandingRow({ item, isLast }) {
+  const { t } = useLanguage();
+
   return (
     <div
       className={`flex items-center justify-between rounded-3xl px-4 py-4 dark:md:bg-[#343434] md:rounded-none md:bg-transparent md:px-0 ${
@@ -90,7 +104,7 @@ function StandingRow({ item, isLast }) {
           <span className="block truncate text-base font-medium font-inter text-slate100 dark:text-white md:text-[1.05rem]">
             {getProfileName(item.user)}
           </span>
-          <span className="text-xs text-slate400 dark:text-slate200">{item.videosCount} videos</span>
+          <span className="text-xs text-slate400 dark:text-slate200">{t("leaderboard.videosCount", { count: item.videosCount })}</span>
         </div>
       </div>
 
@@ -103,7 +117,9 @@ function StandingRow({ item, isLast }) {
 }
 
 export default function Leaderboard() {
-  const [tab, setTab] = useState(tabs[0]);
+  const { t } = useLanguage();
+  const tabs = useMemo(() => getTabs(t), [t]);
+  const [tab, setTab] = useState("daily");
   const [board, setBoard] = useState({ podium: [], standings: [], currentUserRank: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -116,14 +132,14 @@ export default function Leaderboard() {
       setError("");
 
       try {
-        const response = await api.getLeaderboard(tab.value);
+        const response = await api.getLeaderboard(tab);
 
         if (!ignore) {
           setBoard(response?.data || { podium: [], standings: [], currentUserRank: null });
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load leaderboard."));
+          setError(firstError(nextError.errors, nextError.message || t("leaderboard.unableToLoad")));
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -135,7 +151,7 @@ export default function Leaderboard() {
     return () => {
       ignore = true;
     };
-  }, [tab]);
+  }, [t, tab]);
 
   const currentRank = useMemo(() => board.currentUserRank?.rank ?? "—", [board.currentUserRank]);
 
@@ -145,13 +161,13 @@ export default function Leaderboard() {
         <div className="w-full max-w-155 rounded-full bg-white200 p-2 dark:bg-black100">
           <div className="grid grid-cols-3 gap-2">
             {tabs.map((item) => {
-              const isActive = tab.value === item.value;
+              const isActive = tab === item.value;
 
               return (
                 <button
                   key={item.value}
                   type="button"
-                  onClick={() => setTab(item)}
+                  onClick={() => setTab(item.value)}
                   className={`rounded-full px-3 py-3 text-sm font-medium font-inter transition-colors md:px-4 md:text-[1.05rem] ${
                     isActive
                       ? "bg-orange100 text-black"
@@ -169,7 +185,7 @@ export default function Leaderboard() {
 
         {loading ? (
           <div className="mt-8 w-full rounded-3xl bg-[#F3F3F3] px-6 py-12 text-center text-sm text-slate100 dark:bg-[#343434] dark:text-white">
-            Loading leaderboard...
+            {t("leaderboard.loading")}
           </div>
         ) : (
           <>
@@ -181,7 +197,7 @@ export default function Leaderboard() {
 
             <section className="mt-6 md:mt-0 w-full md:overflow-hidden md:rounded-4xl">
               <div className="flex items-center justify-between bg-orange100 rounded-full md:rounded-none px-6 py-5 md:px-10">
-                <span className="text-base font-medium font-inter text-black md:text-lg">You Currently Rank</span>
+                <span className="text-base font-medium font-inter text-black md:text-lg">{t("leaderboard.currentRank")}</span>
                 <div className="flex items-center gap-4">
                   <span className="text-base font-medium font-inter text-black md:text-lg">{currentRank}</span>
                   <TrendIndicator trend={board.currentUserRank?.trend || "steady"} />
@@ -195,7 +211,7 @@ export default function Leaderboard() {
                   ))
                 ) : (
                   <div className="rounded-3xl bg-[#F3F3F3] px-4 py-6 text-center text-sm text-slate100 dark:bg-[#343434] dark:text-white">
-                    No leaderboard entries yet.
+                    {t("leaderboard.noEntries")}
                   </div>
                 )}
               </div>

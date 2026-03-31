@@ -3,13 +3,15 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
 import { useAuth } from "../../context/AuthContext";
+import { useLanguage } from "../../context/LanguageContext";
 import { api, firstError } from "../../services/api";
-import { getProfileAvatar, getProfileName, getVideoTitle } from "../../utils/content";
+import { formatSubscriberLabel, getProfileAvatar, getProfileName, getVideoTitle } from "../../utils/content";
 import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 
 export default function TopBar() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const lookupRef = useRef(null);
@@ -86,7 +88,7 @@ export default function TopBar() {
       } catch (nextError) {
         if (!ignore) {
           setLookup({ videos: [], creators: [], categories: [] });
-          setLookupError(firstError(nextError.errors, nextError.message || "Unable to load suggestions."));
+          setLookupError(firstError(nextError.errors, nextError.message || t("topbar.unableToLoadSuggestions")));
           setIsLookupOpen(true);
         }
       } finally {
@@ -98,7 +100,7 @@ export default function TopBar() {
       ignore = true;
       window.clearTimeout(timeoutId);
     };
-  }, [normalizedQuery]);
+  }, [normalizedQuery, t]);
 
   useEffect(() => {
     if (!isLookupOpen) return undefined;
@@ -145,7 +147,7 @@ export default function TopBar() {
           onSubmit={handleSubmit}
           className="flex items-center gap-2 rounded-full border-[0.15px] border-slate700 bg-white300 px-4 py-2 dark:bg-black100"
         >
-          <button type="submit" className="shrink-0 border-none bg-transparent p-0" aria-label="Submit search">
+          <button type="submit" className="shrink-0 border-none bg-transparent p-0" aria-label={t("topbar.submitSearch")}>
             <HiSearch className="h-4 w-4 text-black dark:text-slate200" />
           </button>
           <input
@@ -156,8 +158,8 @@ export default function TopBar() {
               if (normalizedQuery.length >= 2) setIsLookupOpen(true);
             }}
             onKeyDown={handleInputKeyDown}
-            placeholder="Search videos, creators, categories"
-            aria-label="Search DeyMake"
+            placeholder={t("topbar.searchPlaceholder")}
+            aria-label={t("topbar.searchAriaLabel")}
             className="w-full border-none bg-transparent text-sm font-inter text-black outline-none placeholder-black dark:text-slate200 dark:placeholder-slate200"
           />
         </form>
@@ -165,14 +167,14 @@ export default function TopBar() {
         {showLookup ? (
           <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 rounded-[1.5rem] border border-black/5 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#1B1B1B]">
             {loadingLookup ? (
-              <p className="text-sm text-slate500 dark:text-slate200">Looking up matches...</p>
+              <p className="text-sm text-slate500 dark:text-slate200">{t("topbar.lookingUpMatches")}</p>
             ) : lookupError ? (
               <p className="text-sm text-red-600">{lookupError}</p>
             ) : hasLookupResults ? (
               <div className="space-y-4">
                 {lookup.videos.length ? (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">Videos</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">{t("common.videos")}</p>
                     <div className="space-y-1.5">
                       {lookup.videos.map((video) => (
                         <button
@@ -194,7 +196,7 @@ export default function TopBar() {
 
                 {lookup.creators.length ? (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">Creators</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">{t("common.creators")}</p>
                     <div className="space-y-1.5">
                       {lookup.creators.map((creator) => (
                         <button
@@ -206,7 +208,7 @@ export default function TopBar() {
                           <img src={getProfileAvatar(creator)} alt="" className="h-10 w-10 rounded-full object-cover" />
                           <div className="min-w-0">
                             <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(creator)}</p>
-                            <p className="truncate text-xs text-slate500 dark:text-slate200">{creator.subscriberCount || 0} subscribers</p>
+                            <p className="truncate text-xs text-slate500 dark:text-slate200">{formatSubscriberLabel(creator.subscriberCount || 0)}</p>
                           </div>
                         </button>
                       ))}
@@ -216,7 +218,7 @@ export default function TopBar() {
 
                 {lookup.categories.length ? (
                   <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">Categories</p>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate400">{t("common.categories")}</p>
                     <div className="flex flex-wrap gap-2">
                       {lookup.categories.map((category) => (
                         <button
@@ -237,11 +239,11 @@ export default function TopBar() {
                   onClick={() => submitSearch()}
                   className="w-full rounded-full bg-orange100 px-4 py-2.5 text-sm font-semibold text-black"
                 >
-                  View all results for “{normalizedQuery}”
+                  {t("topbar.viewAllResultsFor", { query: normalizedQuery })}
                 </button>
               </div>
             ) : (
-              <p className="text-sm text-slate500 dark:text-slate200">No quick matches found yet.</p>
+              <p className="text-sm text-slate500 dark:text-slate200">{t("topbar.noQuickMatches")}</p>
             )}
           </div>
         ) : null}
@@ -249,39 +251,41 @@ export default function TopBar() {
 
       {/* Right side */}
       <div className="flex items-center gap-3 relative">
+        {isAuthenticated ? (
+          <>
+            {/* Create */}
+            <button onClick={toggleVisiblity}
+              className="flex items-center gap-1.5
+                         bg-orange100 font-inter hover:bg-[#e09510]
+                         text-black font-semibold text-sm
+                         px-6 py-2.5 rounded-full
+                         border-none cursor-pointer
+                         transition-colors"
+            >
+              <HiPlus className="w-4 h-4" />
+              {t("common.create")}
+            </button>
+            <CreateDropdown isVisible={isVisible}/>
 
-        {/* Create */}
-        
-        <button onClick={toggleVisiblity}
-          className="flex items-center gap-1.5
-                     bg-orange100 font-inter hover:bg-[#e09510]
-                     text-black font-semibold text-sm
-                     px-6 py-2.5 rounded-full
-                     border-none cursor-pointer
-                     transition-colors"
-        >
-          <HiPlus className="w-4 h-4" />
-          Create
-        </button>
-        <CreateDropdown isVisible={isVisible}/>
+            {/* Bell */}
+            <button aria-label={t("common.notifications")} className="w-9 h-9 flex items-center justify-center
+                               rounded-full border-none cursor-pointer
+                               bg-transparent
+                               hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
+                               transition-colors">
+              <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
+            </button>
 
-        {/* Bell */}
-        <button className="w-9 h-9 flex items-center justify-center
-                           rounded-full border-none cursor-pointer
-                           bg-transparent
-                           hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
-                           transition-colors">
-          <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
-        </button>
-
-        {/* Avatar */}
-        <Link to="/profile">
-          <img
-            src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
-            alt={user?.fullName || "Profile"}
-            className="w-10 h-10 rounded-full object-cover cursor-pointer"
-          />
-        </Link>
+            {/* Avatar */}
+            <Link to="/profile">
+              <img
+                src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
+                alt={user?.fullName || t("common.profile")}
+                className="w-10 h-10 rounded-full object-cover cursor-pointer"
+              />
+            </Link>
+          </>
+        ) : null}
       </div>
     </header>
   );

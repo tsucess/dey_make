@@ -1,36 +1,36 @@
+import { getActiveLocale, translate } from "../locales/translations";
+
 export const FALLBACK_AVATAR = "/default avatar.jpg";
 export const FALLBACK_THUMBNAIL = "/Trending image.png";
 
-const compactNumberFormatter = new Intl.NumberFormat("en", {
-  notation: "compact",
-  maximumFractionDigits: 1,
-});
-
-const relativeTimeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
-
 export function formatCompactNumber(value) {
   const numericValue = Number(value ?? 0);
+  const locale = getActiveLocale();
 
   if (!Number.isFinite(numericValue)) return "0";
   if (Math.abs(numericValue) < 1000) return `${numericValue}`;
 
-  return compactNumberFormatter.format(numericValue);
+  return new Intl.NumberFormat(locale, {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(numericValue);
 }
 
-export function formatCountLabel(value, noun = "views") {
+export function formatCountLabel(value, noun = translate(getActiveLocale(), "content.views")) {
   return `${formatCompactNumber(value)} ${noun}`;
 }
 
-export function formatSubscriberLabel(value) {
-  return `${formatCompactNumber(value)} subscribers`;
+export function formatSubscriberLabel(value, noun = translate(getActiveLocale(), "content.subscribers")) {
+  return `${formatCompactNumber(value)} ${noun}`;
 }
 
 export function formatRelativeTime(value) {
-  if (!value) return "Just now";
+  const locale = getActiveLocale();
+  if (!value) return translate(locale, "content.justNow");
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return "Just now";
+  if (Number.isNaN(date.getTime())) return translate(locale, "content.justNow");
 
   const elapsedSeconds = Math.round((date.getTime() - Date.now()) / 1000);
   const units = [
@@ -47,20 +47,20 @@ export function formatRelativeTime(value) {
 
   for (const [threshold, unit] of units) {
     if (Math.abs(duration) < threshold) {
-      return relativeTimeFormatter.format(Math.round(duration), unit);
+      return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(Math.round(duration), unit);
     }
 
     duration /= threshold;
   }
 
-  return "Just now";
+  return translate(locale, "content.justNow");
 }
 
 export function getProfileAvatar(profile) {
   return profile?.avatarUrl || FALLBACK_AVATAR;
 }
 
-export function getProfileName(profile, fallback = "Unknown creator") {
+export function getProfileName(profile, fallback = translate(getActiveLocale(), "content.unknownCreator")) {
   if (typeof profile === "string" && profile.trim()) {
     return profile.trim();
   }
@@ -69,9 +69,10 @@ export function getProfileName(profile, fallback = "Unknown creator") {
 }
 
 export function getVideoTitle(video) {
-  if (!video) return "Untitled video";
+  const untitledVideo = translate(getActiveLocale(), "content.untitledVideo");
+  if (!video) return untitledVideo;
 
-  return video.title || video.caption || video.description || (video.isLive ? "Live stream" : "Untitled video");
+  return video.title || video.caption || video.description || (video.isLive ? translate(getActiveLocale(), "content.liveStream") : untitledVideo);
 }
 
 export function getVideoTags(video) {
@@ -99,6 +100,16 @@ export function getCategoryThumbnail(category) {
   return category?.thumbnailUrl || FALLBACK_THUMBNAIL;
 }
 
+export function getVideoProcessingStatus(video) {
+  const rawStatus = video?.processingStatus || video?.upload?.processingStatus;
+
+  if (typeof rawStatus !== "string") return "completed";
+
+  const normalizedStatus = rawStatus.trim().toLowerCase();
+
+  return normalizedStatus || "completed";
+}
+
 export function mapVideoToCardProps(video) {
   return {
     id: video?.id,
@@ -108,5 +119,6 @@ export function mapVideoToCardProps(video) {
     avatarUrl: getProfileAvatar(video?.author || video?.creator),
     tags: getVideoTags(video),
     live: Boolean(video?.isLive),
+    processingStatus: getVideoProcessingStatus(video),
   };
 }

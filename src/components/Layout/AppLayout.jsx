@@ -7,17 +7,20 @@ import { IoMdSettings } from "react-icons/io";
 import { IoMoonOutline, IoNotificationsOutline } from "react-icons/io5";
 import { MdSunny } from "react-icons/md";
 import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from "../../context/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 import { buildSearchPath } from "../../utils/search";
 
-function getMobileTitle(pathname) {
-  if (pathname.startsWith("/home")) return "DeyMake";
-  if (pathname.startsWith("/leaderboard")) return "Leaderboard";
-  if (pathname.startsWith("/messages")) return "Inbox";
-  if (pathname.startsWith("/profile")) return "Profile";
-  if (pathname.startsWith("/search")) return "Search";
-  if (pathname.startsWith("/settings")) return "Settings";
+function getMobileTitle(pathname, t) {
+  if (pathname.startsWith("/home")) return t("app.name");
+  if (pathname.startsWith("/live")) return t("common.live");
+  if (pathname.startsWith("/leaderboard")) return t("common.leaderboard");
+  if (pathname.startsWith("/messages")) return t("common.messages");
+  if (pathname.startsWith("/profile") || pathname.startsWith("/users/")) return t("common.profile");
+  if (pathname.startsWith("/search")) return t("common.search");
+  if (pathname.startsWith("/settings")) return t("common.settings");
 
-  return "DeyMake";
+  return t("app.name");
 }
 
 const mobileActionClassName = "flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100";
@@ -47,10 +50,12 @@ function MobileActionLink({ children, to, ariaLabel, title }) {
 export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { t } = useLanguage();
   const isHomepage = location.pathname === "/home";
   const isProfile = location.pathname === "/profile";
-  const mobileTitle = getMobileTitle(location.pathname);
+  const mobileTitle = getMobileTitle(location.pathname, t);
 
   function openSearch() {
     navigate(buildSearchPath());
@@ -59,9 +64,11 @@ export default function AppLayout() {
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
       {/* Sidebar — desktop only */}
-      <div className="hidden md:flex">
-        <Sidebar />
-      </div>
+      {isAuthenticated ? (
+        <div className="hidden md:flex">
+          <Sidebar />
+        </div>
+      ) : null}
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* TopBar — desktop only */}
@@ -72,7 +79,7 @@ export default function AppLayout() {
         {/* Mobile TopBar */}
         <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
           {isHomepage ? (
-            <img src="/logo-footer.png" alt="DeyMake" className="h-10 w-auto" />
+            <img src="/logo-footer.png" alt={t("app.name")} className="h-10 w-auto" />
           ) : (
             <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
               {mobileTitle}
@@ -84,24 +91,26 @@ export default function AppLayout() {
               <>
                 <MobileActionButton
                   onClick={toggleTheme}
-                  ariaLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
+                  ariaLabel={isDark ? t("layout.switchToLightMode") : t("layout.switchToDarkMode")}
                 >
                   {isDark ? <MdSunny className="h-5 w-5" /> : <IoMoonOutline className="h-5 w-5" />}
                 </MobileActionButton>
-                <MobileActionButton onClick={openSearch} ariaLabel="Open search">
+                <MobileActionButton onClick={openSearch} ariaLabel={t("layout.openSearch")}>
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
-                <MobileActionButton ariaLabel="Notifications">
-                  <IoNotificationsOutline className="h-5 w-5" />
-                </MobileActionButton>
+                {isAuthenticated ? (
+                  <MobileActionButton ariaLabel={t("common.notifications")}>
+                    <IoNotificationsOutline className="h-5 w-5" />
+                  </MobileActionButton>
+                ) : null}
               </>
             ) : (
-              <MobileActionButton onClick={openSearch} ariaLabel="Open search">
+              <MobileActionButton onClick={openSearch} ariaLabel={t("layout.openSearch")}>
                 <HiOutlineSearch className="h-5 w-5" />
               </MobileActionButton>
             )}
-            {isProfile ? (
-              <MobileActionLink to="/settings" ariaLabel="Open settings">
+            {isAuthenticated && isProfile ? (
+              <MobileActionLink to="/settings" ariaLabel={t("layout.openSettings")}>
                   <IoMdSettings className="h-5 w-5" />
               </MobileActionLink>
             ) : null}
@@ -114,9 +123,11 @@ export default function AppLayout() {
         </main>
 
         {/* Bottom nav — mobile only */}
-        <div className="flex md:hidden">
-          <BottomNav />
-        </div>
+        {isAuthenticated ? (
+          <div className="flex md:hidden">
+            <BottomNav />
+          </div>
+        ) : null}
       </div>
     </div>
   );

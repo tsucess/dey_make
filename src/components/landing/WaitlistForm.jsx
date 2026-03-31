@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useLanguage } from "../../context/LanguageContext";
 import { ApiError, api, firstError } from "../../services/api";
 
 export default function WaitlistForm() {
+  const { t } = useLanguage();
   const [form, setForm] = useState({
     firstName: "",
     email: "",
@@ -30,17 +32,17 @@ export default function WaitlistForm() {
   const validate = () => {
     const newErrors = {};
     if (!form.firstName.trim())
-      newErrors.firstName = "First name is required.";
+      newErrors.firstName = t("landing.waitlist.validation.firstNameRequired");
     if (!form.email.trim())
-      newErrors.email = "Email is required.";
+      newErrors.email = t("landing.waitlist.validation.emailRequired");
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
-      newErrors.email = "Please enter a valid email.";
+      newErrors.email = t("landing.waitlist.validation.validEmail");
     if (!form.country.trim())
-      newErrors.country = "Country is required.";
+      newErrors.country = t("landing.waitlist.validation.countryRequired");
     if (!form.describes.trim())
-      newErrors.describes = "Please tell us what describes you.";
+      newErrors.describes = t("landing.waitlist.validation.describesRequired");
     if (!form.agreed)
-      newErrors.agreed = "You must agree to be contacted.";
+      newErrors.agreed = t("landing.waitlist.validation.agreedRequired");
     return newErrors;
   };
 
@@ -58,7 +60,7 @@ export default function WaitlistForm() {
 
     try {
       await api.joinWaitlist(form);
-      setSubmitMessage("Thanks for joining the waitlist. We’ll reach out when your invite is ready.");
+      setSubmitMessage(t("landing.waitlist.success"));
       setForm({
         firstName: "",
         email: "",
@@ -82,12 +84,23 @@ export default function WaitlistForm() {
         });
         setSubmitError(firstError(error.errors, error.message));
       } else {
-        setSubmitError("We couldn’t join the waitlist right now. Please try again.");
+        setSubmitError(t("landing.waitlist.unableToJoin"));
       }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const countries = [
+    { value: "Nigeria", label: t("landing.waitlist.countries.nigeria") },
+    { value: "Ghana", label: t("landing.waitlist.countries.ghana") },
+    { value: "Kenya", label: t("landing.waitlist.countries.kenya") },
+    { value: "South Africa", label: t("landing.waitlist.countries.southAfrica") },
+    { value: "United Kingdom", label: t("landing.waitlist.countries.unitedKingdom") },
+    { value: "United States", label: t("landing.waitlist.countries.unitedStates") },
+    { value: "Canada", label: t("landing.waitlist.countries.canada") },
+    { value: "Other", label: t("landing.waitlist.countries.other") },
+  ];
 
   const inputClass = (hasError) =>
     `w-full px-3.5 py-3 rounded-lg text-sm outline-none
@@ -110,12 +123,11 @@ export default function WaitlistForm() {
         className="font-semibold font-bricolage text-slate100 dark:text-white mb-3"
         style={{ fontSize: "clamp(28px, 4vw, 32px)" }}
       >
-        Be the first in line
+        {t("landing.waitlist.title")}
       </h2>
       <p className="text-sm text-slate100 font-inter dark:text-white
                     max-w-sm mx-auto mb-8 leading-relaxed">
-        Join the DeyMake waitlist. Early creators get invited in batches
-        and get a real say in shaping the platform.
+        {t("landing.waitlist.description")}
       </p>
 
       {/* Form card */}
@@ -144,12 +156,12 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              First Name
+              {t("landing.waitlist.firstNameLabel")}
             </label>
             <input
               type="text"
               name="firstName"
-              placeholder="First name + Last name"
+              placeholder={t("landing.waitlist.firstNamePlaceholder")}
               value={form.firstName}
               onChange={handleChange}
               className={inputClass(errors.firstName)}
@@ -163,12 +175,12 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              Email
+              {t("landing.waitlist.emailLabel")}
             </label>
             <input
               type="email"
               name="email"
-              placeholder="joedoe@email.com"
+              placeholder={t("landing.waitlist.emailPlaceholder")}
               value={form.email}
               onChange={handleChange}
               className={inputClass(errors.email)}
@@ -182,7 +194,7 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              Phone Number (optional)
+              {t("landing.waitlist.phoneLabel")}
             </label>
             <input
               type="tel"
@@ -197,7 +209,7 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              Country of Residence
+              {t("landing.waitlist.countryLabel")}
             </label>
             <select
               name="country"
@@ -205,15 +217,10 @@ export default function WaitlistForm() {
               onChange={handleChange}
               className={inputClass(errors.country)}
             >
-              <option value="">Select country</option>
-              <option>Nigeria</option>
-              <option>Ghana</option>
-              <option>Kenya</option>
-              <option>South Africa</option>
-              <option>United Kingdom</option>
-              <option>United States</option>
-              <option>Canada</option>
-              <option>Other</option>
+              <option value="">{t("landing.waitlist.countryPlaceholder")}</option>
+              {countries.map((country) => (
+                <option key={country.value} value={country.value}>{country.label}</option>
+              ))}
             </select>
             {errors.country && (
               <p className="text-red-500 text-xs mt-1">{errors.country}</p>
@@ -224,7 +231,7 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              What best describes what you do?
+              {t("landing.waitlist.describesLabel")}
             </label>
             <input
               type="text"
@@ -242,7 +249,7 @@ export default function WaitlistForm() {
           <div>
             <label className="text-sm font-semibold text-slate100 font-inter
                                dark:text-white block mb-1.5">
-              What would you love to see in DeyMake
+              {t("landing.waitlist.loveToSeeLabel")}
             </label>
             <textarea
               name="loveToSee"
@@ -266,15 +273,15 @@ export default function WaitlistForm() {
               />
               <span className="text-xs font-inter text-slate400 dark:text-slate200
                                leading-relaxed">
-                I agree to be contacted about the beta and understand my
-                data will be handled under the{" "}
+                {t("landing.waitlist.agreementIntro")}{" "}
                 <a
                   href="#"
                   className="text-slate400 dark:text-slate200 underline
                              hover:text-orange100 transition-colors"
                 >
-                  Privacy Notice
-                </a>.
+                  {t("landing.waitlist.privacyNotice")}
+                </a>
+                {t("landing.waitlist.agreementEnding")}
               </span>
             </label>
             {errors.agreed && (
@@ -290,7 +297,7 @@ export default function WaitlistForm() {
                        text-slate100 font-semibold text-[15px] rounded-xl
                        border-none cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? "Joining waitlist..." : "Join the waitlist"}
+            {isSubmitting ? t("landing.waitlist.submitting") : t("landing.waitlist.submit")}
           </button>
         </form>
       </div>

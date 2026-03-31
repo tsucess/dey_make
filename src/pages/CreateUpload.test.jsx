@@ -9,6 +9,19 @@ vi.mock('../context/AuthContext', () => ({
   }),
 }));
 
+vi.mock('../context/LanguageContext', async () => {
+  const actual = await vi.importActual('../locales/translations');
+  const t = actual.createTranslator('en');
+
+  return {
+    useLanguage: () => ({
+      locale: 'en',
+      setLocale: vi.fn(),
+      t,
+    }),
+  };
+});
+
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');
 
@@ -99,6 +112,48 @@ describe('CreateUpload', () => {
       uploadId: 99,
       isDraft: true,
       isLive: false,
+    }));
+  });
+
+  it('prepares the live flow from the live intent route and submits a live payload', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({
+      data: {
+        categories: [{ id: 2, label: 'Music' }],
+      },
+    });
+    api.uploadFile.mockResolvedValue({ data: { upload: { id: 55 } } });
+    api.createVideo.mockResolvedValue({
+      data: {
+        video: { id: 88, isDraft: false, isLive: true, mediaUrl: 'https://cdn.example/live.mp4' },
+      },
+    });
+
+    const { container } = renderPage('/create?intent=live');
+
+    await screen.findByText(/Signed in as Test Creator/i);
+    expect(screen.getByRole('heading', { name: /Set up your live stream/i })).toBeInTheDocument();
+    expect(screen.getByText(/start broadcasting to your subscribers/i)).toBeInTheDocument();
+
+    const fileInput = container.querySelector('input[type="file"]');
+    expect(fileInput).toHaveAttribute('accept', expect.stringContaining('video/'));
+
+    const file = new File(['video'], 'live.mp4', { type: 'video/mp4' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /Go live/i })).not.toBeDisabled());
+
+    await user.click(screen.getByRole('button', { name: /Go live/i }));
+
+    await waitFor(() => expect(api.createVideo).toHaveBeenCalledTimes(1));
+
+    expect(api.uploadFile).toHaveBeenCalledTimes(1);
+    expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'video',
+      uploadId: 55,
+      isDraft: false,
+      isLive: true,
     }));
   });
 });

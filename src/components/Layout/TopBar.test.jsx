@@ -1,11 +1,15 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { LanguageProvider } from '../../context/LanguageContext';
+
+const authState = {
+  isAuthenticated: true,
+  user: { fullName: 'Test Creator', avatarUrl: '' },
+};
 
 vi.mock('../../context/AuthContext', () => ({
-  useAuth: () => ({
-    user: { fullName: 'Test Creator', avatarUrl: '' },
-  }),
+  useAuth: () => authState,
 }));
 
 vi.mock('../../services/api', async () => {
@@ -29,17 +33,21 @@ function LocationDisplay() {
 
 function renderTopBar(initialEntry = '/home') {
   return render(
-    <MemoryRouter initialEntries={[initialEntry]}>
-      <Routes>
-        <Route path="*" element={<><TopBar /><LocationDisplay /></>} />
-      </Routes>
-    </MemoryRouter>,
+    <LanguageProvider>
+      <MemoryRouter initialEntries={[initialEntry]}>
+        <Routes>
+          <Route path="*" element={<><TopBar /><LocationDisplay /></>} />
+        </Routes>
+      </MemoryRouter>
+    </LanguageProvider>,
   );
 }
 
 describe('TopBar', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authState.isAuthenticated = true;
+    authState.user = { fullName: 'Test Creator', avatarUrl: '' };
   });
 
   it('loads lookup suggestions and navigates to search results', async () => {
@@ -66,5 +74,17 @@ describe('TopBar', () => {
     await waitFor(() => {
       expect(screen.getByTestId('location')).toHaveTextContent('/search?q=Jazz');
     });
+  });
+
+  it('hides authenticated-only actions for signed-out visitors', () => {
+    authState.isAuthenticated = false;
+    authState.user = null;
+
+    renderTopBar('/users/7');
+
+    expect(screen.getByLabelText(/search deymake/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /create/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /notifications/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /profile/i })).not.toBeInTheDocument();
   });
 });

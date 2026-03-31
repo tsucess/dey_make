@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
-  formatCompactNumber,
+  formatCountLabel,
   formatSubscriberLabel,
   getProfileAvatar,
   getProfileName,
@@ -12,23 +13,35 @@ import {
   getVideoTitle,
 } from "../utils/content";
 
-const profileTabs = [
-  { label: "Posts", feed: "posts" },
-  { label: "Liked", feed: "liked" },
-  { label: "Saved", feed: "saved" },
-  { label: "Drafts", feed: "drafts" },
-];
+function getProfileTabs(t, isOwnProfile) {
+  const tabs = [
+    { label: t("profile.tabs.posts"), feed: "posts" },
+  ];
+
+  if (!isOwnProfile) return tabs;
+
+  return [
+    ...tabs,
+    { label: t("profile.tabs.liked"), feed: "liked" },
+    { label: t("profile.tabs.saved"), feed: "saved" },
+    { label: t("profile.tabs.drafts"), feed: "drafts" },
+  ];
+}
 
 function ViewsBadge({ views }) {
+  const { t } = useLanguage();
+
   return (
     <div className="inline-flex items-center gap-1 rounded-full border-y-2 border-white bg-black/50 px-3 py-1.5 text-sm font-medium text-white backdrop-blur-xs">
       <IoMdArrowDropright className="h-6 w-6 text-white" />
-      <span className="font-inter text-sm text-white">{formatCompactNumber(views)} views</span>
+      <span className="font-inter text-sm text-white">{formatCountLabel(views, t("content.views"))}</span>
     </div>
   );
 }
 
 function FeedTile({ video, onOpen }) {
+  const { t } = useLanguage();
+
   return (
     <article
       onClick={() => onOpen(video.id)}
@@ -38,7 +51,7 @@ function FeedTile({ video, onOpen }) {
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
         <p className="line-clamp-2 text-sm font-medium text-white md:text-base">{getVideoTitle(video)}</p>
       </div>
-      {video.isLive ? <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">LIVE</span> : null}
+      {video.isLive ? <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">{t("content.liveBadge")}</span> : null}
       <div className="absolute bottom-4 right-4">
         <ViewsBadge views={video.views || 0} />
       </div>
@@ -47,10 +60,14 @@ function FeedTile({ video, onOpen }) {
 }
 
 export default function Profile() {
+  const { id: routeProfileId } = useParams();
   const navigate = useNavigate();
-  const { syncUser } = useAuth();
+  const { user, isAuthenticated, syncUser } = useAuth();
+  const { t } = useLanguage();
   const avatarInputRef = useRef(null);
-  const [activeTab, setActiveTab] = useState(profileTabs[0].feed);
+  const isOwnProfile = !routeProfileId || String(user?.id) === String(routeProfileId);
+  const profileTabs = useMemo(() => getProfileTabs(t, isOwnProfile), [isOwnProfile, t]);
+  const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
   const [form, setForm] = useState({ fullName: "", bio: "", avatarUrl: "" });
@@ -65,7 +82,7 @@ export default function Profile() {
 
   const activeConfig = useMemo(
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
-    [activeTab],
+    [activeTab, profileTabs],
   );
   const displayProfile = useMemo(
     () => (form.avatarUrl ? { ...(profile || {}), avatarUrl: form.avatarUrl } : profile),
@@ -73,6 +90,7 @@ export default function Profile() {
   );
   const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
+  const canSubscribe = !isOwnProfile && Boolean(profile?.id) && user?.id !== profile?.id;
 
   useEffect(() => {
     if (!feedback) return undefined;
@@ -89,6 +107,12 @@ export default function Profile() {
   }, [editing]);
 
   useEffect(() => {
+    if (!profileTabs.some((tab) => tab.feed === activeTab)) {
+      setActiveTab(profileTabs[0]?.feed || "posts");
+    }
+  }, [activeTab, profileTabs]);
+
+  useEffect(() => {
     let ignore = false;
 
     async function loadProfile() {
@@ -96,10 +120,11 @@ export default function Profile() {
       setError("");
 
       try {
-        const response = await api.getProfile();
-        const nextProfile = response?.data?.profile;
+        const response = isOwnProfile ? await api.getProfile() : await api.getUser(routeProfileId);
+        const nextProfile = response?.data?.profile || response?.data?.user;
 
         if (!ignore) {
+          setEditing(false);
           setProfile(nextProfile);
           setForm({
             fullName: nextProfile?.fullName || "",
@@ -109,7 +134,7 @@ export default function Profile() {
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || "Unable to load profile."));
+          setError(firstError(nextError.errors, nextError.message || t("profile.unableToLoad")));
         }
       } finally {
         if (!ignore) setLoadingProfile(false);
@@ -121,7 +146,7 @@ export default function Profile() {
     return () => {
       ignore = true;
     };
-  }, []);
+  }, [isOwnProfile, routeProfileId, t]);
 
   useEffect(() => {
     let ignore = false;
@@ -130,7 +155,9 @@ export default function Profile() {
       setLoadingFeed(true);
 
       try {
-        const response = await api.getProfileFeed(activeConfig.feed);
+        const response = isOwnProfile
+          ? await api.getProfileFeed(activeConfig.feed)
+          : await api.getUserPosts(routeProfileId);
 
         if (!ignore) {
           setFeeds((current) => ({
@@ -140,7 +167,7 @@ export default function Profile() {
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || `Unable to load ${activeConfig.label.toLowerCase()}.`));
+          setError(firstError(nextError.errors, nextError.message || t("profile.unableToLoadFeed", { feed: activeConfig.label.toLowerCase() })));
         }
       } finally {
         if (!ignore) setLoadingFeed(false);
@@ -152,11 +179,19 @@ export default function Profile() {
     return () => {
       ignore = true;
     };
-  }, [activeConfig.feed, activeConfig.label]);
+  }, [activeConfig.feed, activeConfig.label, isOwnProfile, routeProfileId, t]);
+
+  function requireAuth() {
+    if (isAuthenticated) return true;
+    navigate("/login");
+    return false;
+  }
 
   async function handleSaveProfile() {
+    if (!isOwnProfile) return;
+
     if (!form.fullName.trim()) {
-      setError("Your full name is required.");
+      setError(t("profile.fullNameRequired"));
       return;
     }
 
@@ -178,28 +213,31 @@ export default function Profile() {
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || "",
       });
-      syncUser(nextProfile);
+      syncUser?.(nextProfile);
       setEditing(false);
-      setFeedback("Profile updated successfully.");
+      setFeedback(t("profile.updated"));
     } catch (nextError) {
-      setError(firstError(nextError.errors, nextError.message || "Unable to update profile."));
+      setError(firstError(nextError.errors, nextError.message || t("profile.unableToUpdate")));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleShareProfile() {
-    const shareUrl = `${window.location.origin}/profile`;
+    const sharePath = profile?.id ? `/users/${profile.id}` : (isOwnProfile ? "/profile" : `/users/${routeProfileId}`);
+    const shareUrl = `${window.location.origin}${sharePath}`;
 
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setFeedback("Profile link copied to your clipboard.");
+      setFeedback(t("profile.shareCopied"));
     } catch {
-      setFeedback(`Share this link: ${shareUrl}`);
+      setFeedback(t("profile.shareFallback", { url: shareUrl }));
     }
   }
 
   async function handleAvatarFileChange(event) {
+    if (!isOwnProfile) return;
+
     const selectedFile = event.target.files?.[0];
 
     if (!selectedFile) return;
@@ -216,13 +254,13 @@ export default function Profile() {
       const uploadedAvatarUrl = uploadResponse?.data?.upload?.url;
 
       if (!uploadedAvatarUrl) {
-        throw new Error("Unable to resolve the uploaded profile picture.");
+        throw new Error(t("profile.unableToResolveUpload"));
       }
 
       setForm((current) => ({ ...current, avatarUrl: uploadedAvatarUrl }));
 
       if (editing) {
-        setFeedback("Profile picture uploaded. Save profile to keep this change.");
+        setFeedback(t("profile.uploadSavedPending"));
         return;
       }
 
@@ -236,18 +274,46 @@ export default function Profile() {
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || uploadedAvatarUrl,
       }));
-      syncUser(nextProfile);
-      setFeedback("Profile picture updated successfully.");
+      syncUser?.(nextProfile);
+      setFeedback(t("profile.pictureUpdated"));
     } catch (nextError) {
-      setError(firstError(nextError?.errors, nextError?.message || "Unable to upload profile picture."));
+      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpload")));
     } finally {
       setUploadingAvatar(false);
       event.target.value = "";
     }
   }
 
+  async function handleSubscribe() {
+    if (!canSubscribe || !requireAuth()) return;
+
+    setSaving(true);
+    setError("");
+    setFeedback("");
+
+    try {
+      const response = profile?.currentUserState?.subscribed
+        ? await api.unsubscribeFromCreator(profile.id)
+        : await api.subscribeToCreator(profile.id);
+      const creator = response?.data?.creator;
+
+      setProfile((current) => current ? {
+        ...current,
+        subscriberCount: creator?.subscriberCount ?? current.subscriberCount,
+        currentUserState: {
+          ...current.currentUserState,
+          subscribed: creator?.subscribed ?? current.currentUserState?.subscribed,
+        },
+      } : current);
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.unableToUpdateSubscription")));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function handleAvatarClick() {
-    if (editing) {
+    if (editing && isOwnProfile) {
       avatarInputRef.current?.click();
       return;
     }
@@ -256,12 +322,12 @@ export default function Profile() {
   }
 
   function handleOpenFeedItem(videoId) {
-    navigate(activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
+    navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
   }
 
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
-      <img src="./header_profile.png" className="h-56 w-full md:h-64" />
+      <img src="./header_profile.png" alt="" className="h-56 w-full md:h-64" />
 
       <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pl-20 md:pb-12">
         <div className="-mt-12 md:-mt-16">
@@ -270,7 +336,7 @@ export default function Profile() {
 
           <div className="md:p-8">
             {loadingProfile ? (
-              <p className="text-sm text-slate600 dark:text-slate200">Loading profile...</p>
+              <p className="text-sm text-slate600 dark:text-slate200">{t("profile.loadingProfile")}</p>
             ) : (
               <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
@@ -280,7 +346,7 @@ export default function Profile() {
                       onClick={handleAvatarClick}
                       disabled={uploadingAvatar}
                       className="group relative block rounded-full disabled:cursor-not-allowed"
-                      aria-label={editing ? "Change profile picture" : "View profile picture"}
+                      aria-label={editing ? t("profile.changeProfilePicture") : t("profile.viewProfilePicture")}
                     >
                       <img
                         src={avatarPreviewUrl}
@@ -288,7 +354,7 @@ export default function Profile() {
                         className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg transition-opacity group-hover:opacity-90 dark:border-slate100 md:h-28 md:w-28"
                       />
                       <span className="absolute inset-x-0 bottom-1 mx-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
-                        {uploadingAvatar ? "Uploading..." : editing ? "Change photo" : "View photo"}
+                        {uploadingAvatar ? t("profile.uploading") : editing ? t("profile.changePhoto") : t("profile.viewPhoto")}
                       </span>
                     </button>
                     <input
@@ -305,37 +371,37 @@ export default function Profile() {
                     <p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
-                    {profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
+                    {isOwnProfile && profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
                   </div>
                 </div>
 
-                {editing ? (
+                {editing && isOwnProfile ? (
                   <div className="grid gap-4 md:grid-cols-2">
                     <input
                       type="text"
                       value={form.fullName}
                       onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
-                      placeholder="Full name"
+                      placeholder={t("profile.fullNamePlaceholder")}
                       className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
                     />
                     <input
                       type="url"
                       value={form.avatarUrl}
                       onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
-                      placeholder="Avatar URL"
+                      placeholder={t("profile.avatarUrlPlaceholder")}
                       className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
                     />
                     <textarea
                       value={form.bio}
                       onChange={(event) => setForm((current) => ({ ...current, bio: event.target.value }))}
-                      placeholder="Bio"
+                      placeholder={t("profile.bioPlaceholder")}
                       rows={4}
                       className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white md:col-span-2"
                     />
                   </div>
                 ) : (
                   <p className="text-lg font-medium font-inter text-black dark:text-white md:text-xl">
-                    {profile?.bio || "Tell people what you create and why they should follow along."}
+                    {profile?.bio || t("profile.emptyBio")}
                   </p>
                 )}
 
@@ -348,7 +414,7 @@ export default function Profile() {
                         disabled={saving}
                         className="min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {saving ? "Saving..." : "Save profile"}
+                        {saving ? t("profile.saving") : t("profile.saveProfile")}
                       </button>
                       <button
                         type="button"
@@ -362,24 +428,48 @@ export default function Profile() {
                         }}
                         className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
                       >
-                        Cancel
+                        {t("profile.cancel")}
                       </button>
                     </>
-                  ) : (
+                  ) : isOwnProfile ? (
                     <div className="flex gap-4 justify-center">
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
                         className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
-                        Edit profile
+                        {t("profile.editProfile")}
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
                         className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
-                        Share profile
+                        {t("profile.shareProfile")}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-3 md:flex-row md:justify-center">
+                      {canSubscribe ? (
+                        <button
+                          type="button"
+                          onClick={handleSubscribe}
+                          disabled={saving}
+                          className="md:min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {saving
+                            ? t("profile.saving")
+                            : profile?.currentUserState?.subscribed
+                              ? t("profile.unsubscribe")
+                              : t("profile.subscribe")}
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        onClick={handleShareProfile}
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                      >
+                        {t("profile.shareProfile")}
                       </button>
                     </div>
                   )}
@@ -389,7 +479,7 @@ export default function Profile() {
           </div>
 
           <div className="mt-8 md:rounded-full md:bg-white300 p-2 dark:md:bg-black100 md:mt-10">
-            <div className="grid grid-cols-4 gap-2 md:grid-cols-4">
+            <div className={`grid gap-2 ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4 md:grid-cols-4"}`}>
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
 
@@ -414,13 +504,13 @@ export default function Profile() {
           <div className="mt-4 flex items-center justify-between gap-3 px-1">
             <div>
               <h2 className="text-lg font-semibold text-black dark:text-white">{activeConfig.label}</h2>
-              <p className="text-sm text-slate600 dark:text-slate200">{visiblePosts.length} items in this feed</p>
+                <p className="text-sm text-slate600 dark:text-slate200">{t("profile.itemsInFeed", { count: visiblePosts.length })}</p>
             </div>
           </div>
 
           {loadingFeed ? (
             <div className="mt-6 rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-              Loading {activeConfig.label.toLowerCase()}...
+              {t("profile.loadingFeed", { feed: activeConfig.label.toLowerCase() })}
             </div>
           ) : visiblePosts.length ? (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-8 md:gap-6">
@@ -430,7 +520,7 @@ export default function Profile() {
             </div>
           ) : (
             <div className="mt-6 rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-              No {activeConfig.label.toLowerCase()} yet.
+              {t("profile.noFeedYet", { feed: activeConfig.label.toLowerCase() })}
             </div>
           )}
         </div>
@@ -441,7 +531,7 @@ export default function Profile() {
             onClick={() => setIsAvatarPreviewOpen(false)}
             role="dialog"
             aria-modal="true"
-            aria-label="Profile picture preview"
+            aria-label={t("profile.picturePreview")}
           >
             <div className="relative max-h-full max-w-3xl" onClick={(event) => event.stopPropagation()}>
               <button
@@ -449,7 +539,7 @@ export default function Profile() {
                 onClick={() => setIsAvatarPreviewOpen(false)}
                 className="absolute right-3 top-3 rounded-full bg-black/60 px-3 py-2 text-sm font-medium text-white"
               >
-                Close
+                {t("profile.close")}
               </button>
               <img src={avatarPreviewUrl} alt={getProfileName(displayProfile)} className="max-h-[80vh] max-w-full rounded-3xl object-contain shadow-2xl" />
             </div>

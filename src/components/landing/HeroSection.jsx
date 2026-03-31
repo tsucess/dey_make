@@ -1,4 +1,5 @@
 import { useTheme } from "../../context/ThemeContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 
 function scrollToAbout() {
@@ -7,7 +8,9 @@ function scrollToAbout() {
 }
 
 export default function HeroSection({ onSignUp }) {
-  const {isDark} = useTheme()
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
+
   return (
     <section className="flex flex-col items-start md:items-center text-center
                         px-6 py-12 md:py-20
@@ -18,7 +21,7 @@ export default function HeroSection({ onSignUp }) {
   <span className="text-xs font-medium font-inter text-slate100 dark:text-white 
                    bg-slate100/5 dark:bg-black100
                    rounded-full px-4 py-2.5 relative flex justify-center items-center after:content-[''] after:w-[106%] after:h-[110%] after:bg-linear-to-r after:-z-10 after:from-[#FDB30059] after:to-[#00000080] after:absolute after:rounded-full">
-    Coming soon — Request early access
+    {t("landing.hero.badge")}
   </span>
       
 
@@ -28,7 +31,7 @@ export default function HeroSection({ onSignUp }) {
                    leading-tight font-inter mb-1"
         style={{ fontSize: "clamp(24px, 5vw, 44px)" }}
       >
-        Create. Post. Grow.
+        {t("landing.hero.headline")}
       </p>
       <p
         className="font-extrabold text-slate100 dark:text-white
@@ -44,9 +47,7 @@ export default function HeroSection({ onSignUp }) {
                    leading-relaxed mb-7"
         style={{ fontSize: "clamp(14px, 2vw, 16px)" }}
       >
-        DeyMake is a creator-first content platform where short videos,
-        long-form content, and communities live in one place. Built for
-        people who DeyMake.
+        {t("landing.hero.description")}
       </p>
 
       {/* Buttons */}
@@ -58,7 +59,7 @@ export default function HeroSection({ onSignUp }) {
                      border-none cursor-pointer transition-colors
                      md:min-w-45"
         >
-          Join the waitlist
+          {t("landing.hero.joinWaitlist")}
         </button>
         <button
           onClick={scrollToAbout}
@@ -70,13 +71,13 @@ export default function HeroSection({ onSignUp }) {
                      hover:bg-slate100 hover:text-white
                      dark:hover:bg-white  dark:hover:text-slate100"
         >
-          Learn more
+          {t("landing.hero.learnMore")}
         </button>
       </div>
 
       {/* Desktop floating cards */}
-      <div className="md:hidden flex justify-center w-full"><img src={isDark ? './home_dark_m.png' :"./home_m.png"} alt=""  className="w-80"/></div>
-      <div className=" hidden md:block"><img src={isDark ? './home_dark.png' :"./home.png"} alt="" /></div>
+      <div className="md:hidden flex justify-center w-full"><img src={isDark ? "./home_dark_m.png" : "./home_m.png"} alt="" className="w-80" /></div>
+      <div className=" hidden md:block"><img src={isDark ? "./home_dark.png" : "./home.png"} alt="" /></div>
     </section>
   );
 }

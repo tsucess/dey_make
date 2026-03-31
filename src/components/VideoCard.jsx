@@ -1,8 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
+import { useLanguage } from "../context/LanguageContext";
 
-export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live }) {
+export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live, processingStatus = "completed" }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const showProcessingBadge = processingStatus !== "completed";
+  const processingLabel = processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge");
+
   return (
     <div
       className="flex flex-col cursor-pointer group w-full"
@@ -13,13 +18,19 @@ export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = 
         <img src={thumb || FALLBACK_THUMBNAIL} alt={title}
           className="w-full h-full object-cover group-hover:scale-105
                      transition-transform duration-300" />
-        {live && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white
-                           text-[10px] font-bold px-2 py-0.5 flex gap-1 items-center">
-                            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-            LIVE
-          </div>
-        )}
+        <div className="absolute left-2 top-2 flex flex-col gap-1.5">
+          {live && (
+            <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 flex gap-1 items-center rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
+              {t("content.liveBadge")}
+            </div>
+          )}
+          {showProcessingBadge ? (
+            <div className="rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-bold text-black">
+              {processingLabel}
+            </div>
+          ) : null}
+        </div>
       </div>
       <div className="flex items-start gap-3 mt-2.5 px-0.5">
         <img src={avatarUrl || FALLBACK_AVATAR} alt={author}

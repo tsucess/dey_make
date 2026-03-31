@@ -6,11 +6,13 @@ import SocialButtonRow from "../components/SocialButton";
 import OrDivider from "../components/OrDivider";
 import NetworkIllustration from "../components/NetworkIllustration";
 import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
 import { ApiError, firstError } from "../services/api";
 
 export default function Login({ onNavigateToSignUp, onSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { t } = useLanguage();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -27,14 +29,14 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
   const validate = () => {
     const newErrors = {};
     if (!form.email.trim()) {
-      newErrors.email = "Email is required.";
+      newErrors.email = t("auth.validation.emailRequired");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Please enter a valid email address.";
+      newErrors.email = t("auth.validation.validEmail");
     }
     if (!form.password) {
-      newErrors.password = "Password is required.";
+      newErrors.password = t("auth.validation.passwordRequired");
     } else if (form.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters.";
+      newErrors.password = t("auth.validation.passwordMin");
     }
     return newErrors;
   };
@@ -64,7 +66,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
         });
         setSubmitError(firstError(error.errors, error.message));
       } else {
-        setSubmitError("Unable to sign in right now. Please try again.");
+        setSubmitError(t("auth.unableToSignIn"));
       }
     } finally {
       setIsSubmitting(false);
@@ -93,7 +95,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
           <input
             type="email"
             name="email"
-            placeholder="Email"
+            placeholder={t("auth.email")}
             value={form.email}
             onChange={handleChange}
             className={`w-full px-4 py-3 rounded-md text-sm
@@ -117,7 +119,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
             <input
               type={showPassword ? "text" : "password"}
               name="password"
-              placeholder="Password"
+              placeholder={t("auth.password")}
               value={form.password}
               onChange={handleChange}
               className={`w-full px-4 py-3 rounded-md text-sm
@@ -134,6 +136,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
               className="absolute right-4 top-1/2 -translate-y-1/2
                          text-gray-400 dark:text-slate500
                          bg-transparent border-none cursor-pointer"
+              aria-label={t("auth.togglePassword")}
             >
               {showPassword ? <EyeOffIcon /> : <EyeIcon />}
             </button>
@@ -150,7 +153,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
           <a href="#forgot"
             className="text-[0.78rem] font-inter text-slate400 dark:text-slate400
                        underline">
-            Forgot Password?
+            {t("auth.forgotPassword")}
           </a>
         </div>
 
@@ -162,7 +165,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                      text-slate100 font-inter  font-semibold text-sm rounded-md
                      transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "Signing In..." : "Sign In"}
+          {isSubmitting ? t("auth.signingIn") : t("auth.signIn")}
         </button>
       </form>
 
@@ -171,7 +174,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
 
       <p className="text-center mt-4 text-[0.82rem]
                     text-black200 font-inter font-medium dark:text-slate200">
-        Are you new here?{" "}
+        {t("auth.areYouNewHere")}{" "}
         <button
           type="button"
           onClick={navigateToSignUp}
@@ -180,7 +183,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                      bg-transparent border-none
                      hover:text-orange100 transition-colors"
         >
-          Sign Up
+          {t("auth.signUp")}
         </button>
       </p>
     </AuthLayout>

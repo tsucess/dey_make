@@ -1,4 +1,8 @@
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function LandingFooter({ onSignUp }) {
+  const { t } = useLanguage();
+
   return (
     <footer
       className="px-6 md:px-12 pb-7 pt-12
@@ -8,11 +12,11 @@ export default function LandingFooter({ onSignUp }) {
     
         <div className="flex justify-between items-center w-full md:w-auto gap-2 md:gap-10">
         {/* Logo */}
-        <img src='./logo-footer.png' className="w-25 h-7 md:w-30"/>
+        <img src="./logo-footer.png" alt="DeyMake" className="w-25 h-7 md:w-30"/>
 
         {/* Copyright */}
         <p className="text-xs md:text-sm text-black font-inter font-medium dark:text-white">
-          ©2025 DeyMake. All right reserved
+          {t("landing.footer.copyright")}
         </p>
         </div>
 
@@ -24,7 +28,7 @@ export default function LandingFooter({ onSignUp }) {
                        hover:text-[#f5a623] transition-colors
                        bg-transparent border-none cursor-pointer"
           >
-            Join waitlist
+            {t("landing.footer.joinWaitlist")}
           </button>
           <a
             href="#"
@@ -32,7 +36,7 @@ export default function LandingFooter({ onSignUp }) {
                        hover:text-[#f5a623] transition-colors"
             style={{ textDecoration: "none" }}
           >
-            Terms
+            {t("landing.footer.terms")}
           </a>
           <a
             href="#"
@@ -40,7 +44,7 @@ export default function LandingFooter({ onSignUp }) {
                        hover:text-[#f5a623] transition-colors"
             style={{ textDecoration: "none" }}
           >
-            Privacy
+            {t("landing.footer.privacy")}
           </a>
         </div>
     </footer>

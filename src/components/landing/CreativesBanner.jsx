@@ -1,5 +1,9 @@
 
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function CreativesBanner({ onSignUp }) {
+  const { t } = useLanguage();
+
   return (
     <section
       className="md:px-12 py-10
@@ -18,16 +22,15 @@ export default function CreativesBanner({ onSignUp }) {
               className="font-semibold font-bricolage text-slate100 leading-tight"
               style={{ fontSize: "clamp(28px, 4vw, 40px)" }}
             >
-              For creatives,
+              {t("landing.banner.titleLineOne")}
               <br />
-              By creatives.
+              {t("landing.banner.titleLineTwo")}
             </h2>
             <p
               className="text-base font-inter text-slate100 leading-relaxed max-w-sm"
               
             >
-              Built by people who have been there and are building
-              something with care.
+              {t("landing.banner.description")}
             </p>
             <button
               onClick={onSignUp}
@@ -35,7 +38,7 @@ export default function CreativesBanner({ onSignUp }) {
                          cursor-pointer border-none transition-colors
                          bg-white hover:bg-gray-50 text-slate100"
             >
-              Join the waitlist
+              {t("landing.banner.joinWaitlist")}
             </button>
           </div>
 

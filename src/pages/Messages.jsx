@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
@@ -69,6 +70,7 @@ function mergeConversationSummaries(currentConversations, incomingConversations,
 }
 
 function ConversationRow({ conversation, active, onClick }) {
+  const { t } = useLanguage();
   const participant = conversation.participant;
   const preview = conversation.lastMessage?.body || conversation.status;
   const timestamp = conversation.lastMessage?.createdAt || conversation.updatedAt;
@@ -97,7 +99,7 @@ function ConversationRow({ conversation, active, onClick }) {
       </div>
 
       <div className="flex shrink-0 flex-col items-end gap-2">
-        <span className="text-xs text-slate500 dark:text-slate200">{timestamp ? formatRelativeTime(timestamp) : "Now"}</span>
+        <span className="text-xs text-slate500 dark:text-slate200">{timestamp ? formatRelativeTime(timestamp) : t("content.justNow")}</span>
         {conversation.unreadCount ? (
           <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-red200 px-2 text-sm font-medium text-white">
             {conversation.unreadCount}
@@ -142,6 +144,7 @@ function SectionCard({ title, children }) {
 }
 
 export default function Messages() {
+  const { t } = useLanguage();
   const { user } = useAuth();
   const isMountedRef = useRef(true);
   const activeConversationIdRef = useRef(null);
@@ -220,12 +223,12 @@ export default function Messages() {
       );
     } catch (nextError) {
       if (!silent && isMountedRef.current) {
-        setError(firstError(nextError?.errors, nextError?.message || "Unable to load messages."));
+        setError(firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
       }
     } finally {
       if (!silent && isMountedRef.current) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const loadConversationMessages = useCallback(async (conversationId, { silent = false, after } = {}) => {
     if (!conversationId) {
@@ -268,12 +271,12 @@ export default function Messages() {
       }
     } catch (nextError) {
       if (!silent && isMountedRef.current) {
-        setError(firstError(nextError?.errors, nextError?.message || "Unable to load conversation."));
+        setError(firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadConversation")));
       }
     } finally {
       if (!silent && isMountedRef.current) setLoadingMessages(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadInbox();
@@ -359,9 +362,9 @@ export default function Messages() {
       setSuggestedUsers((current) => current.filter((item) => item.id !== participant.id));
       setActiveConversationId(conversation.id);
       setMessages(conversation.lastMessage ? [conversation.lastMessage] : []);
-      setFeedback(`Conversation with ${getProfileName(participant)} is ready.`);
+      setFeedback(t("messages.conversationReady", { name: getProfileName(participant) }));
     } catch (nextError) {
-      setError(firstError(nextError.errors, nextError.message || "Unable to start conversation."));
+      setError(firstError(nextError.errors, nextError.message || t("messages.unableToStartConversation")));
     } finally {
       setBusyUserId(null);
     }
@@ -392,7 +395,7 @@ export default function Messages() {
                 ...conversation,
                 lastMessage: nextMessage,
                 unreadCount: 0,
-                status: "Sent just now",
+                status: t("messages.sentJustNow"),
                 updatedAt: nextMessage.createdAt,
               }
             : conversation,
@@ -403,7 +406,7 @@ export default function Messages() {
         );
       });
     } catch (nextError) {
-      setError(firstError(nextError.errors, nextError.message || "Unable to send message."));
+      setError(firstError(nextError.errors, nextError.message || t("messages.unableToSendMessage")));
     } finally {
       setSending(false);
     }
@@ -417,9 +420,9 @@ export default function Messages() {
 
         <div className="grid gap-6 lg:grid-cols-[340px,minmax(0,1fr)]">
           <div className="space-y-6">
-            <SectionCard title="Inbox">
+            <SectionCard title={t("messages.inbox")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">Loading conversations...</p>
+                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingConversations")}</p>
               ) : conversations.length ? (
                 <div className="space-y-3">
                   {conversations.map((conversation) => (
@@ -432,13 +435,13 @@ export default function Messages() {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate600 dark:text-slate200">No conversations yet. Start one from suggested creators.</p>
+                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.noConversations")}</p>
               )}
             </SectionCard>
 
-            <SectionCard title="Suggested creators">
+            <SectionCard title={t("messages.suggestedCreators")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">Loading suggestions...</p>
+                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingSuggestions")}</p>
               ) : suggestedUsers.length ? (
                 <div className="space-y-3">
                   {suggestedUsers.map((participant) => (
@@ -448,7 +451,7 @@ export default function Messages() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(participant)}</p>
                           <p className="text-xs text-slate600 dark:text-slate200">
-                            {participant.isOnline ? "Active now" : "Suggested for new chats"}
+                            {participant.isOnline ? t("messages.activeNow") : t("messages.suggestedForNewChats")}
                           </p>
                         </div>
                       </div>
@@ -458,13 +461,13 @@ export default function Messages() {
                         disabled={busyUserId === participant.id}
                         className="rounded-full bg-orange100 px-4 py-2 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
                       >
-                        {busyUserId === participant.id ? "Opening..." : "Message"}
+                        {busyUserId === participant.id ? t("messages.opening") : t("messages.messageAction")}
                       </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate600 dark:text-slate200">No suggestions right now.</p>
+                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.noSuggestions")}</p>
               )}
             </SectionCard>
           </div>
@@ -488,12 +491,12 @@ export default function Messages() {
 
                 <div className="flex-1 space-y-3 overflow-y-auto py-5">
                   {loadingMessages ? (
-                    <p className="text-sm text-slate600 dark:text-slate200">Loading messages...</p>
+                    <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingMessages")}</p>
                   ) : messages.length ? (
                     messages.map((message) => <MessageBubble key={message.id} message={message} />)
                   ) : (
                     <div className="rounded-3xl bg-[#F5F5F5] px-4 py-6 text-center text-sm text-slate600 dark:bg-[#262626] dark:text-slate200">
-                      No messages yet. Say hello to {getProfileName(activeConversation.participant)}.
+                      {t("messages.noMessagesYet", { name: getProfileName(activeConversation.participant) })}
                     </div>
                   )}
                 </div>
@@ -504,7 +507,7 @@ export default function Messages() {
                       value={draftMessage}
                       onChange={(event) => setDraftMessage(event.target.value)}
                       rows={2}
-                      placeholder={`Message ${getProfileName(activeConversation.participant)}...`}
+                      placeholder={t("messages.messagePlaceholder", { name: getProfileName(activeConversation.participant) })}
                       className="min-h-24 flex-1 resize-none rounded-3xl bg-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate400 dark:bg-[#1E1E1E] dark:text-white"
                     />
                     <button
@@ -512,15 +515,15 @@ export default function Messages() {
                       disabled={sending || !draftMessage.trim()}
                       className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {sending ? "Sending..." : "Send"}
+                      {sending ? t("messages.sending") : t("messages.send")}
                     </button>
                   </div>
-                  <p className="mt-2 text-xs text-slate500 dark:text-slate200">Signed in as {user?.fullName || "you"}</p>
+                  <p className="mt-2 text-xs text-slate500 dark:text-slate200">{t("messages.signedInAs", { name: user?.fullName || t("messages.you") })}</p>
                 </form>
               </>
             ) : (
               <div className="flex flex-1 items-center justify-center rounded-3xl bg-[#F5F5F5] px-6 text-center text-sm text-slate600 dark:bg-[#262626] dark:text-slate200">
-                Select a conversation or start one from the suggested creators list.
+                {t("messages.selectConversation")}
               </div>
             )}
           </section>

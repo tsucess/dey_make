@@ -1,25 +1,26 @@
 import { useState } from "react";
 import { HiChevronDown } from "react-icons/hi";
 import { useTheme } from "../../context/ThemeContext";
-
-const faqs = [
-  {
-    q: "When is DeyMake launching?",
-    a: "We're launching soon. Access will be rolled out in phases, starting with people on the waitlist.",
-  },
-  {
-    q: "Who can join DeyMake?",
-    a: "Anyone can join the waitlist! DeyMake is built for creators of all kinds — video creators, podcasters, writers, and more.",
-  },
-  {
-    q: "How do I get early access?",
-    a: "Fill out the waitlist form above and you will be among the first to know when we launch.",
-  },
-];
+import { useLanguage } from "../../context/LanguageContext";
 
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(0);
-  const {isDark} = useTheme()
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
+  const faqs = [
+    {
+      q: t("landing.faq.launchQuestion"),
+      a: t("landing.faq.launchAnswer"),
+    },
+    {
+      q: t("landing.faq.joinQuestion"),
+      a: t("landing.faq.joinAnswer"),
+    },
+    {
+      q: t("landing.faq.earlyAccessQuestion"),
+      a: t("landing.faq.earlyAccessAnswer"),
+    },
+  ];
 
   return (
     <section
@@ -31,7 +32,7 @@ export default function FAQSection() {
         className="font-semibold font-bricolage text-slate100 dark:text-white mb-10"
         style={{ fontSize: "clamp(28px, 4vw, 32px)" }}
       >
-        <span className="hidden md:inline">Frequently asked questions</span> <span className="md:hidden">FAQ</span>
+        <span className="hidden md:inline">{t("landing.faq.title")}</span>{" "}<span className="md:hidden">{t("landing.faq.shortTitle")}</span>
       </h2>
 
       <div className="max-w-2xl mx-auto text-left flex flex-col gap-4">
@@ -52,7 +53,7 @@ export default function FAQSection() {
               </span>
               <HiChevronDown
                 size={20}
-                color={isDark ? '#fff' : '#1a1a1a'}
+                color={isDark ? "#fff" : "#1a1a1a"}
                 style={{
                   flexShrink: 0,
                   marginLeft: "12px",

@@ -1,19 +1,22 @@
+import { useLanguage } from "../../context/LanguageContext";
+
 export default function WhySection() {
+  const { t } = useLanguage();
   const features = [
     {
-      icon: <img src='/visibilty-icon.png' alt="" />,
-      title: "Better Visibility",
-      desc: "Your content gets a fair chance to be seen by the right people.",
+      icon: <img src="/visibilty-icon.png" alt="" />,
+      title: t("landing.why.betterVisibilityTitle"),
+      desc: t("landing.why.betterVisibilityDescription"),
     },
     {
-      icon: <img src='/connection-icon.png' alt="" />,
-      title: "More connection",
-      desc: "Real engagement that leads to community, not just numbers.",
+      icon: <img src="/connection-icon.png" alt="" />,
+      title: t("landing.why.moreConnectionTitle"),
+      desc: t("landing.why.moreConnectionDescription"),
     },
     {
       icon: <img src="/noise-icon.png" alt="" />,
-      title: "Less Noise",
-      desc: "No more cluttered feeds or forced virality.",
+      title: t("landing.why.lessNoiseTitle"),
+      desc: t("landing.why.lessNoiseDescription"),
     },
   ];
 
@@ -27,12 +30,11 @@ export default function WhySection() {
         className="font-medium text-slate100 font-bricolage dark:text-white mb-4"
         style={{ fontSize: "clamp(28px, 4vw, 34px)" }}
       >
-        Why creators choose Dey Make
+        {t("landing.why.title")}
       </h2>
       <p className="text-sm text-slate100 font-inter dark:text-white
                     max-w-lg mx-auto mb-16 leading-relaxed">
-        DeyMake amplifies real creativity and real voices, helping creators
-        get discovered, build community and grow without the noise.
+        {t("landing.why.description")}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10

@@ -1,9 +1,16 @@
 export const SEARCH_TABS = [
-  { value: "all", label: "All" },
-  { value: "videos", label: "Videos" },
-  { value: "creators", label: "Creators" },
-  { value: "categories", label: "Categories" },
+  { value: "all", labelKey: "search.tabs.all" },
+  { value: "videos", labelKey: "search.tabs.videos" },
+  { value: "creators", labelKey: "search.tabs.creators" },
+  { value: "categories", labelKey: "search.tabs.categories" },
 ];
+
+export function getSearchTabs(t) {
+  return SEARCH_TABS.map((tab) => ({
+    ...tab,
+    label: t(tab.labelKey),
+  }));
+}
 
 export function normalizeSearchQuery(value) {
   return `${value || ""}`.replace(/\s+/g, " ").trim();
