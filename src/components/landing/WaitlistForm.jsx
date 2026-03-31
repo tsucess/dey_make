@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLanguage } from "../../context/LanguageContext";
 import { ApiError, api, firstError } from "../../services/api";
+import { motion } from "motion/react";
 
 export default function WaitlistForm() {
   const { t } = useLanguage();
@@ -136,7 +137,9 @@ export default function WaitlistForm() {
                    border-[0.25px] border-gray-200 dark:border-gray-700
                    max-w-3xl mx-auto text-left shadow-waitlist dark:shadow-waitlist-dark md:px-16 py-10"
       >
-        <form
+        <motion.form  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.6 }}
           onSubmit={handleSubmit}
           noValidate
           className=" p-4 md:p-7 flex flex-col gap-5 "
@@ -158,7 +161,7 @@ export default function WaitlistForm() {
                                dark:text-white block mb-1.5">
               {t("landing.waitlist.firstNameLabel")}
             </label>
-            <input
+            <motion.input whileFocus={{ scale: 1.02 }}
               type="text"
               name="firstName"
               placeholder={t("landing.waitlist.firstNamePlaceholder")}
@@ -177,7 +180,7 @@ export default function WaitlistForm() {
                                dark:text-white block mb-1.5">
               {t("landing.waitlist.emailLabel")}
             </label>
-            <input
+            <motion.input whileFocus={{ scale: 1.02 }}
               type="email"
               name="email"
               placeholder={t("landing.waitlist.emailPlaceholder")}
@@ -196,7 +199,7 @@ export default function WaitlistForm() {
                                dark:text-white block mb-1.5">
               {t("landing.waitlist.phoneLabel")}
             </label>
-            <input
+            <motion.input whileFocus={{ scale: 1.02 }}
               type="tel"
               name="phone"
               value={form.phone}
@@ -233,7 +236,7 @@ export default function WaitlistForm() {
                                dark:text-white block mb-1.5">
               {t("landing.waitlist.describesLabel")}
             </label>
-            <input
+            <motion.input whileFocus={{ scale: 1.02 }}
               type="text"
               name="describes"
               value={form.describes}
@@ -251,7 +254,7 @@ export default function WaitlistForm() {
                                dark:text-white block mb-1.5">
               {t("landing.waitlist.loveToSeeLabel")}
             </label>
-            <textarea
+            <motion.textarea whileFocus={{ scale: 1.02 }}
               name="loveToSee"
               value={form.loveToSee}
               onChange={handleChange}
@@ -290,7 +293,8 @@ export default function WaitlistForm() {
           </div>
 
           {/* Submit */}
-          <button
+          <motion.button whileHover={{ scale: 1.05 }}
+  whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={isSubmitting}
             className="w-full py-4 font-inter bg-orange100 hover:bg-[#e09510]
@@ -298,8 +302,8 @@ export default function WaitlistForm() {
                        border-none cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? t("landing.waitlist.submitting") : t("landing.waitlist.submit")}
-          </button>
-        </form>
+          </motion.button>
+        </motion.form>
       </div>
     </section>
   );

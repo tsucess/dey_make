@@ -3,6 +3,7 @@ import ThemeToggle from "../ThemeToggle";
 import Logo from "../Logo";
 import { IoClose } from "react-icons/io5";
 import { useLanguage } from "../../context/LanguageContext";
+import { motion } from "motion/react";
 
 export default function LandingNavbar({ onSignUp }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,7 +16,9 @@ export default function LandingNavbar({ onSignUp }) {
   ];
 
   return (
-    <nav className="bg-white100/20 dark:bg-slate100 
+    <motion.nav  initial={{ y: -60, opacity: 0 }}
+  animate={{ y: 0, opacity: 1 }}
+  transition={{ duration: 0.5 }} className="bg-white100/20 dark:bg-slate100 
                     md:border-b-[0.5px] border-slate200 dark:border-slate300">
       <div className="flex items-center justify-between px-6 py-4 md:px-14 md:py-7">
 
@@ -106,6 +109,6 @@ export default function LandingNavbar({ onSignUp }) {
           </button>
         </div>
       )}
-    </nav>
+    </motion.nav>
   );
 }

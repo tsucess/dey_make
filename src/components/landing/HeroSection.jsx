@@ -1,5 +1,7 @@
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { motion, useMotionValue, useTransform } from "motion/react";
+import { fadeUp, staggerContainer } from "../../utils/animation";
 
 
 function scrollToAbout() {
@@ -10,9 +12,13 @@ function scrollToAbout() {
 export default function HeroSection({ onSignUp }) {
   const { isDark } = useTheme();
   const { t } = useLanguage();
+  const x = useMotionValue(0);
+const smoothX = useTransform(x, [-20, 20], [-10, 10]);
 
   return (
-    <section className="flex flex-col items-start md:items-center text-center
+    <motion.section variants={staggerContainer}
+  initial="hidden"
+  animate="show" className="flex flex-col items-start md:items-center text-center
                         px-6 py-12 md:py-20
                         bg-white100/20 dark:bg-slate100/20">
 
@@ -26,20 +32,24 @@ export default function HeroSection({ onSignUp }) {
       
 
       {/* Headline */}
-      <p
+      <motion.p variants={fadeUp}
+      onMouseMove={(e) => {
+        const moveX = (e.clientX / window.innerWidth - 0.5) * 20;
+        x.set(moveX);
+      }}
+      style={{ x: smoothX, fontSize: "clamp(24px, 5vw, 44px)" }}
         className="font-medium italic text-slate100 dark:text-white
                    leading-tight font-inter mb-1"
-        style={{ fontSize: "clamp(24px, 5vw, 44px)" }}
       >
         {t("landing.hero.headline")}
-      </p>
-      <p
+      </motion.p>
+      <motion.p variants={fadeUp}
         className="font-extrabold text-slate100 dark:text-white
                    leading-none font-inter mb-5"
         style={{ fontSize: "clamp(48px, 10vw, 80px)" }}
       >
         DeyMake.
-      </p>
+      </motion.p>
 
       {/* Subtext */}
       <p
@@ -51,7 +61,7 @@ export default function HeroSection({ onSignUp }) {
       </p>
 
       {/* Buttons */}
-      <div className="flex justify-start md:justify-center gap-3 mb-12">
+      <motion.div variants={fadeUp} className="flex justify-start md:justify-center gap-3 mb-12">
         <button
           onClick={onSignUp}
           className="bg-orange100 font-inter hover:bg-[#e09510] text-slate100
@@ -73,11 +83,15 @@ export default function HeroSection({ onSignUp }) {
         >
           {t("landing.hero.learnMore")}
         </button>
-      </div>
+      </motion.div>
 
       {/* Desktop floating cards */}
-      <div className="md:hidden flex justify-center w-full"><img src={isDark ? "./home_dark_m.png" : "./home_m.png"} alt="" className="w-80" /></div>
-      <div className=" hidden md:block"><img src={isDark ? "./home_dark.png" : "./home.png"} alt="" /></div>
-    </section>
+      <motion.div
+  animate={{ y: [0, -10, 0] }}
+  transition={{ duration: 4, repeat: Infinity }} className="md:hidden flex justify-center w-full"><img src={isDark ? "./home_dark_m.png" : "./home_m.png"} alt="" className="w-80" /></motion.div>
+      <motion.div
+  animate={{ y: [0, -10, 0] }}
+  transition={{ duration: 4, repeat: Infinity }} className=" hidden md:block"><img src={isDark ? "./home_dark.png" : "./home.png"} alt="" /></motion.div>
+    </motion.section>
   );
 }
