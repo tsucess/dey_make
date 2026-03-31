@@ -9,6 +9,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
   buildVideoLink,
+  filterActiveLiveVideos,
   formatCompactNumber,
   formatSubscriberLabel,
   getProfileAvatar,
@@ -199,7 +200,7 @@ export default function Homepage() {
         const homeData = homeResponse?.data || {};
         setCategories(homeData.categories || []);
         setTrendingVideos(trendingResponse?.data?.videos || homeData.trending || []);
-        setLiveVideos(liveResponse?.data?.videos || homeData.liveStreams || []);
+        setLiveVideos(filterActiveLiveVideos(liveResponse?.data?.videos ?? homeData.liveStreams ?? []));
       } catch (nextError) {
         if (!ignore) {
           setError(firstError(nextError.errors, nextError.message || t("homepage.unableToLoad")));

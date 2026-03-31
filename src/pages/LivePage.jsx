@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import VideoCard from "../components/VideoCard";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
-import { mapVideoToCardProps } from "../utils/content";
+import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
 
 function StateCard({ title, body, actionLabel, onAction }) {
   return (
@@ -36,7 +36,7 @@ export default function LivePage() {
       try {
         const response = await api.getLiveVideos();
 
-        if (!ignore) setLiveVideos(response?.data?.videos || []);
+        if (!ignore) setLiveVideos(filterActiveLiveVideos(response?.data?.videos || []));
       } catch (nextError) {
         if (!ignore) setError(firstError(nextError.errors, nextError.message || t("livePage.unableToLoad")));
       } finally {

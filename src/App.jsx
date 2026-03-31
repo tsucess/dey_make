@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import SearchResults from "./pages/SearchResults";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
+import LiveRoom from "./pages/LiveRoom";
 import { useLanguage } from "./context/LanguageContext";
 
 function FullPageLoader() {
@@ -76,7 +77,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/home" element={<Homepage />} />
             <Route path="/live" element={<LivePage />} />
-            <Route path="/live/:id" element={<VideoDetails />} />
+            <Route path="/live/:id" element={<LiveRoom />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />
