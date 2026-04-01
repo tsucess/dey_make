@@ -48,6 +48,82 @@ function stopMediaStream(stream) {
   stream?.getTracks?.().forEach((track) => track.stop());
 }
 
+function createUploadStatusState() {
+  return {
+    phase: "idle",
+    progress: 0,
+    fileName: "",
+    mediaType: "image",
+  };
+}
+
+function getUploadStatusMessage(t, phase, mediaType) {
+  switch (phase) {
+    case "preparing":
+      return t("upload.status.preparing");
+    case "uploading":
+      return t("upload.status.uploading");
+    case "processing":
+      return mediaType === "video" ? t("upload.status.processingVideo") : t("upload.status.processingMedia");
+    case "saving":
+      return t("upload.status.saving");
+    case "publishing":
+      return t("upload.status.publishing");
+    default:
+      return "";
+  }
+}
+
+async function uploadSelectedFile(file, type, callbacks = {}) {
+  const onProgress = callbacks?.onProgress;
+  const onStatusChange = callbacks?.onStatusChange;
+
+  onStatusChange?.("preparing");
+
+  const presignResponse = await api.presignUpload({
+    type,
+    originalName: file.name,
+  });
+  const uploadStrategy = presignResponse?.data || {};
+
+  if (uploadStrategy.strategy === "client-direct-upload") {
+    onStatusChange?.("uploading");
+
+    const directUpload = await api.uploadFileDirect(file, uploadStrategy, {
+      onProgress,
+    });
+    const secureUrl = directUpload?.secure_url;
+
+    if (!secureUrl) {
+      throw new Error("Upload provider did not return a file URL.");
+    }
+
+    onStatusChange?.("processing");
+
+    const uploadResponse = await api.uploadFile({
+      type,
+      path: secureUrl,
+      originalName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: directUpload?.bytes ?? file.size ?? 0,
+      width: directUpload?.width ?? null,
+      height: directUpload?.height ?? null,
+      duration: directUpload?.duration ?? null,
+    });
+
+    return uploadResponse?.data?.upload || null;
+  }
+
+  const uploadFormData = new FormData();
+  uploadFormData.append("file", file);
+
+  onStatusChange?.("uploading");
+
+  const uploadResponse = await api.uploadFile(uploadFormData);
+
+  return uploadResponse?.data?.upload || null;
+}
+
 export default function CreateUpload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -79,6 +155,7 @@ export default function CreateUpload() {
   const [submitting, setSubmitting] = useState("");
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [uploadStatus, setUploadStatus] = useState(() => createUploadStatusState());
 
   const uploadTypes = useMemo(() => uploadTypeOptions.map((type) => ({
     ...type,
@@ -96,6 +173,18 @@ export default function CreateUpload() {
   const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
   const previewUrl = selectedFilePreviewUrl || existingMediaUrl;
   const isLoading = loadingCategories || loadingDraft;
+  const showUploadStatus = uploadStatus.phase !== "idle";
+  const uploadStatusMessage = useMemo(
+    () => getUploadStatusMessage(t, uploadStatus.phase, uploadStatus.mediaType),
+    [t, uploadStatus.phase, uploadStatus.mediaType],
+  );
+  const uploadStatusProgress = uploadStatus.phase === "idle"
+    ? 0
+    : uploadStatus.phase === "preparing"
+      ? Math.max(uploadStatus.progress, 5)
+      : uploadStatus.phase === "uploading"
+        ? uploadStatus.progress
+        : 100;
 
   useEffect(() => {
     if (isLiveIntent) setSelectedType("video");
@@ -267,6 +356,8 @@ export default function CreateUpload() {
     const file = event.target.files?.[0];
     if (file) {
       setError("");
+      setFeedback("");
+      setUploadStatus(createUploadStatusState());
       setSelectedFile(file);
       const nextType = detectUploadType(file);
       if (nextType) setSelectedType(nextType);
@@ -305,13 +396,44 @@ export default function CreateUpload() {
 
     try {
       let upload = null;
+      const nextMediaType = detectedType || selectedType;
 
       if (selectedFile) {
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", selectedFile);
+        setUploadStatus({
+          phase: "preparing",
+          progress: 0,
+          fileName: selectedFile.name,
+          mediaType: nextMediaType,
+        });
 
-        const uploadResponse = await api.uploadFile(uploadFormData);
-        upload = uploadResponse?.data?.upload;
+        upload = await uploadSelectedFile(selectedFile, selectedType, {
+          onProgress: ({ percent }) => {
+            setUploadStatus((current) => ({
+              ...current,
+              phase: "uploading",
+              progress: percent ?? current.progress,
+            }));
+          },
+          onStatusChange: (phase) => {
+            setUploadStatus((current) => ({
+              ...current,
+              phase,
+              progress: phase === "uploading"
+                ? current.progress
+                : phase === "preparing"
+                  ? 0
+                  : 100,
+            }));
+          },
+        });
+      }
+
+      if (selectedFile) {
+        setUploadStatus((current) => ({
+          ...current,
+          phase: action === "publish" ? "publishing" : "saving",
+          progress: 100,
+        }));
       }
 
       const payload = {
@@ -347,6 +469,8 @@ export default function CreateUpload() {
         setSelectedFile(null);
       }
 
+      setUploadStatus(createUploadStatusState());
+
       setFeedback(
         action === "draft"
           ? t("upload.success.draftSaved")
@@ -362,6 +486,7 @@ export default function CreateUpload() {
 
       navigate(buildVideoLink(nextVideo, action === "live"));
     } catch (nextError) {
+      setUploadStatus(createUploadStatusState());
       setError(firstError(nextError.errors, nextError.message || t("upload.errors.unableToComplete")));
     } finally {
       setSubmitting("");
@@ -394,6 +519,20 @@ export default function CreateUpload() {
            </div>
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
+          {showUploadStatus ? (
+            <div className="mb-6 rounded-3xl border border-orange100/40 bg-orange200/10 px-5 py-4 dark:border-orange100/30 dark:bg-black100" aria-live="polite">
+              <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-semibold text-black dark:text-white">{uploadStatusMessage}</p>
+                  <p className="text-xs text-slate500 dark:text-slate200">{t("upload.status.file", { name: uploadStatus.fileName })}</p>
+                </div>
+                <p className="text-xs font-medium text-slate600 dark:text-slate200">{t("upload.status.progress", { percent: uploadStatusProgress })}</p>
+              </div>
+              <div className="mt-3 h-2.5 w-full overflow-hidden rounded-full bg-white300 dark:bg-slate800" role="progressbar" aria-label={t("upload.status.progressLabel")} aria-valuemin={0} aria-valuemax={100} aria-valuenow={uploadStatusProgress}>
+                <div className={`h-full rounded-full bg-orange100 transition-all duration-300 ${uploadStatus.phase === "processing" || uploadStatus.phase === "saving" || uploadStatus.phase === "publishing" ? "animate-pulse" : ""}`} style={{ width: `${uploadStatusProgress}%` }} />
+              </div>
+            </div>
+          ) : null}
 
           {isLiveIntent ? (
             <div className="mb-8 overflow-hidden rounded-[2rem] border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
