@@ -69,7 +69,7 @@ export default function CreateLive(){
             </div>
 
             <div className="flex items-center justify-end gap-3">
-                <Link to='/home' className="text-black100 bg-white300 hover:bg-black200 dark:bg-black100 font-inter text-sm px-8 font-medium py-3.5 rounded-full">Cancel</Link>
+                <Link to='/home' className="text-black100 bg-white300 hover:bg-black200 hover:text-white dark:bg-black100 font-inter text-sm px-8 font-medium py-3.5 rounded-full">Cancel</Link>
                 <Link to='/preview-live' className="text-black bg-orange100 hover:bg-orange200 font-inter text-sm px-8 font-medium py-3.5 rounded-full">Preview</Link>
 
             </div>
