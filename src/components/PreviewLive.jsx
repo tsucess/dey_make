@@ -24,7 +24,7 @@ export default function PreviewLive(){
 
             <div className="flex items-center justify-end gap-3 mt-20">
                 <button className="text-black100 bg-white300 hover:bg-black200 hover:text-white dark:bg-black100 font-inter text-sm px-8 font-medium py-3 rounded-full">Share</button>
-                <Link to='/live' className="text-black bg-orange100 hover:bg-orange200 font-inter text-sm px-8 font-medium py-3 rounded-full">Go Live</Link>
+                <Link to={`live.${id}`} className="text-black bg-orange100 hover:bg-orange200 font-inter text-sm px-8 font-medium py-3 rounded-full">Go Live</Link>
 
             </div>
         </div>
