@@ -15,6 +15,8 @@ import SearchResults from "./pages/SearchResults";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
 import { useLanguage } from "./context/LanguageContext";
+import CreateLive from "./components/CreateLive";
+import PreviewLive from "./components/PreviewLive";
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -84,6 +86,8 @@ export default function App() {
             <Route path="/settings" element={<Settings />} />
           </Route>
           <Route path="/create" element={<CreateUpload />} />
+          <Route path="/create-live" element={<CreateLive />} />
+          <Route path="/preview-live" element={<PreviewLive />} />
         </Route>
 
         <Route path="/video/:id" element={<VideoDetails />} />

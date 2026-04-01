@@ -8,6 +8,7 @@ import { api, firstError } from "../../services/api";
 import { buildVideoLink, formatSubscriberLabel, getProfileAvatar, getProfileName, getVideoTitle } from "../../utils/content";
 import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
+import Notification from "../Notification";
 
 export default function TopBar() {
   const { user, isAuthenticated } = useAuth();
@@ -21,12 +22,21 @@ export default function TopBar() {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState("");
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
 
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
   const hasLookupResults = lookup.videos.length || lookup.creators.length || lookup.categories.length;
 
   function toggleVisiblity() {
     setIsVisible((prev) => !prev);
+  }
+
+  function openNotification(){
+    setIsNotificationOpen(true)
+  }
+
+  function closeNotification(){
+    setIsNotificationOpen(false)
   }
 
   function closeLookup() {
@@ -137,6 +147,8 @@ export default function TopBar() {
   }
 
   return (
+    <>
+    <Notification isVisible={isNotificationOpen} closeNotification={closeNotification}/>
     <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
                        bg-white dark:bg-slate100
                        sticky top-0 z-10 ">
@@ -165,7 +177,7 @@ export default function TopBar() {
         </form>
 
         {showLookup ? (
-          <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 rounded-[1.5rem] border border-black/5 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#1B1B1B]">
+          <div className="absolute left-0 right-0 top-[calc(100%+0.75rem)] z-30 rounded-3xl border border-black/5 bg-white p-4 shadow-xl dark:border-white/10 dark:bg-[#1B1B1B]">
             {loadingLookup ? (
               <p className="text-sm text-slate500 dark:text-slate200">{t("topbar.lookingUpMatches")}</p>
             ) : lookupError ? (
@@ -268,13 +280,14 @@ export default function TopBar() {
             <CreateDropdown isVisible={isVisible}/>
 
             {/* Bell */}
-            <button aria-label={t("common.notifications")} className="w-9 h-9 flex items-center justify-center
+            <button onClick={openNotification} aria-label={t("common.notifications")} className="w-9 h-9 flex items-center justify-center
                                rounded-full border-none cursor-pointer
                                bg-transparent
                                hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
                                transition-colors">
               <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
             </button>
+            
 
             {/* Avatar */}
             <Link to="/profile">
@@ -288,5 +301,6 @@ export default function TopBar() {
         ) : null}
       </div>
     </header>
+    </>
   );
 }
