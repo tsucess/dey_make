@@ -62,7 +62,10 @@ describe('LivePage', () => {
 
     api.getLiveVideos.mockResolvedValue({
       data: {
-        videos: [buildVideo()],
+        videos: [
+          buildVideo({ id: 10, title: 'Live Set', isLive: 'true' }),
+          buildVideo({ id: 11, title: 'Ended Set', isLive: 'false' }),
+        ],
       },
     });
 
@@ -73,6 +76,7 @@ describe('LivePage', () => {
     expect(await screen.findByRole('heading', { name: 'Watch creators live' })).toBeInTheDocument();
     expect(screen.getByText('1 active streams')).toBeInTheDocument();
     expect(screen.getByText('Live Set')).toBeInTheDocument();
+    expect(screen.queryByText('Ended Set')).not.toBeInTheDocument();
     expect(screen.getAllByText('Creator Uno')).toHaveLength(1);
 
     await user.click(screen.getByText('Live Set'));

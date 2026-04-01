@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { IoIosArrowBack } from "react-icons/io";
 import { MdArrowCircleLeft } from "react-icons/md";
@@ -88,6 +88,10 @@ function normalizePreferences(preferences = {}) {
       ...(preferences.accessibilityPreferences || {}),
     },
   };
+}
+
+function arePreferencesEqual(left = {}, right = {}) {
+  return JSON.stringify(normalizePreferences(left)) === JSON.stringify(normalizePreferences(right));
 }
 
 function parseList(value) {
@@ -291,6 +295,7 @@ export default function Settings() {
   const { theme, setThemePreference } = useTheme();
   const { logout, user, syncUser } = useAuth();
   const { setLocale, t, supportedLocales } = useLanguage();
+  const contextRef = useRef({ setThemePreference, setLocale, syncUser, t });
   const [openSections, setOpenSections] = useState({
     notifications: true,
     language: true,
@@ -313,6 +318,11 @@ export default function Settings() {
   const navigate = useNavigate();
   const developerBusy = savingSection === "developer";
   const membershipsBusy = savingSection === "memberships";
+  const userId = user?.id ?? null;
+
+  useEffect(() => {
+    contextRef.current = { setThemePreference, setLocale, syncUser, t };
+  }, [setThemePreference, setLocale, syncUser, t]);
 
   function goBack() {
     navigate(-1);
@@ -321,7 +331,21 @@ export default function Settings() {
   useEffect(() => {
     let ignore = false;
 
+    if (!userId) {
+      setLoading(false);
+      return () => {
+        ignore = true;
+      };
+    }
+
     async function loadPreferences() {
+      const {
+        setThemePreference: applyThemePreference,
+        setLocale: applyLocale,
+        syncUser: applySyncUser,
+        t: translate,
+      } = contextRef.current;
+
       setLoading(true);
       setError("");
 
@@ -331,18 +355,21 @@ export default function Settings() {
 
         if (!ignore) {
           setValues(nextValues);
-          setThemePreference(nextValues.displayPreferences.theme);
-          setLocale(nextValues.language);
-          if (user) {
-            syncUser({
-              ...user,
+          applyThemePreference(nextValues.displayPreferences.theme);
+          applyLocale(nextValues.language);
+          applySyncUser((currentUser) => {
+            if (!currentUser) return currentUser;
+            if (arePreferencesEqual(currentUser.preferences, nextValues)) return currentUser;
+
+            return {
+              ...currentUser,
               preferences: nextValues,
-            });
-          }
+            };
+          });
         }
       } catch (nextError) {
         if (!ignore) {
-          setError(firstError(nextError.errors, nextError.message || t("settings.unableToLoad")));
+          setError(firstError(nextError.errors, nextError.message || translate("settings.unableToLoad")));
         }
       } finally {
         if (!ignore) setLoading(false);
@@ -354,7 +381,7 @@ export default function Settings() {
     return () => {
       ignore = true;
     };
-  }, [setLocale, setThemePreference, syncUser, t, user]);
+  }, [userId]);
 
   async function loadDeveloperWorkspace(extras = {}) {
     setDeveloperWorkspace((current) => ({

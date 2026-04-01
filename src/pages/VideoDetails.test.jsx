@@ -53,6 +53,7 @@ vi.mock('../services/api', async () => {
 });
 
 import { api } from '../services/api';
+import LiveRoom from './LiveRoom';
 import VideoDetails from './VideoDetails';
 
 let lastPeerConnection = null;
@@ -114,8 +115,8 @@ function buildVideo(overrides = {}) {
     title: 'Alpha Session',
     mediaUrl: 'https://cdn.example.com/alpha.mp4',
     views: 12,
-    author: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
-    creator: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+    author: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
+    creator: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
     currentUserState: { liked: false, disliked: false, saved: false, subscribed: false },
     commentsCount: 0,
     processingStatus: 'completed',
@@ -143,7 +144,7 @@ function renderPage(initialEntry = '/video/10') {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/video/:id" element={<VideoDetails />} />
-        <Route path="/live/:id" element={<VideoDetails />} />
+        <Route path="/live/:id" element={<LiveRoom />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -172,7 +173,7 @@ describe('VideoDetails', () => {
     api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
   });
 
-  it('renders translated video actions and empty states', async () => {
+  it('renders the recorded video layout with creator details and comments', async () => {
     api.getVideo.mockResolvedValue({
       data: {
         video: buildVideo(),
@@ -186,17 +187,43 @@ describe('VideoDetails', () => {
 
     await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('10'));
 
-    expect(await screen.findByRole('button', { name: /Volver/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Alpha Session' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Volver/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Suscribirse' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Guardar/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Compartir/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Reportar/i })).toBeInTheDocument();
-    expect(screen.getByText('Más videos')).toBeInTheDocument();
     expect(screen.getByText('12 vistas')).toBeInTheDocument();
-    expect(screen.getByText('Aún no hay videos relacionados.')).toBeInTheDocument();
+    expect(screen.getByText('Aún no se ha proporcionado una descripción para este video.')).toBeInTheDocument();
+    expect(screen.getByText('Acerca del creador')).toBeInTheDocument();
+    expect(screen.getByText('Creadora de sesiones de estudio y tutoriales.')).toBeInTheDocument();
+    expect(screen.queryByText('Más videos')).not.toBeInTheDocument();
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('¡Dile al creador lo que piensas!')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay comentarios. Empieza la conversación.')).toBeInTheDocument();
+  });
+
+  it('redirects active live videos to the dedicated live room route', async () => {
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ isLive: true, mediaUrl: '' }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    render(
+      <MemoryRouter initialEntries={['/video/10']}>
+        <Routes>
+          <Route path="/video/:id" element={<VideoDetails />} />
+          <Route path="/live/:id" element={<div>Live room route</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('10'));
+    expect(await screen.findByText('Live room route')).toBeInTheDocument();
   });
 
   it('links to the creator profile and lets viewers subscribe', async () => {
@@ -342,7 +369,7 @@ describe('VideoDetails', () => {
       },
     });
 
-    renderPage();
+    renderPage('/live/10');
 
     const startButton = await screen.findByRole('button', { name: 'Iniciar transmisión' });
     await user.click(startButton);
@@ -467,5 +494,41 @@ describe('VideoDetails', () => {
     await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, expect.objectContaining({ recipientId: 77, type: 'answer', sdp: 'creator-answer-sdp' })));
     expect(lastPeerConnection.addTrack).toHaveBeenCalledTimes(2);
+  });
+
+  it('queues viewer ICE candidates that arrive before the live offer reaches the creator', async () => {
+    authState.user = { id: 99, fullName: 'Creator Uno', avatarUrl: '' };
+    const earlyCandidate = { candidate: 'candidate:1 1 udp 2122260223 127.0.0.1 3478 typ host', sdpMid: '0', sdpMLineIndex: 0 };
+
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({
+          isLive: true,
+          mediaUrl: '',
+          author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+          creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+        }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+    api.getLiveSignals
+      .mockResolvedValueOnce({
+        data: {
+          signals: [
+            { id: 9, type: 'candidate', payload: { candidate: earlyCandidate }, senderId: 77, recipientId: 99 },
+            { id: 10, type: 'offer', payload: { sdp: 'viewer-offer-sdp' }, senderId: 77, recipientId: 99 },
+          ],
+          latestSignalId: 10,
+        },
+      })
+      .mockResolvedValue({ data: { signals: [], latestSignalId: 10 } });
+
+    renderPage('/video/10');
+
+    await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, expect.objectContaining({ recipientId: 77, type: 'answer', sdp: 'creator-answer-sdp' })));
+    expect(lastPeerConnection.addIceCandidate).toHaveBeenCalledWith(earlyCandidate);
   });
 });

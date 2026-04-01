@@ -3,10 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { authState, setThemePreferenceSpy, setLocaleSpy, syncUserSpy } = vi.hoisted(() => ({
+const { authState, logoutSpy, setThemePreferenceSpy, setLocaleSpy, syncUserSpy } = vi.hoisted(() => ({
   authState: {
     user: { id: 1, fullName: 'Ada', preferences: {} },
+    mode: 'static',
   },
+  logoutSpy: vi.fn(),
   setThemePreferenceSpy: vi.fn(),
   setLocaleSpy: vi.fn(),
   syncUserSpy: vi.fn(),
@@ -19,13 +21,40 @@ vi.mock('../context/ThemeContext', () => ({
   }),
 }));
 
-vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({
-    logout: vi.fn(),
-    user: authState.user,
-    syncUser: syncUserSpy,
-  }),
-}));
+vi.mock('../context/AuthContext', async () => {
+  const React = await vi.importActual('react');
+
+  function resolveNextUser(currentUser, nextUser) {
+    return typeof nextUser === 'function' ? nextUser(currentUser) : nextUser;
+  }
+
+  return {
+    useAuth: () => {
+      const [userState, setUserState] = React.useState(authState.user);
+
+      function syncUser(nextUser) {
+        if (authState.mode === 'stateful') {
+          setUserState((currentUser) => {
+            const resolvedUser = resolveNextUser(currentUser, nextUser);
+            syncUserSpy(resolvedUser);
+            return resolvedUser;
+          });
+          return;
+        }
+
+        const resolvedUser = resolveNextUser(authState.user, nextUser);
+        authState.user = resolvedUser;
+        syncUserSpy(resolvedUser);
+      }
+
+      return {
+        logout: logoutSpy,
+        user: authState.mode === 'stateful' ? userState : authState.user,
+        syncUser,
+      };
+    },
+  };
+});
 
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
@@ -74,6 +103,34 @@ describe('Settings', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     authState.user = { id: 1, fullName: 'Ada', preferences: {} };
+    authState.mode = 'static';
+  });
+
+  it('loads preferences once without getting stuck in a sync loop', async () => {
+    authState.mode = 'stateful';
+
+    api.getPreferences.mockResolvedValue({
+      data: {
+        preferences: {
+          notificationSettings: { messages: true, comments: true, likes: true, subscriptions: true },
+          language: 'fr',
+          displayPreferences: { theme: 'dark', autoplay: true },
+          accessibilityPreferences: { captions: false, reducedMotion: false },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Settings />
+      </MemoryRouter>,
+    );
+
+    await waitFor(() => expect(screen.getByRole('combobox')).toHaveValue('fr'));
+    await new Promise((resolve) => setTimeout(resolve, 25));
+
+    expect(api.getPreferences).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Loading your preferences...')).not.toBeInTheDocument();
   });
 
   it('loads preferences and persists notification changes', async () => {

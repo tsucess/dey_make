@@ -29,6 +29,8 @@ vi.mock('../services/api', async () => {
     ...actual,
     api: {
       getCategories: vi.fn(),
+      presignUpload: vi.fn(),
+      uploadFileDirect: vi.fn(),
       uploadFile: vi.fn(),
       createVideo: vi.fn(),
       updateVideo: vi.fn(),
@@ -98,6 +100,20 @@ describe('CreateUpload', () => {
         categories: [{ id: 2, label: 'Music' }],
       },
     });
+    api.presignUpload.mockResolvedValue({
+      data: {
+        strategy: 'client-direct-upload',
+        method: 'POST',
+        endpoint: 'https://api.cloudinary.com/v1_1/demo/image/upload',
+        fields: { signature: 'signed' },
+      },
+    });
+    api.uploadFileDirect.mockResolvedValue({
+      secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/deymake/uploads/images/user-1/cover.png',
+      bytes: 5,
+      width: 100,
+      height: 100,
+    });
     api.uploadFile.mockResolvedValue({ data: { upload: { id: 99 } } });
     api.createVideo.mockResolvedValue({
       data: {
@@ -123,6 +139,11 @@ describe('CreateUpload', () => {
 
     await waitFor(() => expect(api.createVideo).toHaveBeenCalledTimes(1));
 
+    expect(api.presignUpload).toHaveBeenCalledWith({
+      type: 'image',
+      originalName: 'cover.png',
+    });
+    expect(api.uploadFileDirect).toHaveBeenCalledTimes(1);
     expect(api.uploadFile).toHaveBeenCalledTimes(1);
     expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
       type: 'image',
@@ -131,6 +152,70 @@ describe('CreateUpload', () => {
       isDraft: true,
       isLive: false,
     }));
+  });
+
+  it('shows upload progress and video processing status during direct upload', async () => {
+    const user = userEvent.setup();
+
+    let resolveDirectUpload;
+    let resolveFinalizeUpload;
+
+    api.getCategories.mockResolvedValue({
+      data: {
+        categories: [{ id: 2, label: 'Music' }],
+      },
+    });
+    api.presignUpload.mockResolvedValue({
+      data: {
+        strategy: 'client-direct-upload',
+        method: 'POST',
+        endpoint: 'https://api.cloudinary.com/v1_1/demo/video/upload',
+        fields: { signature: 'signed' },
+      },
+    });
+    api.uploadFileDirect.mockImplementation((_file, _uploadConfig, options) => new Promise((resolve) => {
+      options?.onProgress?.({ loaded: 50, total: 100, percent: 50 });
+      resolveDirectUpload = () => resolve({
+        secure_url: 'https://res.cloudinary.com/demo/video/upload/v1/deymake/uploads/videos/user-1/clip.mp4',
+        bytes: 100,
+        duration: 15,
+      });
+    }));
+    api.uploadFile.mockImplementation(() => new Promise((resolve) => {
+      resolveFinalizeUpload = () => resolve({ data: { upload: { id: 109 } } });
+    }));
+    api.createVideo.mockResolvedValue({
+      data: {
+        video: { id: 55, isDraft: false, mediaUrl: 'https://cdn.example/video.mp4' },
+      },
+    });
+
+    const { container } = renderPage();
+
+    const fileInput = await waitFor(() => container.querySelector('input[type="file"]'));
+    const videoButton = screen.getByRole('button', { name: /Videos\s*MP4,\s*MOV,\s*AVI/i });
+    await user.click(videoButton);
+    fireEvent.change(fileInput, { target: { files: [new File(['video'], 'clip.mp4', { type: 'video/mp4' })] } });
+
+    await user.click(screen.getByRole('button', { name: /^Upload$/i }));
+
+    expect(await screen.findByText(/Uploading file/i)).toBeInTheDocument();
+    expect(screen.getByText(/File: clip.mp4/i)).toBeInTheDocument();
+    expect(screen.getByText(/50% uploaded/i)).toBeInTheDocument();
+
+    resolveDirectUpload();
+
+    expect(await screen.findByText(/Processing and optimizing your video/i)).toBeInTheDocument();
+    expect(screen.getByText(/100% uploaded/i)).toBeInTheDocument();
+
+    resolveFinalizeUpload();
+
+    await waitFor(() => expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'video',
+      uploadId: 109,
+      isDraft: false,
+      isLive: false,
+    })));
   });
 
   it('prepares the live flow from the live intent route and submits a live payload', async () => {

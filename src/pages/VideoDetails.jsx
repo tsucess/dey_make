@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { useLanguage } from "../context/LanguageContext";
@@ -15,6 +15,7 @@ import {
   getVideoProcessingStatus,
   getProfileAvatar,
   getProfileName,
+  isActiveLiveVideo,
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
@@ -89,7 +90,7 @@ function RelatedVideoCard({ video, onOpen }) {
       <div className="relative aspect-video overflow-hidden">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
         <div className="absolute left-3 top-3 flex flex-col gap-2">
-          {video.isLive ? <span className="rounded-full bg-red-500 px-2 py-1 text-[10px] font-semibold text-white">{t("content.liveBadge")}</span> : null}
+          {isActiveLiveVideo(video) ? <span className="rounded-full bg-red-500 px-2 py-1 text-[10px] font-semibold text-white">{t("content.liveBadge")}</span> : null}
           {showProcessingBadge ? <span className="rounded-full bg-amber-500 px-2 py-1 text-[10px] font-semibold text-black">{processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge")}</span> : null}
         </div>
       </div>
@@ -112,11 +113,12 @@ function CommentCard({
   onSubmitReply,
   onToggleReplies,
   onToggleReaction,
+  compact = false,
 }) {
   const { t } = useLanguage();
 
   return (
-    <article className="rounded-3xl bg-white300 p-4 dark:bg-black100">
+    <article className={compact ? "border-b border-black/10 pb-5 last:border-b-0 dark:border-white/10" : "rounded-3xl bg-white300 p-4 dark:bg-black100"}>
       <div className="flex gap-3">
         <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
         <div className="min-w-0 flex-1 space-y-2">
@@ -124,9 +126,9 @@ function CommentCard({
             <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
-          <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{comment.body || comment.text}</p>
+          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>{comment.body || comment.text}</p>
 
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate500 dark:text-slate200">
+          <div className={`flex flex-wrap items-center ${compact ? "gap-4" : "gap-3"} text-xs text-slate500 dark:text-slate200`}>
             <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={comment.currentUserState?.liked ? "text-orange100" : ""}>
               {t("videoDetails.like")} {comment.likes ? `(${formatCompactNumber(comment.likes)})` : ""}
             </button>
@@ -182,12 +184,12 @@ function CommentCard({
   );
 }
 
-export default function VideoDetails() {
+export default function VideoDetails({ mode = "video" }) {
   const { id } = useParams();
-  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { isAuthenticated, user } = useAuth();
+  const isLiveRoom = mode === "live";
   const viewRecordedRef = useRef(new Set());
   const livePreviewRef = useRef(null);
   const livePlaybackRef = useRef(null);
@@ -216,14 +218,14 @@ export default function VideoDetails() {
   const [livePreviewStatus, setLivePreviewStatus] = useState("idle");
   const [liveConnectionStatus, setLiveConnectionStatus] = useState("idle");
   const creatorId = video?.author?.id || video?.creator?.id;
+  const isVideoCurrentlyLive = isActiveLiveVideo(video);
   const canSubscribeToAuthor = Boolean(creatorId) && user?.id !== creatorId;
-  const canManageLive = Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
+  const canManageLive = isLiveRoom && Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
   const processingStatus = getVideoProcessingStatus(video);
   const showProcessingBadge = processingStatus !== "completed";
-  const isLiveWatchRoute = location.pathname.startsWith("/live/");
-  const shouldUseLocalLivePreview = Boolean(video?.isLive && canManageLive && video?.type === "video");
-  const shouldReceiveRemoteLiveStream = Boolean(video?.isLive && isLiveWatchRoute && !canManageLive && video?.type === "video" && isAuthenticated);
-  const shouldBroadcastLiveStream = Boolean(video?.isLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
+  const shouldUseLocalLivePreview = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video");
+  const shouldReceiveRemoteLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && !canManageLive && video?.type === "video" && isAuthenticated);
+  const shouldBroadcastLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
 
   useEffect(() => {
     if (livePreviewRef.current) {
@@ -500,6 +502,10 @@ export default function VideoDetails() {
       return entry;
     }
 
+    function getOrCreateBroadcasterConnection(recipientId) {
+      return broadcasterConnectionsRef.current.get(recipientId) || createBroadcasterConnection(recipientId);
+    }
+
     async function flushPendingCandidates(entry) {
       while (entry.pendingCandidates.length) {
         const candidate = entry.pendingCandidates.shift();
@@ -519,12 +525,12 @@ export default function VideoDetails() {
       if (signal.type === "offer" && signal.payload?.sdp) {
         const existing = broadcasterConnectionsRef.current.get(senderId);
 
-        if (existing) {
+        if (existing?.peerConnection.remoteDescription?.type || existing?.peerConnection.localDescription?.type) {
           closePeerConnection(existing.peerConnection);
           broadcasterConnectionsRef.current.delete(senderId);
         }
 
-        const entry = createBroadcasterConnection(senderId);
+        const entry = getOrCreateBroadcasterConnection(senderId);
         await entry.peerConnection.setRemoteDescription({
           type: "offer",
           sdp: signal.payload.sdp,
@@ -541,8 +547,7 @@ export default function VideoDetails() {
       }
 
       if (signal.type === "candidate" && signal.payload?.candidate) {
-        const entry = broadcasterConnectionsRef.current.get(senderId);
-        if (!entry) return;
+        const entry = getOrCreateBroadcasterConnection(senderId);
 
         if (entry.peerConnection.remoteDescription?.type) {
           await entry.peerConnection.addIceCandidate(signal.payload.candidate);
@@ -589,7 +594,7 @@ export default function VideoDetails() {
       try {
         const [videoResponse, relatedResponse, commentsResponse] = await Promise.all([
           api.getVideo(id),
-          api.getRelatedVideos(id),
+          isLiveRoom ? Promise.resolve({ data: { videos: [] } }) : api.getRelatedVideos(id),
           api.getVideoComments(id),
         ]);
 
@@ -619,7 +624,7 @@ export default function VideoDetails() {
     return () => {
       ignore = true;
     };
-  }, [id, t]);
+  }, [id, isLiveRoom, t]);
 
   function requireAuth() {
     if (isAuthenticated) return true;
@@ -708,7 +713,7 @@ export default function VideoDetails() {
   async function handleLiveToggle() {
     if (!video || !canManageLive || !requireAuth()) return;
 
-    const wasLive = Boolean(video.isLive);
+    const wasLive = isActiveLiveVideo(video);
     const actionKey = `${wasLive ? "stop" : "start"}-live-${video.id}`;
     setBusyAction(actionKey);
     setError("");
@@ -734,7 +739,7 @@ export default function VideoDetails() {
 
     try {
       const response = await api.shareVideo(video.id);
-      const shareUrl = buildShareUrl(video, isLiveWatchRoute);
+      const shareUrl = buildShareUrl(video, isLiveRoom);
 
       try {
         await navigator.clipboard.writeText(shareUrl);
@@ -885,8 +890,16 @@ export default function VideoDetails() {
     return <div className="flex min-h-screen items-center justify-center bg-white px-6 text-center text-sm text-slate600 dark:bg-[#121212] dark:text-slate200">{t("videoDetails.videoNotFound")}</div>;
   }
 
+  if (isLiveRoom && (video.type !== "video" || (!isVideoCurrentlyLive && !canManageLive))) {
+    return <Navigate to={buildVideoLink(video, { isLive: false })} replace />;
+  }
+
+  if (!isLiveRoom && isVideoCurrentlyLive) {
+    return <Navigate to={buildVideoLink(video, { isLive: true })} replace />;
+  }
+
   const creatorProfile = video.author || video.creator;
-  const isLiveWatchLayout = Boolean(video.isLive && isLiveWatchRoute);
+  const isLiveWatchLayout = Boolean(isLiveRoom && isVideoCurrentlyLive);
   const showRemoteLivePlayer = Boolean(shouldReceiveRemoteLiveStream && remoteLiveStream);
   const livePlaceholderMessage = shouldUseLocalLivePreview && livePreviewStatus === "requesting"
     ? t("videoDetails.loadingLivePreview")
@@ -903,13 +916,13 @@ export default function VideoDetails() {
       {canManageLive ? (
         <button
           type="button"
-          disabled={busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`}
+          disabled={busyAction === `${isVideoCurrentlyLive ? "stop" : "start"}-live-${video.id}`}
           onClick={handleLiveToggle}
           className="rounded-full bg-red-500 px-6 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {busyAction === `${video.isLive ? "stop" : "start"}-live-${video.id}`
-            ? t(video.isLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive")
-            : t(video.isLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
+          {busyAction === `${isVideoCurrentlyLive ? "stop" : "start"}-live-${video.id}`
+            ? t(isVideoCurrentlyLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive")
+            : t(isVideoCurrentlyLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
         </button>
       ) : null}
       {canSubscribeToAuthor ? (
@@ -963,8 +976,23 @@ export default function VideoDetails() {
     </div>
   );
 
-  const commentsSection = (
-    <section className={`flex flex-col gap-4 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6 ${isLiveWatchLayout ? "max-h-[75vh] overflow-hidden" : ""}`}>
+  const creatorBio = creatorProfile?.bio?.trim() || t("profile.emptyBio");
+  const videoDescription = video.description || video.caption || t("videoDetails.noDescription");
+  const hasTopStatusPills = showProcessingBadge || isVideoCurrentlyLive;
+  const recordedCreatorIdentity = creatorId ? (
+    <Link to={`/users/${creatorId}`} className="flex items-center gap-3 rounded-2xl transition-opacity hover:opacity-80">
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
+      <p className="text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+    </Link>
+  ) : (
+    <div className="flex items-center gap-3">
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
+      <p className="text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+    </div>
+  );
+
+  const commentsSection = isLiveWatchLayout ? (
+    <section className="flex max-h-[75vh] flex-col gap-4 overflow-hidden rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
         <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
@@ -991,7 +1019,7 @@ export default function VideoDetails() {
         </div>
       </div>
 
-      <div className={`${isLiveWatchLayout ? "flex-1 space-y-4 overflow-y-auto pr-1" : "space-y-4"}`}>
+      <div className="flex-1 space-y-4 overflow-y-auto pr-1">
         {comments.length ? (
           comments.map((comment) => (
             <CommentCard
@@ -1013,28 +1041,87 @@ export default function VideoDetails() {
         )}
       </div>
     </section>
+  ) : (
+    <section className="flex min-h-[36rem] flex-col pt-2 lg:max-h-[calc(100vh-3rem)]">
+      <div className="flex items-center justify-between gap-3 border-y border-black/10 py-4 dark:border-white/10">
+        <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
+        <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
+      </div>
+
+      <div className="flex-1 overflow-y-auto py-5 pr-1">
+        <div className="space-y-5">
+          {comments.length ? (
+            comments.map((comment) => (
+              <CommentCard
+                key={comment.id}
+                comment={comment}
+                replies={repliesByComment[comment.id] || []}
+                repliesExpanded={Boolean(expandedReplies[comment.id])}
+                loadingReplies={loadingRepliesId === comment.id}
+                replying={submittingReplyId === comment.id}
+                replyDraft={replyDrafts[comment.id] || ""}
+                onChangeReplyDraft={(commentId, value) => setReplyDrafts((current) => ({ ...current, [commentId]: value }))}
+                onSubmitReply={handleSubmitReply}
+                onToggleReplies={handleToggleReplies}
+                onToggleReaction={handleCommentReaction}
+                compact
+              />
+            ))
+          ) : (
+            <div className="rounded-3xl bg-[#F7F7F7] px-6 py-10 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noComments")}</div>
+          )}
+        </div>
+      </div>
+
+      <div className="border-t border-black/10 py-4 dark:border-white/10">
+        <div className="flex flex-wrap items-center gap-3">
+          <img src={getProfileAvatar(user)} alt={getProfileName(user, t("videoDetails.you"))} className="h-9 w-9 rounded-full object-cover" />
+          <div className="min-w-0 flex-1 rounded-full bg-[#F7F7F7] px-4 py-3 dark:bg-[#171717]">
+            <textarea
+              value={commentBody}
+              onChange={(event) => setCommentBody(event.target.value)}
+              rows={1}
+              placeholder={t("videoDetails.commentPlaceholder")}
+              className="h-6 max-h-24 w-full resize-none bg-transparent text-sm text-slate100 outline-none placeholder:text-slate500 dark:text-white dark:placeholder:text-slate200"
+            />
+          </div>
+          <button
+            type="button"
+            disabled={submittingComment || !commentBody.trim()}
+            onClick={handleSubmitComment}
+            className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {submittingComment ? t("videoDetails.posting") : t("videoDetails.postComment")}
+          </button>
+        </div>
+      </div>
+    </section>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
-      <div className="mx-auto max-w-7xl space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
-            <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
-          </button>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            {showProcessingBadge ? <span className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold tracking-wide text-black">{processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge")}</span> : null}
-            {video.isLive ? <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">{t("videoDetails.liveNow")}</span> : null}
+    <div className={`min-h-screen px-4 py-5 md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212]" : "bg-white dark:bg-[#121212]"}`}>
+      <div className="mx-auto max-w-[1400px] space-y-4">
+        {isLiveWatchLayout || hasTopStatusPills ? (
+          <div className={`flex items-center gap-4 ${isLiveWatchLayout ? "justify-between" : "justify-end"}`}>
+            {isLiveWatchLayout ? (
+              <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
+                <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
+              </button>
+            ) : null}
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              {showProcessingBadge ? <span className="rounded-full bg-amber-500 px-4 py-2 text-xs font-semibold tracking-wide text-black">{processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge")}</span> : null}
+              {isVideoCurrentlyLive ? <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">{t("videoDetails.liveNow")}</span> : null}
+            </div>
           </div>
-        </div>
+        ) : null}
 
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className={`grid gap-6 ${isLiveWatchLayout ? "xl:grid-cols-[minmax(0,1.2fr),400px]" : "xl:grid-cols-[minmax(0,1fr),360px]"}`}>
+        <div className={`grid gap-8 ${isLiveWatchLayout ? "xl:grid-cols-[minmax(0,1.2fr),400px]" : "lg:grid-cols-[minmax(0,1fr),340px] xl:grid-cols-[minmax(0,1fr),380px]"}`}>
           <div className="space-y-6">
-            <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
-              <div className="relative aspect-video bg-black">
+            <section className={isLiveWatchLayout ? "overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
+              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-[2rem]"}`}>
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video
@@ -1054,7 +1141,7 @@ export default function VideoDetails() {
                       playsInline
                       controls
                     />
-                  ) : video.isLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !video.mediaUrl) ? (
+                  ) : isVideoCurrentlyLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !video.mediaUrl) ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-white">
                       <div className="max-w-lg">
                         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-red-300">{t("videoDetails.liveNow")}</p>
@@ -1072,54 +1159,59 @@ export default function VideoDetails() {
                 )}
               </div>
 
-              <div className="space-y-5 px-5 py-5 md:px-6 md:py-6">
-                <div className={`flex flex-col gap-4 ${isLiveWatchLayout ? "" : "lg:flex-row lg:items-start lg:justify-between"}`}>
-                  <div className="space-y-2">
-                    <h1 className="text-2xl font-semibold text-black dark:text-white">{getVideoTitle(video)}</h1>
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
-                      <span>{formatCountLabel(video.views || 0, t("content.views"))}</span>
-                      <span>{formatRelativeTime(video.createdAt)}</span>
-                      {video.category?.label ? <span>{video.category.label}</span> : null}
-                      {video.location ? <span>{video.location}</span> : null}
-                    </div>
-                  </div>
-
-                  {!isLiveWatchLayout ? <div className="flex flex-wrap gap-3">{creatorControls}</div> : null}
-                </div>
-
-                {!isLiveWatchLayout ? (
+              <div className={isLiveWatchLayout ? "space-y-5 px-5 py-5 md:px-6 md:py-6" : "space-y-5"}>
+                {isLiveWatchLayout ? (
                   <>
-                    <div className="flex flex-wrap gap-3">{actionButtons}</div>
-
-                    <div className="rounded-3xl bg-gray-50 p-5 dark:bg-[#101010]">
-                      {creatorIdentity}
-                      <p className="mt-4 text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
+                    <div className="flex flex-col gap-4">
+                      <div className="space-y-2">
+                        <h1 className="text-2xl font-semibold text-black dark:text-white">{getVideoTitle(video)}</h1>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
+                          <span>{formatCountLabel(video.views || 0, t("content.views"))}</span>
+                          <span>{formatRelativeTime(video.createdAt)}</span>
+                          {video.category?.label ? <span>{video.category.label}</span> : null}
+                          {video.location ? <span>{video.location}</span> : null}
+                        </div>
+                      </div>
                     </div>
                   </>
-                ) : null}
+                ) : (
+                  <>
+                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1 space-y-4">
+                        <h1 className="text-2xl font-semibold text-black dark:text-white md:text-[2.15rem]">{getVideoTitle(video)}</h1>
+                        {recordedCreatorIdentity}
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
+                          <span>{formatCountLabel(video.views || 0, t("content.views"))}</span>
+                          <span>{formatRelativeTime(video.createdAt)}</span>
+                          {video.category?.label ? <span>{video.category.label}</span> : null}
+                          {video.location ? <span>{video.location}</span> : null}
+                        </div>
+                      </div>
+                      {canSubscribeToAuthor || canManageLive ? <div className="shrink-0">{creatorControls}</div> : null}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                      {actionButtons}
+                    </div>
+
+                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
+                  </>
+                )}
               </div>
             </section>
 
             {!isLiveWatchLayout ? (
               <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.moreVideos")}</h2>
-                  <p className="text-sm text-slate500 dark:text-slate200">{t("videoDetails.relatedCount", { count: relatedVideos.length })}</p>
+                <h2 className="text-[1.75rem] font-semibold text-black dark:text-white">{t("videoDetails.aboutCreator")}</h2>
+                <div className="rounded-[2rem] bg-[#F7F7F7] px-6 py-6 dark:bg-[#171717] md:px-8 md:py-7">
+                  <p className="text-base font-medium text-black dark:text-white">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
+                  <p className="mt-4 text-sm leading-8 text-slate700 dark:text-slate200">{creatorBio}</p>
                 </div>
-                {relatedVideos.length ? (
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                    {relatedVideos.map((relatedVideo) => (
-                      <RelatedVideoCard key={relatedVideo.id} video={relatedVideo} onOpen={(nextVideo) => navigate(buildVideoLink(nextVideo))} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">{t("videoDetails.noRelatedVideos")}</div>
-                )}
               </section>
             ) : null}
           </div>
 
-          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : ""}>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10"}>
             {isLiveWatchLayout ? (
               <section className="space-y-5 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1131,7 +1223,7 @@ export default function VideoDetails() {
                   {actionButtons}
                 </div>
 
-                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{video.description || video.caption || t("videoDetails.noDescription")}</p>
+                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
               </section>
             ) : null}
 

@@ -72,21 +72,40 @@ export function getVideoTitle(video) {
   const untitledVideo = translate(getActiveLocale(), "content.untitledVideo");
   if (!video) return untitledVideo;
 
-  return video.title || video.caption || video.description || (video.isLive ? translate(getActiveLocale(), "content.liveStream") : untitledVideo);
+  return video.title || video.caption || video.description || (isActiveLiveVideo(video) ? translate(getActiveLocale(), "content.liveStream") : untitledVideo);
 }
 
 export function getVideoTags(video) {
   return [video?.category?.label || video?.category?.name].filter(Boolean);
 }
 
+function normalizeBooleanFlag(value) {
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (["true", "1", "yes"].includes(normalized)) return true;
+    if (["false", "0", "no", ""].includes(normalized)) return false;
+  }
+
+  return Boolean(value);
+}
+
+export function isActiveLiveVideo(video) {
+  return normalizeBooleanFlag(video?.isLive);
+}
+
+export function filterActiveLiveVideos(videos) {
+  return Array.isArray(videos) ? videos.filter(isActiveLiveVideo) : [];
+}
+
 function resolveVideoRouteOptions(videoOrId, options = {}) {
   if (typeof options === "boolean") {
-    return { id: videoOrId?.id ?? videoOrId, isLive: options };
+    return { id: videoOrId?.id ?? videoOrId, isLive: normalizeBooleanFlag(options) };
   }
 
   return {
     id: videoOrId?.id ?? videoOrId,
-    isLive: options.isLive ?? Boolean(videoOrId?.isLive),
+    isLive: options.isLive ?? isActiveLiveVideo(videoOrId),
   };
 }
 
@@ -131,7 +150,7 @@ export function mapVideoToCardProps(video) {
     author: getProfileName(video?.author || video?.creator),
     avatarUrl: getProfileAvatar(video?.author || video?.creator),
     tags: getVideoTags(video),
-    live: Boolean(video?.isLive),
+    live: isActiveLiveVideo(video),
     processingStatus: getVideoProcessingStatus(video),
   };
 }

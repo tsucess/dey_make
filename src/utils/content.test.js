@@ -5,6 +5,7 @@ import {
   buildVideoLink,
   buildShareUrl,
   formatCompactNumber,
+  filterActiveLiveVideos,
   getVideoProcessingStatus,
   getProfileAvatar,
   getProfileName,
@@ -63,5 +64,15 @@ describe('content helpers', () => {
     expect(buildShareUrl(42)).toBe(`${window.location.origin}/video/42`);
     expect(buildShareUrl(42, true)).toBe(`${window.location.origin}/live/42`);
     expect(buildVideoLink({ id: 7, isLive: true })).toBe('/live/7');
+  });
+
+  it('normalizes live flags before filtering or building links', () => {
+    expect(buildVideoLink({ id: 8, isLive: 'true' })).toBe('/live/8');
+    expect(buildVideoLink({ id: 9, isLive: 'false' })).toBe('/video/9');
+    expect(filterActiveLiveVideos([
+      { id: 1, isLive: 'true' },
+      { id: 2, isLive: 'false' },
+      { id: 3, isLive: 1 },
+    ]).map((video) => video.id)).toEqual([1, 3]);
   });
 });

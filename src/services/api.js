@@ -104,6 +104,86 @@ async function request(path, options = {}) {
   return json;
 }
 
+async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
+  const endpoint = uploadConfig?.endpoint;
+  const onProgress = options?.onProgress;
+
+  if (!endpoint) {
+    throw new ApiError("Upload endpoint is unavailable.", 500, {
+      file: ["Upload endpoint is unavailable."],
+    });
+  }
+
+  const formData = new FormData();
+
+  Object.entries(uploadConfig?.fields || {}).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    formData.append(key, `${value}`);
+  });
+
+  formData.append("file", file);
+
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    xhr.open(uploadConfig?.method || "POST", endpoint);
+
+    Object.entries(uploadConfig?.headers || {}).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      xhr.setRequestHeader(key, `${value}`);
+    });
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (!onProgress) return;
+
+      const total = event.total || file?.size || 0;
+      const percent = total > 0 ? Math.round((event.loaded / total) * 100) : 0;
+
+      onProgress({
+        loaded: event.loaded,
+        total,
+        percent: Math.max(0, Math.min(100, percent)),
+      });
+    });
+
+    xhr.addEventListener("load", () => {
+      const text = xhr.responseText || "";
+      let data = null;
+
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = text ? { message: text } : null;
+      }
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        if (onProgress) {
+          const total = file?.size || 0;
+          onProgress({ loaded: total, total, percent: 100 });
+        }
+
+        resolve(data || {});
+        return;
+      }
+
+      const message = data?.error?.message || data?.message || "Unable to upload file.";
+      reject(new ApiError(message, xhr.status || 502, { file: [message] }));
+    });
+
+    xhr.addEventListener("error", () => {
+      const message = "Unable to upload file.";
+      reject(new ApiError(message, xhr.status || 502, { file: [message] }));
+    });
+
+    xhr.addEventListener("abort", () => {
+      const message = "Upload was cancelled.";
+      reject(new ApiError(message, xhr.status || 499, { file: [message] }));
+    });
+
+    xhr.send(formData);
+  });
+}
+
 export const api = {
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
   register: (payload) => request("/auth/register", { method: "POST", body: payload }),
@@ -116,6 +196,8 @@ export const api = {
   getVideos: (category) => request(category ? `/videos?category=${encodeURIComponent(category)}` : "/videos"),
   getTrendingVideos: () => request("/videos/trending"),
   getLiveVideos: () => request("/videos/live"),
+  presignUpload: (payload) => request("/uploads/presign", { method: "POST", body: payload }),
+  uploadFileDirect: (file, uploadConfig, options) => uploadFileDirect(file, uploadConfig, options),
   uploadFile: (formData) => request("/uploads", { method: "POST", body: formData }),
   createVideo: (payload) => request("/videos", { method: "POST", body: payload }),
   updateVideo: (id, payload) => request(`/videos/${id}`, { method: "PATCH", body: payload }),
