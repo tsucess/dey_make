@@ -992,7 +992,7 @@ export default function VideoDetails({ mode = "video" }) {
   );
 
   const commentsSection = isLiveWatchLayout ? (
-    <section className="flex max-h-[75vh] flex-col gap-4 overflow-hidden rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+    <section className="flex max-h-[75vh] flex-col gap-4 overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
         <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
@@ -1042,7 +1042,7 @@ export default function VideoDetails({ mode = "video" }) {
       </div>
     </section>
   ) : (
-    <section className="flex min-h-[36rem] flex-col pt-2 lg:max-h-[calc(100vh-3rem)]">
+    <section className="flex min-h-144 flex-col pt-2 lg:max-h-[calc(100vh-3rem)]">
       <div className="flex items-center justify-between gap-3 border-y border-black/10 py-4 dark:border-white/10">
         <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
         <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
@@ -1100,7 +1100,7 @@ export default function VideoDetails({ mode = "video" }) {
 
   return (
     <div className={`min-h-screen px-4 py-5 md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212]" : "bg-white dark:bg-[#121212]"}`}>
-      <div className="mx-auto max-w-[1400px] space-y-4">
+      <div className="mx-auto max-w-350 space-y-4">
         {isLiveWatchLayout || hasTopStatusPills ? (
           <div className={`flex items-center gap-4 ${isLiveWatchLayout ? "justify-between" : "justify-end"}`}>
             {isLiveWatchLayout ? (
@@ -1120,8 +1120,8 @@ export default function VideoDetails({ mode = "video" }) {
 
         <div className={`grid gap-8 ${isLiveWatchLayout ? "xl:grid-cols-[minmax(0,1.2fr),400px]" : "lg:grid-cols-[minmax(0,1fr),340px] xl:grid-cols-[minmax(0,1fr),380px]"}`}>
           <div className="space-y-6">
-            <section className={isLiveWatchLayout ? "overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
-              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-[2rem]"}`}>
+            <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
+              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-4xl"}`}>
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video
@@ -1203,7 +1203,7 @@ export default function VideoDetails({ mode = "video" }) {
             {!isLiveWatchLayout ? (
               <section className="space-y-4">
                 <h2 className="text-[1.75rem] font-semibold text-black dark:text-white">{t("videoDetails.aboutCreator")}</h2>
-                <div className="rounded-[2rem] bg-[#F7F7F7] px-6 py-6 dark:bg-[#171717] md:px-8 md:py-7">
+                <div className="rounded-4xl bg-[#F7F7F7] px-6 py-6 dark:bg-[#171717] md:px-8 md:py-7">
                   <p className="text-base font-medium text-black dark:text-white">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
                   <p className="mt-4 text-sm leading-8 text-slate700 dark:text-slate200">{creatorBio}</p>
                 </div>
@@ -1213,7 +1213,7 @@ export default function VideoDetails({ mode = "video" }) {
 
           <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10"}>
             {isLiveWatchLayout ? (
-              <section className="space-y-5 rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   {creatorIdentity}
                   <div className="flex flex-wrap gap-3">{creatorControls}</div>
