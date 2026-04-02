@@ -535,7 +535,7 @@ export default function CreateUpload() {
           ) : null}
 
           {isLiveIntent ? (
-            <div className="mb-8 overflow-hidden rounded-[2rem] border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
+            <div className="mb-8 overflow-hidden rounded-4xl border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
               <div className="flex h-72 items-center justify-center bg-black md:h-80">
                 {liveCameraStream ? (
                   <video
@@ -627,7 +627,7 @@ export default function CreateUpload() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-80"
+                className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-110"
               >
                 {previewUrl ? (
                   selectedType === "video" ? (
