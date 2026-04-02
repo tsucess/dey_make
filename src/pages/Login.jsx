@@ -108,7 +108,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                         placeholder-slate500 dark:placeholder-slate500 font-inter
                         ${errors.identifier
                           ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
           {errors.identifier && (
@@ -132,7 +132,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                           placeholder-gray-400 dark:placeholder-slate500 font-inter
                           ${errors.password
                             ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                            : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                            : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                           }`}
             />
             <button
