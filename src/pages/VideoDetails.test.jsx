@@ -14,7 +14,7 @@ const authState = {
   user: { id: 99, fullName: 'Viewer Example', avatarUrl: '' },
 };
 
-vi.mock('hls.js/light', () => ({
+vi.mock('hls.js', () => ({
   default: class MockHls {
     static Events = { ERROR: hlsMockState.errorEvent };
 
@@ -204,8 +204,8 @@ function buildVideo(overrides = {}) {
     mediaUrl: 'https://cdn.example.com/alpha.mp4',
     streamUrl: null,
     views: 12,
-    author: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
-    creator: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
+    author: { id: 5, fullName: 'Creator Uno', username: 'creator.uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
+    creator: { id: 5, fullName: 'Creator Uno', username: 'creator.uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
     currentUserState: { liked: false, disliked: false, saved: false, subscribed: false },
     commentsCount: 0,
     processingStatus: 'completed',
@@ -222,7 +222,7 @@ function buildComment(overrides = {}) {
     dislikes: 0,
     repliesCount: 0,
     createdAt: '2025-01-01T00:00:00.000Z',
-    user: { id: 5, fullName: 'Creator Uno', avatarUrl: '' },
+    user: { id: 5, fullName: 'Creator Uno', username: 'creator.uno', avatarUrl: '' },
     currentUserState: { liked: false, disliked: false },
     ...overrides,
   };
@@ -407,6 +407,30 @@ describe('VideoDetails', () => {
     await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(5));
     expect(screen.getByText('34 suscriptores')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Suscrito' })).toBeInTheDocument();
+  });
+
+  it('renders clickable mention links in video descriptions and comments', async () => {
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ description: 'Big thanks to @creator.uno and #guest.user for the collab.' }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({
+      data: {
+        comments: [buildComment({ body: 'Loved the cameo from @creator.uno and #guest.user.' })],
+      },
+    });
+    api.recordView.mockResolvedValue({});
+
+    renderPage();
+
+    const directMentionLinks = await screen.findAllByRole('link', { name: '@creator.uno' });
+    const searchMentionLinks = screen.getAllByRole('link', { name: '#guest.user' });
+
+    expect(directMentionLinks).toHaveLength(2);
+    directMentionLinks.forEach((link) => expect(link).toHaveAttribute('href', '/users/5'));
+    searchMentionLinks.forEach((link) => expect(link).toHaveAttribute('href', '/search?q=guest.user&tab=creators'));
   });
 
   it('only saves the video when the save button is clicked', async () => {

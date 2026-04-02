@@ -29,6 +29,7 @@ vi.mock('../services/api', async () => {
     ...actual,
     api: {
       getCategories: vi.fn(),
+      searchCreators: vi.fn(),
       presignUpload: vi.fn(),
       uploadFileDirect: vi.fn(),
       uploadFile: vi.fn(),
@@ -221,6 +222,38 @@ describe('CreateUpload', () => {
       isDraft: false,
       isLive: false,
     })));
+  });
+
+  it('shows mention suggestions while typing and inserts the selected username', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({
+      data: {
+        categories: [{ id: 2, label: 'Music' }],
+      },
+    });
+    api.searchCreators.mockResolvedValue({
+      data: {
+        creators: [
+          { id: 7, fullName: 'Creator Uno', username: 'creator.uno', avatarUrl: '' },
+          { id: 8, fullName: 'Creative Two', username: 'creative.two', avatarUrl: '' },
+        ],
+      },
+    });
+
+    renderPage();
+
+    const captionInput = await screen.findByPlaceholderText('Add a caption');
+
+    await user.type(captionInput, 'Collab with @cre');
+
+    await waitFor(() => expect(api.searchCreators).toHaveBeenCalledWith('cre'));
+
+    const creatorOption = await screen.findByRole('option', { name: /Creator Uno\s+@creator\.uno/i });
+    await user.click(creatorOption);
+
+    expect(captionInput).toHaveValue('Collab with @creator.uno ');
+    expect(screen.queryByRole('listbox', { name: 'Mention suggestions' })).not.toBeInTheDocument();
   });
 
   it('blocks backend fallback for large videos when direct upload is unavailable', async () => {

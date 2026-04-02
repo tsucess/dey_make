@@ -75,12 +75,18 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
     setSubmitError("");
 
     try {
-      await register({
+      const result = await register({
         ...form,
         fullName: form.fullName.trim(),
         username: form.username.trim(),
         email: form.email.trim(),
       });
+
+      if (result?.verification?.required) {
+        navigate("/verify-email", { replace: true });
+        return;
+      }
+
       onSuccess?.();
       navigate("/home", { replace: true });
     } catch (error) {

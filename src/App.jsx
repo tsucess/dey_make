@@ -1,8 +1,11 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import SignUp from "./pages/SignUp";
 import Login from "./pages/Login";
+import VerifyEmail from "./pages/VerifyEmail";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import AppLayout from "./components/Layout/AppLayout";
 import Homepage from "./pages/Homepage";
 import LivePage from "./pages/LivePage";
@@ -38,11 +41,26 @@ function ProtectedRoute() {
 }
 
 function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const location = useLocation();
 
   if (isLoading) return <FullPageLoader />;
 
+  if (pendingVerification && location.pathname !== "/auth/callback") {
+    return <Navigate to="/verify-email" replace />;
+  }
+
   return isAuthenticated ? <Navigate to="/home" replace /> : <Outlet />;
+}
+
+function PendingVerificationRoute() {
+  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+
+  if (isLoading) return <FullPageLoader />;
+
+  if (isAuthenticated) return <Navigate to="/home" replace />;
+
+  return pendingVerification ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
 function LandingRoute() {
@@ -52,9 +70,13 @@ function LandingRoute() {
 }
 
 function RootRedirect() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
 
   if (isLoading) return <FullPageLoader />;
+
+  if (pendingVerification) {
+    return <Navigate to="/verify-email" replace />;
+  }
 
   return <Navigate to={isAuthenticated ? "/home" : "/welcome"} replace />;
 }
@@ -68,8 +90,15 @@ export default function App() {
           <Route path="/welcome" element={<LandingRoute />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
-          <Route path="/auth/callback" element={<OAuthCallback />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
+
+        <Route element={<PendingVerificationRoute />}>
+          <Route path="/verify-email" element={<VerifyEmail />} />
+        </Route>
+
+        <Route path="/auth/callback" element={<OAuthCallback />} />
 
         <Route element={<AppLayout />}>
           <Route path="/users/:id" element={<Profile />} />

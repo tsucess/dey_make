@@ -1,12 +1,14 @@
-import Hls from "hls.js/light";
+import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
+import MentionText from "../components/MentionText";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { clearLiveCreationSession, getLiveCreationSession } from "../live/liveSessionStore";
+import { normalizeMentionHandle } from "../utils/mentions";
 import {
   buildShareUrl,
   buildVideoLink,
@@ -161,6 +163,15 @@ async function uploadSelectedFile(file, type, callbacks = {}) {
   return uploadResponse?.data?.upload || null;
 }
 
+function registerMentionProfile(lookup, profile) {
+  const handle = normalizeMentionHandle(profile?.username);
+  const id = profile?.id;
+
+  if (!handle || !id || lookup.has(handle)) return;
+
+  lookup.set(handle, `/users/${id}`);
+}
+
 function ActionButton({ children, active, disabled, onClick }) {
   return (
     <button
@@ -211,6 +222,7 @@ function CommentCard({
   onSubmitReply,
   onToggleReplies,
   onToggleReaction,
+  resolveMentionHref,
   compact = false,
 }) {
   const { t } = useLanguage();
@@ -224,7 +236,9 @@ function CommentCard({
             <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
-          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>{comment.body || comment.text}</p>
+          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>
+            <MentionText text={comment.body || comment.text} resolveMentionHref={resolveMentionHref} />
+          </p>
 
           <div className={`flex flex-wrap items-center ${compact ? "gap-4" : "gap-3"} text-xs text-slate500 dark:text-slate200`}>
             <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={comment.currentUserState?.liked ? "text-orange100" : ""}>
@@ -253,7 +267,9 @@ function CommentCard({
                       <p className="text-xs font-medium text-black dark:text-white">{getProfileName(reply.user)}</p>
                       <span className="text-[11px] text-slate500 dark:text-slate200">{formatRelativeTime(reply.createdAt)}</span>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">{reply.body || reply.text}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">
+                      <MentionText text={reply.body || reply.text} resolveMentionHref={resolveMentionHref} />
+                    </p>
                   </div>
                 </div>
               ))}
@@ -1303,6 +1319,12 @@ export default function VideoDetails({ mode = "video" }) {
   const creatorBio = creatorProfile?.bio?.trim() || t("profile.emptyBio");
   const videoDescription = video.description || video.caption || t("videoDetails.noDescription");
   const hasTopStatusPills = showProcessingBadge || isVideoCurrentlyLive;
+  const mentionHrefByHandle = new Map();
+  registerMentionProfile(mentionHrefByHandle, video.author);
+  registerMentionProfile(mentionHrefByHandle, video.creator);
+  comments.forEach((comment) => registerMentionProfile(mentionHrefByHandle, comment.user));
+  Object.values(repliesByComment).flat().forEach((reply) => registerMentionProfile(mentionHrefByHandle, reply.user));
+  const resolveMentionHref = (handle) => mentionHrefByHandle.get(normalizeMentionHandle(handle)) || null;
   const recordedCreatorIdentity = creatorId ? (
     <Link to={`/users/${creatorId}`} className="flex items-center gap-3 rounded-2xl transition-opacity hover:opacity-80">
       <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
@@ -1358,6 +1380,7 @@ export default function VideoDetails({ mode = "video" }) {
               onSubmitReply={handleSubmitReply}
               onToggleReplies={handleToggleReplies}
               onToggleReaction={handleCommentReaction}
+              resolveMentionHref={resolveMentionHref}
             />
           ))
         ) : (
@@ -1388,6 +1411,7 @@ export default function VideoDetails({ mode = "video" }) {
                 onSubmitReply={handleSubmitReply}
                 onToggleReplies={handleToggleReplies}
                 onToggleReaction={handleCommentReaction}
+                resolveMentionHref={resolveMentionHref}
                 compact
               />
             ))
@@ -1518,7 +1542,9 @@ export default function VideoDetails({ mode = "video" }) {
                       {actionButtons}
                     </div>
 
-                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
+                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
+                      <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
+                    </p>
                   </>
                 )}
               </div>
@@ -1547,7 +1573,9 @@ export default function VideoDetails({ mode = "video" }) {
                   {actionButtons}
                 </div>
 
-                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
+                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
+                  <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
+                </p>
               </section>
             ) : null}
 

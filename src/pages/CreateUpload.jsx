@@ -7,7 +7,8 @@ import Logo from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
-import { buildVideoLink } from "../utils/content";
+import { buildVideoLink, getProfileAvatar, getProfileName } from "../utils/content";
+import { getActiveMentionCandidate, normalizeMentionHandle } from "../utils/mentions";
 
 const uploadTypeOptions = [
   { id: "image", icon: IoImageOutline, accept: "image/png,image/jpeg" },
@@ -126,13 +127,19 @@ async function uploadSelectedFile(file, type, callbacks = {}) {
   return uploadResponse?.data?.upload || null;
 }
 
+function supportsMentionAutocomplete(fieldKey) {
+  return fieldKey === "caption" || fieldKey === "description";
+}
+
 export default function CreateUpload() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
+  const fieldInputRefs = useRef({});
   const livePreviewRef = useRef(null);
+  const mentionBlurTimeoutRef = useRef(null);
   const draftId = searchParams.get("id");
   const intent = searchParams.get("intent");
   const isEditingDraft = Boolean(draftId);
@@ -157,6 +164,10 @@ export default function CreateUpload() {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [uploadStatus, setUploadStatus] = useState(() => createUploadStatusState());
+  const [activeMention, setActiveMention] = useState(null);
+  const [mentionSuggestions, setMentionSuggestions] = useState([]);
+  const [loadingMentionSuggestions, setLoadingMentionSuggestions] = useState(false);
+  const [activeMentionSuggestionIndex, setActiveMentionSuggestionIndex] = useState(0);
 
   const uploadTypes = useMemo(() => uploadTypeOptions.map((type) => ({
     ...type,
@@ -257,6 +268,162 @@ export default function CreateUpload() {
       livePreviewRef.current.srcObject = liveCameraStream || null;
     }
   }, [liveCameraStream]);
+
+  useEffect(() => () => {
+    if (mentionBlurTimeoutRef.current) {
+      window.clearTimeout(mentionBlurTimeoutRef.current);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!activeMention?.fieldKey || activeMention.query.length < 1) {
+      setMentionSuggestions([]);
+      setLoadingMentionSuggestions(false);
+      setActiveMentionSuggestionIndex(0);
+      return undefined;
+    }
+
+    let ignore = false;
+    const debounceTimer = window.setTimeout(async () => {
+      setLoadingMentionSuggestions(true);
+
+      try {
+        const response = await api.searchCreators(activeMention.query);
+
+        if (ignore) return;
+
+        const creators = (response?.data?.creators || [])
+          .filter((creator) => creator?.username)
+          .slice(0, 5);
+
+        setMentionSuggestions(creators);
+        setActiveMentionSuggestionIndex(0);
+      } catch {
+        if (!ignore) {
+          setMentionSuggestions([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoadingMentionSuggestions(false);
+        }
+      }
+    }, 250);
+
+    return () => {
+      ignore = true;
+      window.clearTimeout(debounceTimer);
+    };
+  }, [activeMention?.fieldKey, activeMention?.query]);
+
+  function clearMentionAutocomplete() {
+    if (mentionBlurTimeoutRef.current) {
+      window.clearTimeout(mentionBlurTimeoutRef.current);
+      mentionBlurTimeoutRef.current = null;
+    }
+
+    setActiveMention(null);
+    setMentionSuggestions([]);
+    setLoadingMentionSuggestions(false);
+    setActiveMentionSuggestionIndex(0);
+  }
+
+  function cancelMentionBlurTimeout() {
+    if (!mentionBlurTimeoutRef.current) return;
+    window.clearTimeout(mentionBlurTimeoutRef.current);
+    mentionBlurTimeoutRef.current = null;
+  }
+
+  function syncActiveMention(fieldKey, value, cursorIndex) {
+    if (!supportsMentionAutocomplete(fieldKey)) {
+      clearMentionAutocomplete();
+      return;
+    }
+
+    const nextMention = getActiveMentionCandidate(value, cursorIndex ?? value.length);
+
+    if (!nextMention) {
+      clearMentionAutocomplete();
+      return;
+    }
+
+    cancelMentionBlurTimeout();
+    setActiveMention({ ...nextMention, fieldKey });
+  }
+
+  function handleFieldChange(fieldKey, value, cursorIndex) {
+    setForm((current) => ({ ...current, [fieldKey]: value }));
+    syncActiveMention(fieldKey, value, cursorIndex);
+  }
+
+  function scheduleMentionAutocompleteClose() {
+    cancelMentionBlurTimeout();
+    mentionBlurTimeoutRef.current = window.setTimeout(() => {
+      clearMentionAutocomplete();
+    }, 120);
+  }
+
+  function handleMentionSelection(creator) {
+    const mention = activeMention;
+    const fieldKey = mention?.fieldKey;
+    const username = normalizeMentionHandle(creator?.username);
+
+    if (!fieldKey || !username) return;
+
+    cancelMentionBlurTimeout();
+
+    setForm((current) => {
+      const currentValue = current[fieldKey] || "";
+      const before = currentValue.slice(0, mention.start);
+      const after = currentValue.slice(mention.end);
+      const nextCharacter = after.slice(0, 1);
+      const needsTrailingSpace = nextCharacter === "" || !/[\s.,!?;:)]/.test(nextCharacter);
+      const replacement = `${mention.prefix}${username}${needsTrailingSpace ? " " : ""}`;
+      const nextValue = `${before}${replacement}${after}`;
+      const nextCursorPosition = before.length + replacement.length;
+
+      window.setTimeout(() => {
+        const input = fieldInputRefs.current[fieldKey];
+        input?.focus();
+        input?.setSelectionRange?.(nextCursorPosition, nextCursorPosition);
+      }, 0);
+
+      return {
+        ...current,
+        [fieldKey]: nextValue,
+      };
+    });
+
+    clearMentionAutocomplete();
+  }
+
+  function handleMentionInputKeyDown(fieldKey, event) {
+    if (activeMention?.fieldKey !== fieldKey) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      clearMentionAutocomplete();
+      return;
+    }
+
+    if (!mentionSuggestions.length) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveMentionSuggestionIndex((current) => (current + 1) % mentionSuggestions.length);
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveMentionSuggestionIndex((current) => (current - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+      return;
+    }
+
+    if (event.key === "Enter" || event.key === "Tab") {
+      event.preventDefault();
+      handleMentionSelection(mentionSuggestions[activeMentionSuggestionIndex] || mentionSuggestions[0]);
+    }
+  }
 
   useEffect(() => () => {
     stopMediaStream(liveCameraStream);
@@ -648,14 +815,69 @@ export default function CreateUpload() {
 
           <div className="space-y-4 md:space-y-5">
             {textFields.map(({ key, placeholder }) => (
-              <input
-                key={key}
-                type="text"
-                value={form[key]}
-                placeholder={placeholder}
-                onChange={(event) => setForm((prev) => ({ ...prev, [key]: event.target.value }))}
-                className="h-18 w-full rounded-full bg-white300 px-7 text-base font-inter text-slate50 outline-none placeholder:text-slate50 dark:bg-black100 dark:text-white dark:placeholder:text-slate200"
-              />
+              <div key={key} className="relative">
+                <input
+                  ref={(element) => {
+                    if (element) {
+                      fieldInputRefs.current[key] = element;
+                    } else {
+                      delete fieldInputRefs.current[key];
+                    }
+                  }}
+                  type="text"
+                  value={form[key]}
+                  placeholder={placeholder}
+                  onChange={(event) => handleFieldChange(key, event.target.value, event.target.selectionStart ?? event.target.value.length)}
+                  onFocus={supportsMentionAutocomplete(key) ? (event) => syncActiveMention(key, event.target.value, event.target.selectionStart ?? event.target.value.length) : undefined}
+                  onClick={supportsMentionAutocomplete(key) ? (event) => syncActiveMention(key, event.target.value, event.target.selectionStart ?? event.target.value.length) : undefined}
+                  onSelect={supportsMentionAutocomplete(key) ? (event) => syncActiveMention(key, event.target.value, event.target.selectionStart ?? event.target.value.length) : undefined}
+                  onBlur={supportsMentionAutocomplete(key) ? scheduleMentionAutocompleteClose : undefined}
+                  onKeyDown={supportsMentionAutocomplete(key) ? (event) => handleMentionInputKeyDown(key, event) : undefined}
+                  className="h-18 w-full rounded-full bg-white300 px-7 text-base font-inter text-slate50 outline-none placeholder:text-slate50 dark:bg-black100 dark:text-white dark:placeholder:text-slate200"
+                />
+
+                {supportsMentionAutocomplete(key) && activeMention?.fieldKey === key && activeMention.query.length >= 1 ? (
+                  <div
+                    role="listbox"
+                    aria-label={t("upload.mentions.suggestionsLabel")}
+                    className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-[1.75rem] border border-black/10 bg-white shadow-xl dark:border-white/10 dark:bg-[#171717]"
+                  >
+                    {loadingMentionSuggestions ? (
+                      <p className="px-5 py-4 text-sm text-slate500 dark:text-slate200">{t("upload.mentions.loading")}</p>
+                    ) : mentionSuggestions.length ? (
+                      mentionSuggestions.map((creator, index) => {
+                        const isActiveSuggestion = index === activeMentionSuggestionIndex;
+
+                        return (
+                          <button
+                            key={creator.id || creator.username}
+                            type="button"
+                            role="option"
+                            aria-label={`${getProfileName(creator)} @${creator.username}`}
+                            aria-selected={isActiveSuggestion}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              cancelMentionBlurTimeout();
+                            }}
+                            onClick={() => handleMentionSelection(creator)}
+                            className={`flex w-full items-center gap-3 px-5 py-4 text-left transition-colors ${
+                              isActiveSuggestion ? "bg-orange100/10" : "hover:bg-black/5 dark:hover:bg-white/5"
+                            }`}
+                          >
+                            <img src={getProfileAvatar(creator)} alt="" className="h-10 w-10 rounded-full object-cover" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-medium text-black dark:text-white">{getProfileName(creator)}</span>
+                              <span className="block truncate text-xs text-slate500 dark:text-slate200">@{creator.username}</span>
+                            </span>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <p className="px-5 py-4 text-sm text-slate500 dark:text-slate200">{t("upload.mentions.noResults")}</p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
             ))}
 
             {!isLiveIntent ? <p className="px-2 text-sm text-slate500 dark:text-slate200">{t("upload.mentionGuide")}</p> : null}
