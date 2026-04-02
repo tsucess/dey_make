@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -138,6 +138,86 @@ describe('Messages', () => {
 
     await screen.findByText('La conversación con Nora Network está lista.');
     expect(screen.getByText(/Aún no hay mensajes\. Saluda a Nora Network\./i)).toBeInTheDocument();
+  });
+
+  it('keeps creators already in the inbox out of suggested creators', async () => {
+    api.getConversations.mockResolvedValue({
+      data: {
+        conversations: [{
+          id: 10,
+          participant: { id: 2, fullName: 'Bob Builder', avatarUrl: '', isOnline: true },
+          unreadCount: 0,
+          status: 'Active now',
+          updatedAt: '2025-01-01T00:00:00.000Z',
+          lastMessage: { id: 1, body: 'Hello there', createdAt: '2025-01-01T00:00:00.000Z' },
+        }],
+      },
+    });
+    api.getSuggestedUsers.mockResolvedValue({
+      data: {
+        users: [
+          { id: 2, fullName: 'Bob Builder', avatarUrl: '', isOnline: true },
+          { id: 7, fullName: 'Nora Network', avatarUrl: '', isOnline: false },
+        ],
+      },
+    });
+    api.getConversationMessages.mockResolvedValue({
+      data: {
+        messages: [{
+          id: 1,
+          body: 'Hello there',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          isMine: false,
+          sender: { fullName: 'Bob Builder' },
+        }],
+      },
+    });
+    api.markConversationRead.mockResolvedValue({});
+
+    render(<Messages />);
+
+    const suggestedSection = (await screen.findByText('Creadores sugeridos')).closest('section');
+
+    expect(suggestedSection).not.toBeNull();
+    expect(within(suggestedSection).queryByText('Bob Builder')).not.toBeInTheDocument();
+    expect(within(suggestedSection).getByText('Nora Network')).toBeInTheDocument();
+  });
+
+  it('still loads inbox conversations when suggested creators request fails', async () => {
+    api.getConversations.mockResolvedValue({
+      data: {
+        conversations: [{
+          id: 10,
+          participant: { id: 2, fullName: 'Bob Builder', avatarUrl: '', isOnline: true },
+          unreadCount: 0,
+          status: 'Active now',
+          updatedAt: '2025-01-01T00:00:00.000Z',
+          lastMessage: { id: 1, body: 'Hello there', createdAt: '2025-01-01T00:00:00.000Z' },
+        }],
+      },
+    });
+    api.getSuggestedUsers.mockRejectedValue({ message: 'Unable to load suggestions' });
+    api.getConversationMessages.mockResolvedValue({
+      data: {
+        messages: [{
+          id: 1,
+          body: 'Hello there',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          isMine: false,
+          sender: { fullName: 'Bob Builder' },
+        }],
+      },
+    });
+    api.markConversationRead.mockResolvedValue({});
+
+    render(<Messages />);
+
+    const inboxSection = (await screen.findByText('Bandeja')).closest('section');
+
+    expect(inboxSection).not.toBeNull();
+    expect(within(inboxSection).getByText('Bob Builder')).toBeInTheDocument();
+    expect(screen.getByText('Unable to load suggestions')).toBeInTheDocument();
+    expect(screen.getByText('No hay sugerencias por ahora.')).toBeInTheDocument();
   });
 
   it('polls only for new messages and merges them into the active conversation', async () => {

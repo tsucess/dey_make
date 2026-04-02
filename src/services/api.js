@@ -264,6 +264,10 @@ async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
 export const api = {
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
   register: (payload) => request("/auth/register", { method: "POST", body: payload }),
+  verifyEmailCode: (payload) => request("/auth/verify-email-code", { method: "POST", body: payload }),
+  resendVerificationCode: (payload) => request("/auth/resend-verification-code", { method: "POST", body: payload }),
+  forgotPassword: (payload) => request("/auth/forgot-password", { method: "POST", body: payload }),
+  resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),
   getOAuthRedirectUrl: (provider) => `${API_BASE_URL}/auth/oauth/${encodeURIComponent(provider)}/redirect`,
   me: () => request("/auth/me"),
   logout: () => request("/auth/logout", { method: "POST" }),

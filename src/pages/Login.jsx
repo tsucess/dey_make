@@ -40,6 +40,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
   };
 
   const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/signup"));
+  const navigateToForgotPassword = () => navigate("/forgot-password");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -53,10 +54,16 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     setSubmitError("");
 
     try {
-      await login({
+      const result = await login({
         ...form,
         identifier: form.identifier.trim(),
       });
+
+      if (result?.verification?.required) {
+        navigate("/verify-email", { replace: true });
+        return;
+      }
+
       onSuccess?.();
       navigate("/home", { replace: true });
     } catch (error) {
@@ -153,11 +160,14 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
 
         {/* Forgot password */}
         <div className="flex justify-end mb-4 mt-3">
-          <a href="#forgot"
+          <button
+            type="button"
+            onClick={navigateToForgotPassword}
             className="text-[0.78rem] font-inter text-slate400 dark:text-slate400
-                       underline">
+                       underline bg-transparent border-none cursor-pointer"
+          >
             {t("auth.forgotPassword")}
-          </a>
+          </button>
         </div>
 
         {/* Submit */}
