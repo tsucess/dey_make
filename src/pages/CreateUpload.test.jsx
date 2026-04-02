@@ -85,6 +85,8 @@ describe('CreateUpload', () => {
     renderPage();
 
     await screen.findByText(/Signed in as Test Creator/i);
+    expect(screen.getAllByText(/@username or #username/i)).toHaveLength(1);
+    expect(screen.queryByPlaceholderText(/Tag people/i)).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByRole('combobox')).toBeDisabled());
 
@@ -139,19 +141,22 @@ describe('CreateUpload', () => {
 
     await waitFor(() => expect(api.createVideo).toHaveBeenCalledTimes(1));
 
+    const payload = api.createVideo.mock.calls[0][0];
+
     expect(api.presignUpload).toHaveBeenCalledWith({
       type: 'image',
       originalName: 'cover.png',
     });
     expect(api.uploadFileDirect).toHaveBeenCalledTimes(1);
     expect(api.uploadFile).toHaveBeenCalledTimes(1);
-    expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
+    expect(payload).toEqual(expect.objectContaining({
       type: 'image',
       categoryId: 2,
       uploadId: 99,
       isDraft: true,
       isLive: false,
     }));
+    expect(payload).not.toHaveProperty('taggedUsers');
   });
 
   it('shows upload progress and video processing status during direct upload', async () => {

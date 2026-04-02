@@ -14,6 +14,8 @@ import {
   getVideoTitle,
 } from "../utils/content";
 
+const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
+
 function getProfileTabs(t, isOwnProfile) {
   const tabs = [
     { label: t("profile.tabs.posts"), feed: "posts" },
@@ -92,7 +94,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
-  const [form, setForm] = useState({ fullName: "", bio: "", avatarUrl: "" });
+  const [form, setForm] = useState({ fullName: "", username: "", bio: "", avatarUrl: "" });
   const [editing, setEditing] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
@@ -171,6 +173,7 @@ export default function Profile() {
           setProfile(nextProfile);
           setForm({
             fullName: nextProfile?.fullName || "",
+            username: nextProfile?.username || "",
             bio: nextProfile?.bio || "",
             avatarUrl: nextProfile?.avatarUrl || "",
           });
@@ -272,6 +275,16 @@ export default function Profile() {
       return;
     }
 
+    if (!form.username.trim()) {
+      setError(t("profile.usernameRequired"));
+      return;
+    }
+
+    if (!USERNAME_PATTERN.test(form.username.trim())) {
+      setError(t("profile.usernameInvalid"));
+      return;
+    }
+
     setSaving(true);
     setError("");
     setFeedback("");
@@ -279,6 +292,7 @@ export default function Profile() {
     try {
       const response = await api.updateProfile({
         fullName: form.fullName.trim(),
+        username: form.username.trim(),
         bio: form.bio.trim() || null,
         avatarUrl: form.avatarUrl.trim() || null,
       });
@@ -287,6 +301,7 @@ export default function Profile() {
       setProfile(nextProfile);
       setForm({
         fullName: nextProfile?.fullName || "",
+        username: nextProfile?.username || "",
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || "",
       });
@@ -348,6 +363,7 @@ export default function Profile() {
       setForm((current) => ({
         ...current,
         fullName: nextProfile?.fullName || current.fullName,
+        username: nextProfile?.username || current.username,
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || uploadedAvatarUrl,
       }));
@@ -467,6 +483,7 @@ export default function Profile() {
 
                   <div className="space-y-1">
                     <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
+                    {profile?.username ? <p className="text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
                     <p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
@@ -484,11 +501,20 @@ export default function Profile() {
                       className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
                     />
                     <input
+                      type="text"
+                      value={form.username}
+                      onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                      placeholder={t("profile.usernamePlaceholder")}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                    />
+                    <input
                       type="url"
                       value={form.avatarUrl}
                       onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
                       placeholder={t("profile.avatarUrlPlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white md:col-span-2"
                     />
                     <textarea
                       value={form.bio}
@@ -521,6 +547,7 @@ export default function Profile() {
                           setEditing(false);
                           setForm({
                             fullName: profile?.fullName || "",
+                            username: profile?.username || "",
                             bio: profile?.bio || "",
                             avatarUrl: profile?.avatarUrl || "",
                           });

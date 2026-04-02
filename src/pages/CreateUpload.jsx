@@ -23,13 +23,6 @@ function detectUploadType(file) {
   return null;
 }
 
-function parseTaggedUsers(value) {
-  return value
-    .split(",")
-    .map((entry) => Number(entry.trim()))
-    .filter((entry) => Number.isInteger(entry) && entry > 0);
-}
-
 function normalizeCategoryId(value) {
   if (value === "" || value === null || value === undefined) return "";
 
@@ -156,7 +149,6 @@ export default function CreateUpload() {
     caption: "",
     description: "",
     location: "",
-    people: "",
     categoryId: "",
   });
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -176,7 +168,6 @@ export default function CreateUpload() {
     { key: "caption", placeholder: t("upload.fields.caption") },
     { key: "description", placeholder: t("upload.fields.description") },
     { key: "location", placeholder: t("upload.fields.location") },
-    { key: "people", placeholder: t("upload.fields.people") },
   ]), [t]);
   const currentType = uploadTypes.find((type) => type.id === selectedType);
   const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
@@ -337,7 +328,6 @@ export default function CreateUpload() {
             caption: nextVideo.caption || "",
             description: nextVideo.description || "",
             location: nextVideo.location || "",
-            people: Array.isArray(nextVideo.taggedUsers) ? nextVideo.taggedUsers.join(", ") : "",
             categoryId: normalizeCategoryId(nextVideo.category?.id),
           });
         }
@@ -453,7 +443,6 @@ export default function CreateUpload() {
         caption: form.caption.trim() || null,
         description: form.description.trim() || null,
         location: form.location.trim() || null,
-        taggedUsers: parseTaggedUsers(form.people),
         isDraft: action === "draft",
         isLive: action === "live",
       };
@@ -668,6 +657,8 @@ export default function CreateUpload() {
                 className="h-18 w-full rounded-full bg-white300 px-7 text-base font-inter text-slate50 outline-none placeholder:text-slate50 dark:bg-black100 dark:text-white dark:placeholder:text-slate200"
               />
             ))}
+
+            {!isLiveIntent ? <p className="px-2 text-sm text-slate500 dark:text-slate200">{t("upload.mentionGuide")}</p> : null}
 
             <div className="rounded-3xl bg-white300 px-6 py-5 dark:bg-black100">
               <label className="mb-2 block text-sm font-medium text-slate600 dark:text-slate200">{t("upload.category.label")}</label>
