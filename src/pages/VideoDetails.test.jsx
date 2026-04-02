@@ -21,6 +21,24 @@ vi.mock('../context/AuthContext', () => ({
   useAuth: () => authState,
 }));
 
+let liveCreationSession = null;
+
+vi.mock('../live/liveSessionStore', () => ({
+  setLiveCreationSession: vi.fn((session) => {
+    liveCreationSession = session || null;
+  }),
+  getLiveCreationSession: vi.fn((videoId = null) => {
+    if (!liveCreationSession) return null;
+    if (videoId === null || videoId === undefined) return liveCreationSession;
+    return `${liveCreationSession.videoId}` === `${videoId}` ? liveCreationSession : null;
+  }),
+  clearLiveCreationSession: vi.fn((videoId = null) => {
+    if (!liveCreationSession) return;
+    if (videoId !== null && videoId !== undefined && `${liveCreationSession.videoId}` !== `${videoId}`) return;
+    liveCreationSession = null;
+  }),
+}));
+
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');
 
@@ -44,6 +62,10 @@ vi.mock('../services/api', async () => {
       unlikeComment: vi.fn(),
       dislikeComment: vi.fn(),
       undislikeComment: vi.fn(),
+      presignUpload: vi.fn(),
+      uploadFileDirect: vi.fn(),
+      uploadFile: vi.fn(),
+      updateVideo: vi.fn(),
       startVideoLive: vi.fn(),
       stopVideoLive: vi.fn(),
       sendLiveSignal: vi.fn(),
@@ -104,6 +126,41 @@ class MockRTCPeerConnection {
   }
 }
 
+class MockMediaRecorder {
+  constructor(stream, options = {}) {
+    this.stream = stream;
+    this.mimeType = options.mimeType || 'video/webm';
+    this.state = 'inactive';
+    this.ondataavailable = null;
+    this.listeners = { stop: [], error: [] };
+  }
+
+  static isTypeSupported() {
+    return true;
+  }
+
+  addEventListener(type, listener) {
+    this.listeners[type] = [...(this.listeners[type] || []), listener];
+  }
+
+  requestData() {
+    if (this.state === 'recording') {
+      this.ondataavailable?.({ data: new Blob(['recorded-live'], { type: this.mimeType }) });
+    }
+  }
+
+  start() {
+    this.state = 'recording';
+  }
+
+  stop() {
+    if (this.state === 'inactive') return;
+    this.requestData();
+    this.state = 'inactive';
+    this.listeners.stop.forEach((listener) => listener());
+  }
+}
+
 function buildMediaStream(tracks) {
   return new MockMediaStream(tracks);
 }
@@ -145,6 +202,7 @@ function renderPage(initialEntry = '/video/10') {
       <Routes>
         <Route path="/video/:id" element={<VideoDetails />} />
         <Route path="/live/:id" element={<LiveRoom />} />
+        <Route path="/create" element={<div>Draft editor</div>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -156,8 +214,10 @@ describe('VideoDetails', () => {
     authState.isAuthenticated = true;
     authState.user = { id: 99, fullName: 'Viewer Example', avatarUrl: '' };
     lastPeerConnection = null;
+    liveCreationSession = null;
     globalThis.MediaStream = MockMediaStream;
     globalThis.RTCPeerConnection = MockRTCPeerConnection;
+    globalThis.MediaRecorder = MockMediaRecorder;
     Object.defineProperty(globalThis.navigator, 'mediaDevices', {
       configurable: true,
       value: {
@@ -171,6 +231,14 @@ describe('VideoDetails', () => {
     });
     api.sendLiveSignal.mockResolvedValue({ data: {} });
     api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
+    api.presignUpload.mockResolvedValue({ data: { strategy: 'client-direct-upload', endpoint: 'https://upload.example.com', fields: {} } });
+    api.uploadFileDirect.mockResolvedValue({ secure_url: 'https://cdn.example.com/live-recording.webm', bytes: 42, duration: 120 });
+    api.uploadFile.mockResolvedValue({ data: { upload: { id: 501 } } });
+    api.updateVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ isDraft: true, mediaUrl: 'https://cdn.example.com/live-recording.webm' }),
+      },
+    });
   });
 
   it('renders the recorded video layout with creator details and comments', async () => {
@@ -335,7 +403,7 @@ describe('VideoDetails', () => {
     expect(await screen.findByText('PROCESANDO')).toBeInTheDocument();
   });
 
-  it('lets the creator start and stop a live session', async () => {
+  it('lets the creator start and stop a live session, then saves the recording as a draft', async () => {
     const user = userEvent.setup();
     authState.user = { id: 99, fullName: 'Creator Uno', avatarUrl: '' };
 
@@ -363,6 +431,17 @@ describe('VideoDetails', () => {
       data: {
         video: buildVideo({
           isLive: false,
+          isDraft: true,
+          author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+          creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+        }),
+      },
+    });
+    api.updateVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({
+          isDraft: true,
+          mediaUrl: 'https://cdn.example.com/live-recording.webm',
           author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
           creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
         }),
@@ -381,11 +460,73 @@ describe('VideoDetails', () => {
     await user.click(screen.getByRole('button', { name: 'Detener transmisión' }));
 
     await waitFor(() => expect(api.stopVideoLive).toHaveBeenCalledWith(10));
-    expect(await screen.findByText('Tu transmisión en vivo ha terminado.')).toBeInTheDocument();
+    await waitFor(() => expect(api.presignUpload).toHaveBeenCalledWith({ type: 'video', originalName: expect.stringMatching(/^live-10-/) }));
+    expect(api.uploadFileDirect).toHaveBeenCalled();
+    expect(api.uploadFile).toHaveBeenCalled();
+    expect(api.updateVideo).toHaveBeenCalledWith(10, { uploadId: 501, isDraft: true, isLive: false });
+    await waitFor(() => expect(screen.getByText('Draft editor')).toBeInTheDocument(), { timeout: 3000 });
   });
 
-  it('shows the creator camera preview on a live video while keeping video details interactions', async () => {
+  it('blocks backend fallback when stopping a live session without direct upload support', async () => {
+    const user = userEvent.setup();
     authState.user = { id: 99, fullName: 'Creator Uno', avatarUrl: '' };
+
+    api.presignUpload.mockResolvedValue({ data: { strategy: 'server-upload' } });
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({
+          author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+          creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+        }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+    api.startVideoLive.mockResolvedValue({
+      data: {
+        video: buildVideo({
+          isLive: true,
+          author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+          creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+        }),
+      },
+    });
+    api.stopVideoLive.mockResolvedValue({
+      data: {
+        video: buildVideo({
+          isLive: false,
+          isDraft: true,
+          author: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+          creator: { id: 99, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33 },
+        }),
+      },
+    });
+
+    renderPage('/live/10');
+
+    await user.click(await screen.findByRole('button', { name: 'Iniciar transmisión' }));
+    await waitFor(() => expect(api.startVideoLive).toHaveBeenCalledWith(10));
+
+    await user.click(screen.getByRole('button', { name: 'Detener transmisión' }));
+
+    await waitFor(() => expect(api.stopVideoLive).toHaveBeenCalledWith(10));
+    await waitFor(() => expect(api.presignUpload).toHaveBeenCalledWith({ type: 'video', originalName: expect.stringMatching(/^live-10-/) }));
+
+    expect(await screen.findByText('Los archivos grandes y los videos deben subirse directamente. Inténtalo de nuevo.')).toBeInTheDocument();
+    expect(api.uploadFileDirect).not.toHaveBeenCalled();
+    expect(api.uploadFile).not.toHaveBeenCalled();
+    expect(api.updateVideo).not.toHaveBeenCalled();
+    expect(screen.queryByText('Draft editor')).not.toBeInTheDocument();
+  });
+
+  it('shows the creator camera preview in the live room and reuses the preview-live camera stream', async () => {
+    authState.user = { id: 99, fullName: 'Creator Uno', avatarUrl: '' };
+    liveCreationSession = {
+      videoId: 10,
+      stream: buildMediaStream(),
+      liveSetup: { title: 'Alpha Session' },
+    };
 
     api.getVideo.mockResolvedValue({
       data: {
@@ -402,13 +543,13 @@ describe('VideoDetails', () => {
     api.getVideoComments.mockResolvedValue({ data: { comments: [buildComment()] } });
     api.recordView.mockResolvedValue({});
 
-    renderPage('/video/10');
+    renderPage('/live/10');
 
-    await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
     expect(await screen.findByLabelText('Vista previa de la cámara en vivo')).toBeInTheDocument();
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Guardar/i })).toBeInTheDocument();
     expect(screen.getByText('Great drop')).toBeInTheDocument();
+    expect(globalThis.navigator.mediaDevices.getUserMedia).not.toHaveBeenCalled();
   });
 
   it('uses the joined-live layout on the live watch route while keeping stream interactions', async () => {
@@ -489,7 +630,7 @@ describe('VideoDetails', () => {
       })
       .mockResolvedValue({ data: { signals: [], latestSignalId: 9 } });
 
-    renderPage('/video/10');
+    renderPage('/live/10');
 
     await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, expect.objectContaining({ recipientId: 77, type: 'answer', sdp: 'creator-answer-sdp' })));
@@ -525,7 +666,7 @@ describe('VideoDetails', () => {
       })
       .mockResolvedValue({ data: { signals: [], latestSignalId: 10 } });
 
-    renderPage('/video/10');
+    renderPage('/live/10');
 
     await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, expect.objectContaining({ recipientId: 77, type: 'answer', sdp: 'creator-answer-sdp' })));

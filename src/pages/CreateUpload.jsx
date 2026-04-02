@@ -6,7 +6,7 @@ import { MdOutlineGifBox } from "react-icons/md";
 import Logo from "../components/Logo";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
-import { api, firstError } from "../services/api";
+import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { buildVideoLink } from "../utils/content";
 
 const uploadTypeOptions = [
@@ -74,9 +74,14 @@ function getUploadStatusMessage(t, phase, mediaType) {
   }
 }
 
+function requiresDirectUpload(file, type) {
+  return type === "video" || (file?.size ?? 0) > DIRECT_UPLOAD_LARGE_FILE_THRESHOLD;
+}
+
 async function uploadSelectedFile(file, type, callbacks = {}) {
   const onProgress = callbacks?.onProgress;
   const onStatusChange = callbacks?.onStatusChange;
+  const directUploadRequiredMessage = callbacks?.directUploadRequiredMessage;
 
   onStatusChange?.("preparing");
 
@@ -112,6 +117,10 @@ async function uploadSelectedFile(file, type, callbacks = {}) {
     });
 
     return uploadResponse?.data?.upload || null;
+  }
+
+  if (requiresDirectUpload(file, type)) {
+    throw new Error(directUploadRequiredMessage || "Large files and videos must upload directly.");
   }
 
   const uploadFormData = new FormData();
@@ -407,6 +416,7 @@ export default function CreateUpload() {
         });
 
         upload = await uploadSelectedFile(selectedFile, selectedType, {
+          directUploadRequiredMessage: t("upload.errors.directUploadRequired"),
           onProgress: ({ percent }) => {
             setUploadStatus((current) => ({
               ...current,

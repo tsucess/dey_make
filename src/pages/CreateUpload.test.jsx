@@ -40,7 +40,7 @@ vi.mock('../services/api', async () => {
   };
 });
 
-import { api } from '../services/api';
+import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD } from '../services/api';
 import CreateUpload from './CreateUpload';
 
 function buildMediaStream() {
@@ -216,6 +216,32 @@ describe('CreateUpload', () => {
       isDraft: false,
       isLive: false,
     })));
+  });
+
+  it('blocks backend fallback for large videos when direct upload is unavailable', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({ data: { categories: [] } });
+    api.presignUpload.mockResolvedValue({ data: { strategy: 'server-upload' } });
+
+    const { container } = renderPage();
+
+    const fileInput = await waitFor(() => container.querySelector('input[type="file"]'));
+    const file = new File(['video'], 'huge.mp4', { type: 'video/mp4' });
+    Object.defineProperty(file, 'size', {
+      configurable: true,
+      value: DIRECT_UPLOAD_LARGE_FILE_THRESHOLD + 1,
+    });
+
+    await user.click(screen.getByRole('button', { name: /Videos\s*MP4,\s*MOV,\s*AVI/i }));
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await user.click(screen.getByRole('button', { name: /^Upload$/i }));
+
+    expect(await screen.findByText('Large files and videos must upload directly. Please try again.')).toBeInTheDocument();
+    expect(api.uploadFileDirect).not.toHaveBeenCalled();
+    expect(api.uploadFile).not.toHaveBeenCalled();
+    expect(api.createVideo).not.toHaveBeenCalled();
   });
 
   it('prepares the live flow from the live intent route and submits a live payload', async () => {

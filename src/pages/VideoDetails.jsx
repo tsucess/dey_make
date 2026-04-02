@@ -3,8 +3,9 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { useLanguage } from "../context/LanguageContext";
-import { api, firstError } from "../services/api";
+import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
+import { clearLiveCreationSession, getLiveCreationSession } from "../live/liveSessionStore";
 import {
   buildShareUrl,
   buildVideoLink,
@@ -28,6 +29,11 @@ const LIVE_SIGNAL_POLL_INTERVAL_MS = 1500;
 const LIVE_PEER_CONFIGURATION = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
+const LIVE_RECORDING_MIME_TYPES = [
+  "video/webm;codecs=vp9,opus",
+  "video/webm;codecs=vp8,opus",
+  "video/webm",
+];
 
 function clearLivePoll(ref) {
   if (ref.current) {
@@ -61,6 +67,97 @@ function serializeIceCandidate(candidate) {
     sdpMid: candidate.sdpMid ?? null,
     sdpMLineIndex: candidate.sdpMLineIndex ?? null,
   };
+}
+
+function createLiveRecorder(stream) {
+  if (typeof MediaRecorder === "undefined") return null;
+
+  const supportedMimeType = LIVE_RECORDING_MIME_TYPES.find((mimeType) => (
+    typeof MediaRecorder.isTypeSupported !== "function" || MediaRecorder.isTypeSupported(mimeType)
+  ));
+
+  return supportedMimeType
+    ? new MediaRecorder(stream, { mimeType: supportedMimeType })
+    : new MediaRecorder(stream);
+}
+
+function createRecordingUploadFile(blob, videoId) {
+  const recordingType = blob?.type || "video/webm";
+  const extension = recordingType.includes("mp4") ? "mp4" : "webm";
+  const fileName = `live-${videoId || "recording"}-${Date.now()}.${extension}`;
+
+  if (typeof File !== "undefined") {
+    return new File([blob], fileName, {
+      type: recordingType,
+      lastModified: Date.now(),
+    });
+  }
+
+  Object.defineProperty(blob, "name", {
+    configurable: true,
+    value: fileName,
+  });
+
+  return blob;
+}
+
+function requiresDirectUpload(file, type) {
+  return type === "video" || (file?.size ?? 0) > DIRECT_UPLOAD_LARGE_FILE_THRESHOLD;
+}
+
+async function uploadSelectedFile(file, type, callbacks = {}) {
+  const onProgress = callbacks?.onProgress;
+  const onStatusChange = callbacks?.onStatusChange;
+  const directUploadRequiredMessage = callbacks?.directUploadRequiredMessage;
+
+  onStatusChange?.("preparing");
+
+  const presignResponse = await api.presignUpload({
+    type,
+    originalName: file.name,
+  });
+  const uploadStrategy = presignResponse?.data || {};
+
+  if (uploadStrategy.strategy === "client-direct-upload") {
+    onStatusChange?.("uploading");
+
+    const directUpload = await api.uploadFileDirect(file, uploadStrategy, {
+      onProgress,
+    });
+    const secureUrl = directUpload?.secure_url;
+
+    if (!secureUrl) {
+      throw new Error("Upload provider did not return a file URL.");
+    }
+
+    onStatusChange?.("processing");
+
+    const uploadResponse = await api.uploadFile({
+      type,
+      path: secureUrl,
+      originalName: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: directUpload?.bytes ?? file.size ?? 0,
+      width: directUpload?.width ?? null,
+      height: directUpload?.height ?? null,
+      duration: directUpload?.duration ?? null,
+    });
+
+    return uploadResponse?.data?.upload || null;
+  }
+
+  if (requiresDirectUpload(file, type)) {
+    throw new Error(directUploadRequiredMessage || "Large files and videos must upload directly.");
+  }
+
+  const uploadFormData = new FormData();
+  uploadFormData.append("file", file);
+
+  onStatusChange?.("uploading");
+
+  const uploadResponse = await api.uploadFile(uploadFormData);
+
+  return uploadResponse?.data?.upload || null;
 }
 
 function ActionButton({ children, active, disabled, onClick }) {
@@ -199,8 +296,11 @@ export default function VideoDetails({ mode = "video" }) {
   const broadcasterSignalCursorRef = useRef(0);
   const broadcasterPollRef = useRef(null);
   const broadcasterConnectionsRef = useRef(new Map());
+  const liveRecorderRef = useRef(null);
+  const liveRecordingChunksRef = useRef([]);
+  const liveRecordingStopPromiseRef = useRef(null);
   const [video, setVideo] = useState(null);
-  const [relatedVideos, setRelatedVideos] = useState([]);
+  const [, setRelatedVideos] = useState([]);
   const [comments, setComments] = useState([]);
   const [repliesByComment, setRepliesByComment] = useState({});
   const [expandedReplies, setExpandedReplies] = useState({});
@@ -243,6 +343,10 @@ export default function VideoDetails({ mode = "video" }) {
     stopMediaStream(localLiveStream);
   }, [localLiveStream]);
 
+  useEffect(() => () => {
+    clearLiveCreationSession(id);
+  }, [id]);
+
   useEffect(() => {
     let ignore = false;
 
@@ -253,6 +357,19 @@ export default function VideoDetails({ mode = "video" }) {
       });
       setLivePreviewStatus("idle");
       return;
+    }
+
+    const liveCreationSession = getLiveCreationSession(video?.id);
+
+    if (liveCreationSession?.stream) {
+      setLocalLiveStream((current) => current || liveCreationSession.stream);
+      setLivePreviewStatus("ready");
+      return undefined;
+    }
+
+    if (localLiveStream) {
+      setLivePreviewStatus("ready");
+      return undefined;
     }
 
     async function connectCamera() {
@@ -292,7 +409,113 @@ export default function VideoDetails({ mode = "video" }) {
     return () => {
       ignore = true;
     };
-  }, [shouldUseLocalLivePreview]);
+  }, [localLiveStream, shouldUseLocalLivePreview, t, video?.id]);
+
+  useEffect(() => {
+    if (!shouldBroadcastLiveStream || liveRecorderRef.current) {
+      return undefined;
+    }
+
+    let recorder;
+
+    try {
+      recorder = createLiveRecorder(localLiveStream);
+    } catch {
+      return undefined;
+    }
+
+    if (!recorder) {
+      return undefined;
+    }
+
+    liveRecordingChunksRef.current = [];
+    recorder.ondataavailable = (event) => {
+      if (event?.data?.size) {
+        liveRecordingChunksRef.current.push(event.data);
+      }
+    };
+
+    recorder.start(1000);
+    liveRecorderRef.current = recorder;
+
+    return () => {
+      if (liveRecorderRef.current === recorder && recorder.state !== "inactive") {
+        try {
+          recorder.stop();
+        } catch {
+          // Ignore recorder cleanup failures.
+        }
+      }
+    };
+  }, [localLiveStream, shouldBroadcastLiveStream]);
+
+  async function finalizeLiveRecording() {
+    const recorder = liveRecorderRef.current;
+
+    if (!recorder) return null;
+    if (liveRecordingStopPromiseRef.current) return liveRecordingStopPromiseRef.current;
+
+    liveRecordingStopPromiseRef.current = new Promise((resolve) => {
+      let settled = false;
+
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        const recordedChunks = [...liveRecordingChunksRef.current];
+
+        liveRecordingChunksRef.current = [];
+        liveRecorderRef.current = null;
+        liveRecordingStopPromiseRef.current = null;
+
+        resolve(recordedChunks.length
+          ? new Blob(recordedChunks, { type: recorder.mimeType || "video/webm" })
+          : null);
+      };
+
+      if (recorder.state === "inactive") {
+        finish();
+        return;
+      }
+
+      recorder.addEventListener("stop", finish, { once: true });
+      recorder.addEventListener("error", finish, { once: true });
+
+      try {
+        recorder.requestData?.();
+      } catch {
+        // Ignore requestData failures and stop normally.
+      }
+
+      try {
+        recorder.stop();
+      } catch {
+        finish();
+      }
+    });
+
+    return liveRecordingStopPromiseRef.current;
+  }
+
+  async function uploadLiveRecording(recordingBlob, videoId) {
+    if (!recordingBlob || !videoId) return null;
+
+    const recordingFile = createRecordingUploadFile(recordingBlob, videoId);
+    const upload = await uploadSelectedFile(recordingFile, "video", {
+      directUploadRequiredMessage: t("upload.errors.directUploadRequired"),
+    });
+
+    if (!upload?.id) {
+      throw new Error(t("upload.errors.unableToComplete"));
+    }
+
+    const response = await api.updateVideo(videoId, {
+      uploadId: upload.id,
+      isDraft: true,
+      isLive: false,
+    });
+
+    return response?.data?.video || null;
+  }
 
   useEffect(() => {
     let ignore = false;
@@ -720,10 +943,41 @@ export default function VideoDetails({ mode = "video" }) {
     setFeedback("");
 
     try {
-      const response = wasLive ? await api.stopVideoLive(video.id) : await api.startVideoLive(video.id);
+      if (wasLive) {
+        const recordingBlobPromise = finalizeLiveRecording();
+        const response = await api.stopVideoLive(video.id);
+        const stoppedVideo = response?.data?.video || null;
+
+        if (stoppedVideo) {
+          setVideo(stoppedVideo);
+        }
+
+        const recordingBlob = await recordingBlobPromise;
+        let updatedDraft = stoppedVideo;
+
+        setLocalLiveStream((current) => {
+          stopMediaStream(current);
+          return null;
+        });
+        clearLiveCreationSession(video.id);
+
+        if (recordingBlob) {
+          updatedDraft = await uploadLiveRecording(recordingBlob, video.id);
+
+          if (updatedDraft) {
+            setVideo(updatedDraft);
+          }
+        }
+
+        setFeedback(t("videoDetails.liveStopped"));
+        navigate(`/create?id=${updatedDraft?.id || video.id}`, { replace: true });
+        return;
+      }
+
+      const response = await api.startVideoLive(video.id);
 
       if (response?.data?.video) setVideo(response.data.video);
-      setFeedback(t(wasLive ? "videoDetails.liveStopped" : "videoDetails.liveStarted"));
+      setFeedback(t("videoDetails.liveStarted"));
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || t("videoDetails.unableToUpdateLive")));
     } finally {

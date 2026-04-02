@@ -1,79 +1,152 @@
-import { LuImagePlus } from "react-icons/lu";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useLanguage } from "../context/LanguageContext";
+import { api, firstError } from "../services/api";
 
-export default function CreateLive(){
-    return <section className="p-4 md:p-6 flex flex-col gap-8">
-        <h1 className="text-2xl text-black dark:text-white font-inter font-medium">Create Live Stream</h1>
+function parseCategoryId(value) {
+  return /^[0-9]+$/.test(`${value || ""}`) ? Number(value) : null;
+}
 
-        <div className="flex flex-col gap-6 ">
-            <div className="flex flex-col gap-3">
-                <input type="text" name="" id="" className="placeholder:text-slate500 font-inter bg-white300 dark:bg-black100 text-slate100 text-sm dark:text-white100 p-3.5 outline-none"  placeholder="Title (required)"/>
-                <textarea name="" id="" className="placeholder:text-slate500 font-inter bg-white300 dark:bg-black100 text-slate100 text-sm dark:text-white100 p-3.5 outline-none h-30 resize-none"  placeholder="Description"></textarea>
+export default function CreateLive() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    categoryId: "",
+  });
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [error, setError] = useState("");
 
-            </div>
+  useEffect(() => {
+    const liveSetup = location.state?.liveSetup;
 
-            <div className="flex flex-col gap-4">
-                <div className="space-y-1">
-                    <h2 className="text-lg text-black dark:text-white font-inter font-medium">Thumbnail</h2>
-                <p className="text-sm text-slate700 dark:text-slate500 ">Select or upload a picture that represents your stream.</p>
-                </div>
-                
-                <div className="flex items-center justify-center flex-col w-80 p-6 bg-white300 dark:bg-black100">
-                    <LuImagePlus className="w-10 h-10 text-slate700 dark:text-slate500"/>
-                    <p className="text-center text-slate700 dark:text-slate500 font-inter text-sm">Upload your thumbnail</p>
-                    
-                </div>
+    if (!liveSetup) return;
 
-            </div>
+    setForm({
+      title: liveSetup.title || "",
+      description: liveSetup.description || "",
+      categoryId: liveSetup.categoryId ? `${liveSetup.categoryId}` : "",
+    });
+  }, [location.key, location.state]);
 
-            <div className="flex flex-col gap-3">
-                <div className="space-y-1">
-                    <h2 className="text-lg text-black dark:text-white font-inter font-medium">Audience</h2>
-                <p className="text-sm text-slate700 dark:text-slate500 ">You’re required to tell us whether your videos are ‘Made for Children’</p>
-                </div>
-                <div className="space-y-3">
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> For children</label> 
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter  text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Not for children</label> 
-                </div>
-            </div>
+  useEffect(() => {
+    let ignore = false;
 
-            <div className="flex flex-col gap-3">
-                <div className="space-y-1">
-                    <h2 className="text-lg text-black dark:text-white font-inter font-medium">Viewers modes</h2>
-                <p className="text-sm text-slate700 dark:text-slate500 ">Who can send messages</p>
-                </div>
-                <div className="space-y-3">
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Anyone</label> 
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter  text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Subscribers</label> 
-                </div>
-            </div>
+    async function loadCategories() {
+      setIsLoadingCategories(true);
 
-            <div className="flex flex-col gap-3">
-                <div className="space-y-1">
-                    <h2 className="text-lg text-black dark:text-white font-inter font-medium">Reactions</h2>
-                </div>
-                <div className="space-y-3">
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Live reactions</label> 
-                </div>
-            </div>
+      try {
+        const response = await api.getCategories();
+        if (!ignore) setCategories(response?.data?.categories || []);
+      } catch (nextError) {
+        if (!ignore) setError(firstError(nextError.errors, nextError.message || t("upload.unableToLoadCategories")));
+      } finally {
+        if (!ignore) setIsLoadingCategories(false);
+      }
+    }
 
-            <div className="flex flex-col gap-3">
-                <div className="space-y-1">
-                    <h2 className="text-lg text-black dark:text-white font-inter font-medium">Visibility</h2>
-                <p className="text-sm text-slate700 dark:text-slate500 ">Choose who can see your stream</p>
-                </div>
-                <div className="space-y-3">
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Private</label> 
-                   <label htmlFor="" className="flex items-center gap-2 text-black dark:text-white  font-inter  text-base"> <input type="radio" name="" id="" className="w-5 h-5" /> Public</label> 
-                </div>
-            </div>
+    loadCategories();
 
-            <div className="flex items-center justify-end gap-3">
-                <Link to='/home' className="text-black100 bg-white300 hover:bg-black200 hover:text-white dark:bg-black100 font-inter text-sm px-8 font-medium py-3.5 rounded-full">Cancel</Link>
-                <Link to='/preview-live' className="text-black bg-orange100 hover:bg-orange200 font-inter text-sm px-8 font-medium py-3.5 rounded-full">Preview</Link>
+    return () => {
+      ignore = true;
+    };
+  }, [t]);
 
-            </div>
+  function handlePreview() {
+    if (!form.title.trim()) {
+      setError(t("upload.errors.titleRequired"));
+      return;
+    }
 
-        </div>
+    setError("");
+    navigate("/preview-live", {
+      state: {
+        liveSetup: {
+          title: form.title.trim(),
+          description: form.description.trim(),
+          categoryId: parseCategoryId(form.categoryId),
+        },
+      },
+    });
+  }
+
+  return (
+    <section className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 md:px-6 md:py-8">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-semibold text-black dark:text-white">{t("upload.liveTitle")}</h1>
+        <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveDescription")}</p>
+        <p className="text-sm font-medium text-slate500 dark:text-slate200">{t("upload.signedInAs", { name: user?.fullName || user?.name || t("upload.creatorFallback") })}</p>
+      </div>
+
+      {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),320px]">
+        <section className="space-y-5 rounded-[2rem] bg-white300 p-6 dark:bg-black100">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.setupTitle")}</h2>
+            <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveFlow.setupHint")}</p>
+          </div>
+
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={form.title}
+              placeholder={t("upload.fields.title")}
+              onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
+              className="w-full rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1B1B1B] dark:text-white"
+            />
+            <textarea
+              value={form.description}
+              placeholder={t("upload.fields.description")}
+              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+              rows={8}
+              className="w-full resize-none rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1B1B1B] dark:text-white"
+            />
+            <select
+              value={form.categoryId}
+              disabled={isLoadingCategories || categories.length === 0}
+              onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
+              className="w-full rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none disabled:cursor-not-allowed disabled:opacity-70 dark:bg-[#1B1B1B] dark:text-white"
+            >
+              <option value="">{categories.length ? t("upload.category.choose") : t("upload.category.unavailable")}</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label || category.name}
+                </option>
+              ))}
+            </select>
+            {!isLoadingCategories && categories.length === 0 ? <p className="text-xs text-slate500 dark:text-slate200">{t("upload.category.help")}</p> : null}
+          </div>
+        </section>
+
+        <aside className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm dark:bg-[#171717]">
+          <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.previewChecklist")}</h2>
+          <ul className="space-y-3 text-sm text-slate600 dark:text-slate200">
+            <li>• {t("upload.liveFlow.checkTitle")}</li>
+            <li>• {t("upload.liveFlow.checkDevices")}</li>
+            <li>• {t("upload.liveFlow.checkDraft")}</li>
+          </ul>
+          <p className="rounded-2xl bg-orange200/20 px-4 py-3 text-sm text-slate700 dark:text-slate200">{t("upload.liveFlow.saveDraftAfterLive")}</p>
+        </aside>
+      </div>
+
+      <div className="flex items-center justify-end gap-3">
+        <Link to="/home" className="rounded-full bg-white300 px-6 py-3 text-sm font-medium text-black transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white">
+          {t("upload.liveFlow.cancel")}
+        </Link>
+        <button
+          type="button"
+          onClick={handlePreview}
+          className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-orange200"
+        >
+          {t("upload.liveFlow.previewAction")}
+        </button>
+      </div>
     </section>
+  );
 }
