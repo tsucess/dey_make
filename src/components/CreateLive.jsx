@@ -4,9 +4,15 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 
+<<<<<<< HEAD
+export default function CreateLive(){
+    return <section className="p-4 md:p-6 flex flex-col gap-8 max-w-4xl mx-auto">
+        <h1 className="text-2xl text-black dark:text-white font-inter font-medium">Create Live Stream</h1>
+=======
 function parseCategoryId(value) {
   return /^[0-9]+$/.test(`${value || ""}`) ? Number(value) : null;
 }
+>>>>>>> bb4759c8301e42bea1ee2da1d16a3372a7725f2b
 
 export default function CreateLive() {
   const navigate = useNavigate();

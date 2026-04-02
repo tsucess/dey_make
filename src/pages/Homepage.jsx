@@ -18,13 +18,14 @@ import {
   getVideoTitle,
   mapVideoToCardProps,
 } from "../utils/content";
+import Spinner from "../components/Layout/Spinner";
 
 const ALL_CATEGORY_ID = "all";
 
 function SectionState({ message, actionLabel, onAction }) {
   return (
     <div className="rounded-3xl bg-white300 px-5 py-8 text-center dark:bg-black200">
-      <p className="text-sm font-inter text-slate100 dark:text-white">{message}</p>
+      <Spinner/>
       {onAction ? (
         <button
           type="button"

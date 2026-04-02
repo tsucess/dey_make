@@ -7,6 +7,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { useTheme } from "../context/ThemeContext";
 import { useAuth } from "../context/AuthContext";
 import { api, firstError } from "../services/api";
+import Spinner from "../components/Layout/Spinner";
 
 const notificationOptions = ["messages", "comments", "likes", "subscriptions"];
 const displayOptions = ["autoplay"];
@@ -776,7 +777,7 @@ export default function Settings() {
 
         {loading ? (
           <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-            {t("settings.loadingPreferences")}
+            <Spinner/>
           </div>
         ) : (
           <div className="divide-y divide-black/12 dark:divide-white/12 bg-white300 dark:bg-black100 rounded-2xl p-6">

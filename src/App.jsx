@@ -21,13 +21,14 @@ import LiveRoom from "./pages/LiveRoom";
 import { useLanguage } from "./context/LanguageContext";
 import CreateLive from "./components/CreateLive";
 import PreviewLive from "./components/PreviewLive";
+import Spinner from "./components/Layout/Spinner";
 
 function FullPageLoader() {
   const { t } = useLanguage();
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
-      {t("app.loading")}
+      <Spinner big/>
     </div>
   );
 }

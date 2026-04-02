@@ -678,7 +678,7 @@ export default function CreateUpload() {
             type="button"
             onClick={() => navigate(-1)}
             aria-label={t("upload.closePage")}
-            className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate50 dark:bg-black100 dark:text-slate200"
+            className=" flex h-10 w-10 items-center justify-center rounded-full bg-white300 text-slate700 transition-colors hover:bg-slate900 dark:bg-black100 dark:text-slate200"
           >
             <HiX className="h-5 w-5" />
           </button>
@@ -701,7 +701,7 @@ export default function CreateUpload() {
           ) : null}
 
           {isLiveIntent ? (
-            <div className="mb-8 overflow-hidden rounded-[2rem] border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
+            <div className="mb-8 overflow-hidden rounded-4xl border-2 border-dashed border-red-300 bg-white md:mb-10 dark:bg-black100">
               <div className="flex h-72 items-center justify-center bg-black md:h-80">
                 {liveCameraStream ? (
                   <video
@@ -793,7 +793,7 @@ export default function CreateUpload() {
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-80"
+                className="mb-8 flex h-72 w-full flex-col items-center justify-center rounded-4xl border-2 border-dashed border-orange100 px-6 text-center md:mb-10 md:h-110"
               >
                 {previewUrl ? (
                   selectedType === "video" ? (
@@ -888,7 +888,7 @@ export default function CreateUpload() {
                 value={form.categoryId}
                 disabled={isLoading || categories.length === 0}
                 onChange={(event) => setForm((prev) => ({ ...prev, categoryId: normalizeCategoryId(event.target.value) }))}
-                className="w-full rounded-2xl bg-white px-4 py-4 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
+                className="w-full rounded-2xl bg-white300 px-4 py-4 text-sm text-slate600 outline-none dark:bg-black100 dark:text-white"
               >
                 <option value="">{categories.length ? t("upload.category.choose") : t("upload.category.unavailable")}</option>
                 {categories.map((category) => (

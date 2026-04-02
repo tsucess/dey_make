@@ -3,6 +3,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
+import Spinner from "../components/Layout/Spinner";
 
 const INBOX_POLL_INTERVAL_MS = 15000;
 const ACTIVE_CONVERSATION_POLL_INTERVAL_MS = 5000;
@@ -422,7 +423,7 @@ export default function Messages() {
           <div className="space-y-6">
             <SectionCard title={t("messages.inbox")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingConversations")}</p>
+                <p className="text-sm text-slate600 dark:text-slate200"><Spinner/></p>
               ) : conversations.length ? (
                 <div className="space-y-3">
                   {conversations.map((conversation) => (
@@ -441,7 +442,7 @@ export default function Messages() {
 
             <SectionCard title={t("messages.suggestedCreators")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingSuggestions")}</p>
+                <p className="text-sm text-slate600 dark:text-slate200"><Spinner/></p>
               ) : suggestedUsers.length ? (
                 <div className="space-y-3">
                   {suggestedUsers.map((participant) => (
