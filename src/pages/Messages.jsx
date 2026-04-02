@@ -473,7 +473,7 @@ export default function Messages() {
             </SectionCard>
           </div>
 
-          <section className="flex min-h-[540px] flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
+          <section className="flex min-h-135 flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
             {activeConversation ? (
               <>
                 <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8">

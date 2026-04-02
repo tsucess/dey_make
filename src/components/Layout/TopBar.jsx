@@ -55,9 +55,6 @@ export default function TopBar() {
     setIsVisible((prev) => !prev);
   }
 
-<<<<<<< HEAD
- 
-=======
   const loadNotifications = useCallback(async ({ silent = false } = {}) => {
     if (!isAuthenticated) return;
 
@@ -90,7 +87,6 @@ export default function TopBar() {
   function closeNotification() {
     setIsNotificationOpen(false);
   }
->>>>>>> bb4759c8301e42bea1ee2da1d16a3372a7725f2b
 
   function closeLookup() {
     setIsLookupOpen(false);
