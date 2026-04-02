@@ -25,6 +25,7 @@ const TOKEN_STORAGE_KEY = "deymake.auth.token";
 export const DIRECT_UPLOAD_LARGE_FILE_THRESHOLD = 95 * 1024 * 1024;
 const DIRECT_UPLOAD_MIN_CHUNK_SIZE = 5 * 1024 * 1024;
 const DIRECT_UPLOAD_DEFAULT_CHUNK_SIZE = 20 * 1024 * 1024;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
 
 function buildQueryString(params = {}) {
   const searchParams = new URLSearchParams();
@@ -76,35 +77,53 @@ async function request(path, options = {}) {
     body,
     headers = {},
     token = getStoredToken(),
+    timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
   } = options;
   const isFormData = body instanceof FormData;
   const locale = getPreferredRequestLocale(body, headers);
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      Accept: "application/json",
-      ...(locale ? { "Accept-Language": locale, "X-Locale": locale } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
-      ...headers,
-    },
-    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-  });
-  const text = await response.text();
-  let json = null;
+  const controller = typeof AbortController === "function" && timeoutMs > 0 ? new AbortController() : null;
+  const timeoutId = controller
+    ? globalThis.setTimeout(() => controller.abort(), timeoutMs)
+    : null;
 
   try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = text ? { message: text } : null;
-  }
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(locale ? { "Accept-Language": locale, "X-Locale": locale } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    const text = await response.text();
+    let json = null;
 
-  if (!response.ok) {
-    throw new ApiError(json?.message || "Request failed.", response.status, json?.errors || {});
-  }
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = text ? { message: text } : null;
+    }
 
-  return json;
+    if (!response.ok) {
+      throw new ApiError(json?.message || "Request failed.", response.status, json?.errors || {});
+    }
+
+    return json;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+
+    if (error?.name === "AbortError") {
+      throw new ApiError("Request timed out.", 408, { request: ["Request timed out."] });
+    }
+
+    throw new ApiError("Unable to reach the server.", 503, { request: ["Unable to reach the server."] });
+  } finally {
+    if (timeoutId !== null) globalThis.clearTimeout(timeoutId);
+  }
 }
 
 function buildDirectUploadFormData(filePart, uploadConfig = {}, fileName) {

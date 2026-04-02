@@ -30,6 +30,7 @@ function AuthHarness() {
     isAuthenticated,
     pendingVerification,
     login,
+    register,
     verifyEmailCode,
     resendVerificationCode,
   } = useAuth();
@@ -43,6 +44,12 @@ function AuthHarness() {
       <div data-testid="pending-expires">{pendingVerification?.expiresInMinutes || ''}</div>
       <button type="button" onClick={() => login({ identifier: 'ada', password: 'secret' })}>
         Login
+      </button>
+      <button
+        type="button"
+        onClick={() => register({ fullName: 'Ada Lovelace', username: 'ada', email: 'ada@example.com', password: 'secret' })}
+      >
+        Register
       </button>
       <button type="button" onClick={() => verifyEmailCode({ code: '1234' })}>
         Verify
@@ -105,10 +112,10 @@ describe('AuthContext', () => {
     expect(screen.getByTestId('name')).toHaveTextContent('Ada Lovelace');
   });
 
-  it('stores pending verification instead of authenticating when login requires email verification', async () => {
+  it('stores pending verification instead of authenticating when register requires email verification', async () => {
     const user = userEvent.setup();
 
-    api.login.mockResolvedValue({
+    api.register.mockResolvedValue({
       data: {
         user: { id: 1, email: 'ada@example.com' },
         verification: {
@@ -127,7 +134,7 @@ describe('AuthContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
 
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await user.click(screen.getByRole('button', { name: 'Register' }));
 
     await waitFor(() => expect(screen.getByTestId('pending-email')).toHaveTextContent('ada@example.com'));
 
@@ -143,7 +150,7 @@ describe('AuthContext', () => {
   it('uses the stored pending verification email to verify the code and authenticate', async () => {
     const user = userEvent.setup();
 
-    api.login.mockResolvedValue({
+    api.register.mockResolvedValue({
       data: {
         user: { id: 1, email: 'ada@example.com' },
         verification: {
@@ -168,7 +175,7 @@ describe('AuthContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
 
-    await user.click(screen.getByRole('button', { name: 'Login' }));
+    await user.click(screen.getByRole('button', { name: 'Register' }));
     await waitFor(() => expect(screen.getByTestId('pending-email')).toHaveTextContent('ada@example.com'));
 
     await user.click(screen.getByRole('button', { name: 'Verify' }));

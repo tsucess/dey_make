@@ -67,13 +67,6 @@ export function AuthProvider({ children }) {
     async login(payload) {
       const response = await api.login(payload);
 
-      if (response.data?.verification?.required) {
-        setStoredToken(null);
-        setUser(null);
-        syncPendingVerification(response.data.verification);
-        return response.data;
-      }
-
       setStoredToken(response.data.token);
       syncPendingVerification(null);
       setUser(response.data.user);

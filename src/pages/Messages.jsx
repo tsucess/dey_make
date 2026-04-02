@@ -147,7 +147,7 @@ function SectionCard({ title, children }) {
 export default function Messages() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const isMountedRef = useRef(true);
+  const isMountedRef = useRef(false);
   const activeConversationIdRef = useRef(null);
   const conversationsRef = useRef([]);
   const messagesRef = useRef([]);
@@ -156,7 +156,8 @@ export default function Messages() {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draftMessage, setDraftMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [busyUserId, setBusyUserId] = useState(null);
   const [sending, setSending] = useState(false);
@@ -194,62 +195,69 @@ export default function Messages() {
     messagesRef.current = [];
   }, [activeConversationId]);
 
-  useEffect(() => () => {
-    isMountedRef.current = false;
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const loadInbox = useCallback(async ({ silent = false, includeSuggested = true } = {}) => {
     if (!silent) {
-      setLoading(true);
+      setLoadingConversations(true);
+      if (includeSuggested) setLoadingSuggestions(true);
       setError("");
     }
 
-    try {
-      const [conversationResult, suggestedResult] = await Promise.allSettled([
-        api.getConversations(),
-        includeSuggested ? api.getSuggestedUsers() : Promise.resolve(null),
-      ]);
+    const requests = [
+      api.getConversations()
+        .then((response) => {
+          if (!isMountedRef.current) return;
 
-      if (!isMountedRef.current) return;
+          const currentActiveConversationId = activeConversationIdRef.current;
+          const nextConversations = mergeConversationSummaries(
+            conversationsRef.current,
+            response?.data?.conversations || [],
+            currentActiveConversationId,
+          );
 
-      let loadError = null;
+          setConversations(nextConversations);
+          setActiveConversationId((current) =>
+            nextConversations.some((conversation) => conversation.id === current)
+              ? current
+              : nextConversations[0]?.id || null,
+          );
+        })
+        .catch((nextError) => {
+          if (!silent && isMountedRef.current) {
+            setError((current) => current || firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
+          }
+        })
+        .finally(() => {
+          if (!silent && isMountedRef.current) setLoadingConversations(false);
+        }),
+    ];
 
-      if (conversationResult.status === "fulfilled") {
-        const currentActiveConversationId = activeConversationIdRef.current;
-        const nextConversations = mergeConversationSummaries(
-          conversationsRef.current,
-          conversationResult.value?.data?.conversations || [],
-          currentActiveConversationId,
-        );
-
-        setConversations(nextConversations);
-        setActiveConversationId((current) =>
-          nextConversations.some((conversation) => conversation.id === current)
-            ? current
-            : nextConversations[0]?.id || null,
-        );
-      } else {
-        loadError = conversationResult.reason;
-      }
-
-      if (includeSuggested) {
-        if (suggestedResult.status === "fulfilled") {
-          setSuggestedUsers(suggestedResult.value?.data?.users || []);
-        } else if (!loadError) {
-          loadError = suggestedResult.reason;
-        }
-      }
-
-      if (!silent && loadError) {
-        setError(firstError(loadError?.errors, loadError?.message || t("messages.unableToLoadInbox")));
-      }
-    } catch (nextError) {
-      if (!silent && isMountedRef.current) {
-        setError(firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
-      }
-    } finally {
-      if (!silent && isMountedRef.current) setLoading(false);
+    if (includeSuggested) {
+      requests.push(
+        api.getSuggestedUsers()
+          .then((response) => {
+            if (!isMountedRef.current) return;
+            setSuggestedUsers(response?.data?.users || []);
+          })
+          .catch((nextError) => {
+            if (!silent && isMountedRef.current) {
+              setError((current) => current || firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadSuggestions")));
+            }
+          })
+          .finally(() => {
+            if (!silent && isMountedRef.current) setLoadingSuggestions(false);
+          }),
+      );
     }
+
+    await Promise.allSettled(requests);
   }, [t]);
 
   const loadConversationMessages = useCallback(async (conversationId, { silent = false, after } = {}) => {
@@ -443,7 +451,7 @@ export default function Messages() {
         <div className="grid gap-6 lg:grid-cols-[340px,minmax(0,1fr)]">
           <div className="space-y-6">
             <SectionCard title={t("messages.inbox")}>
-              {loading ? (
+              {loadingConversations ? (
                 <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
               ) : conversations.length ? (
                 <div className="space-y-3">
@@ -462,7 +470,7 @@ export default function Messages() {
             </SectionCard>
 
             <SectionCard title={t("messages.suggestedCreators")}>
-              {loading ? (
+              {loadingSuggestions ? (
                 <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
               ) : suggestedCreators.length ? (
                 <div className="space-y-3">

@@ -54,15 +54,10 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     setSubmitError("");
 
     try {
-      const result = await login({
+      await login({
         ...form,
         identifier: form.identifier.trim(),
       });
-
-      if (result?.verification?.required) {
-        navigate("/verify-email", { replace: true });
-        return;
-      }
 
       onSuccess?.();
       navigate("/home", { replace: true });
