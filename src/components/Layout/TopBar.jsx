@@ -10,7 +10,7 @@ import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 import Notification from "../Notification";
 
-export default function TopBar() {
+export default function TopBar(openNotification, closeNotification, isNotificationOpen) {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export default function TopBar() {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState("");
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+ 
 
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
   const hasLookupResults = lookup.videos.length || lookup.creators.length || lookup.categories.length;
@@ -31,13 +31,7 @@ export default function TopBar() {
     setIsVisible((prev) => !prev);
   }
 
-  function openNotification(){
-    setIsNotificationOpen(true)
-  }
-
-  function closeNotification(){
-    setIsNotificationOpen(false)
-  }
+ 
 
   function closeLookup() {
     setIsLookupOpen(false);
