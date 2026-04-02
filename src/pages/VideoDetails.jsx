@@ -1,3 +1,4 @@
+import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
@@ -288,6 +289,7 @@ export default function VideoDetails({ mode = "video" }) {
   const { isAuthenticated, user } = useAuth();
   const isLiveRoom = mode === "live";
   const viewRecordedRef = useRef(new Set());
+  const recordedPlaybackRef = useRef(null);
   const livePreviewRef = useRef(null);
   const livePlaybackRef = useRef(null);
   const viewerPeerConnectionRef = useRef(null);
@@ -338,6 +340,74 @@ export default function VideoDetails({ mode = "video" }) {
       livePlaybackRef.current.srcObject = remoteLiveStream || null;
     }
   }, [remoteLiveStream]);
+
+  useEffect(() => {
+    const playbackElement = recordedPlaybackRef.current;
+
+    if (!playbackElement || video?.type !== "video" || isVideoCurrentlyLive) {
+      return undefined;
+    }
+
+    const fallbackUrl = video?.mediaUrl || "";
+    const streamUrl = video?.streamUrl || "";
+    let hls = null;
+    let hasFallenBackToMp4 = false;
+
+    const setPlaybackSource = (sourceUrl) => {
+      if (!sourceUrl) {
+        playbackElement.removeAttribute("src");
+        return;
+      }
+
+      if (playbackElement.src !== sourceUrl) {
+        playbackElement.src = sourceUrl;
+      }
+    };
+
+    const fallbackToMp4 = () => {
+      if (hasFallenBackToMp4 || !fallbackUrl) {
+        return;
+      }
+
+      hasFallenBackToMp4 = true;
+      hls?.destroy();
+      hls = null;
+      setPlaybackSource(fallbackUrl);
+    };
+
+    playbackElement.removeAttribute("src");
+
+    if (!streamUrl) {
+      setPlaybackSource(fallbackUrl);
+
+      return undefined;
+    }
+
+    if (typeof playbackElement.canPlayType === "function" && playbackElement.canPlayType("application/vnd.apple.mpegurl")) {
+      setPlaybackSource(streamUrl);
+
+      return undefined;
+    }
+
+    if (!Hls.isSupported()) {
+      setPlaybackSource(fallbackUrl);
+
+      return undefined;
+    }
+
+    hls = new Hls();
+    hls.on(Hls.Events.ERROR, (_, data) => {
+      if (data?.fatal) {
+        fallbackToMp4();
+      }
+    });
+    hls.loadSource(streamUrl);
+    hls.attachMedia(playbackElement);
+
+    return () => {
+      hls?.destroy();
+    };
+  }, [isVideoCurrentlyLive, video?.id, video?.mediaUrl, video?.streamUrl, video?.type]);
 
   useEffect(() => () => {
     stopMediaStream(localLiveStream);
@@ -1403,8 +1473,8 @@ export default function VideoDetails({ mode = "video" }) {
                         <p className="mt-3 text-sm leading-relaxed text-slate-300">{livePlaceholderMessage}</p>
                       </div>
                     </div>
-                  ) : video.mediaUrl ? (
-                    <video src={video.mediaUrl} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls className="h-full w-full object-cover" />
+                  ) : (video.streamUrl || video.mediaUrl) ? (
+                    <video ref={recordedPlaybackRef} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls playsInline className="h-full w-full object-cover" />
                   ) : (
                     <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
                   )

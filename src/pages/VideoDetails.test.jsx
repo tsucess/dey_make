@@ -3,10 +3,37 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const hlsMockState = vi.hoisted(() => ({
+  errorEvent: 'hlsError',
+  isSupported: true,
+  lastInstance: null,
+}));
+
 const authState = {
   isAuthenticated: true,
   user: { id: 99, fullName: 'Viewer Example', avatarUrl: '' },
 };
+
+vi.mock('hls.js', () => ({
+  default: class MockHls {
+    static Events = { ERROR: hlsMockState.errorEvent };
+
+    static isSupported() {
+      return hlsMockState.isSupported;
+    }
+
+    constructor() {
+      this.handlers = {};
+      this.loadSource = vi.fn();
+      this.attachMedia = vi.fn();
+      this.on = vi.fn((event, handler) => {
+        this.handlers[event] = handler;
+      });
+      this.destroy = vi.fn();
+      hlsMockState.lastInstance = this;
+    }
+  },
+}));
 
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
@@ -79,6 +106,10 @@ import LiveRoom from './LiveRoom';
 import VideoDetails from './VideoDetails';
 
 let lastPeerConnection = null;
+
+function emitMockHlsError(errorData = { fatal: true }) {
+  hlsMockState.lastInstance?.handlers?.[hlsMockState.errorEvent]?.(hlsMockState.errorEvent, errorData);
+}
 
 class MockMediaStream {
   constructor(tracks = [{ kind: 'video', stop: vi.fn() }, { kind: 'audio', stop: vi.fn() }]) {
@@ -171,6 +202,7 @@ function buildVideo(overrides = {}) {
     type: 'video',
     title: 'Alpha Session',
     mediaUrl: 'https://cdn.example.com/alpha.mp4',
+    streamUrl: null,
     views: 12,
     author: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
     creator: { id: 5, fullName: 'Creator Uno', avatarUrl: '', subscriberCount: 33, bio: 'Creadora de sesiones de estudio y tutoriales.' },
@@ -213,6 +245,8 @@ describe('VideoDetails', () => {
     vi.clearAllMocks();
     authState.isAuthenticated = true;
     authState.user = { id: 99, fullName: 'Viewer Example', avatarUrl: '' };
+    hlsMockState.isSupported = true;
+    hlsMockState.lastInstance = null;
     lastPeerConnection = null;
     liveCreationSession = null;
     globalThis.MediaStream = MockMediaStream;
@@ -228,6 +262,10 @@ describe('VideoDetails', () => {
       configurable: true,
       writable: true,
       value: null,
+    });
+    Object.defineProperty(HTMLMediaElement.prototype, 'canPlayType', {
+      configurable: true,
+      value: vi.fn(() => ''),
     });
     api.sendLiveSignal.mockResolvedValue({ data: {} });
     api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
@@ -269,6 +307,50 @@ describe('VideoDetails', () => {
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('¡Dile al creador lo que piensas!')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay comentarios. Empieza la conversación.')).toBeInTheDocument();
+  });
+
+  it('uses hls.js for recorded videos when a Cloudinary streamUrl is available', async () => {
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ streamUrl: 'https://cdn.example.com/alpha.m3u8' }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    const { container } = renderPage();
+
+    await screen.findByRole('heading', { name: 'Alpha Session' });
+    const player = container.querySelector('video');
+
+    expect(player).not.toBeNull();
+    await waitFor(() => expect(hlsMockState.lastInstance?.loadSource).toHaveBeenCalledWith('https://cdn.example.com/alpha.m3u8'));
+    expect(hlsMockState.lastInstance.attachMedia).toHaveBeenCalledWith(player);
+  });
+
+  it('falls back to the mp4 playback URL when hls.js reports a fatal error', async () => {
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ streamUrl: 'https://cdn.example.com/alpha.m3u8' }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    const { container } = renderPage();
+
+    await screen.findByRole('heading', { name: 'Alpha Session' });
+    const player = container.querySelector('video');
+
+    expect(player).not.toBeNull();
+    await waitFor(() => expect(hlsMockState.lastInstance?.loadSource).toHaveBeenCalledWith('https://cdn.example.com/alpha.m3u8'));
+
+    emitMockHlsError();
+
+    await waitFor(() => expect(hlsMockState.lastInstance.destroy).toHaveBeenCalled());
+    expect(player).toHaveAttribute('src', 'https://cdn.example.com/alpha.mp4');
   });
 
   it('redirects active live videos to the dedicated live room route', async () => {

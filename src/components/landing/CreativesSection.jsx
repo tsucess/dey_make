@@ -3,6 +3,11 @@ import { useLanguage } from "../../context/LanguageContext";
 import { motion } from "motion/react";
 import {container, fadeUp} from '../../utils/animation'
 
+const MotionDiv = motion.div;
+const MotionHeading = motion.h2;
+const MotionParagraph = motion.p;
+const MotionImage = motion.img;
+
 export default function CreativesSection() {
   const { isDark } = useTheme();
   const { t } = useLanguage();
@@ -12,25 +17,25 @@ export default function CreativesSection() {
       id="about"
       className="px-6 md:px-12 py-8 md:py-14 bg-white100 dark:bg-slate100"
     >
-      <motion.div 
+      <MotionDiv 
       variants={container}
   initial="hidden"
   whileInView="show"
   viewport={{ once: true, margin: "-100px" }}
    className="max-w-5xl mx-auto">
 
-        <motion.h2 variants={fadeUp}
+        <MotionHeading variants={fadeUp}
           className="font-semibold font-bricolage text-slate100 dark:text-white mb-3"
           style={{ fontSize: "clamp(36px, 4vw, 38px)" }}
         >
           {t("landing.creatives.titlePrefix")}{" "}
           <span className="text-orange100 italic font-inter">{t("landing.creatives.titleAccent")}</span>
-        </motion.h2>
+        </MotionHeading>
 
-        <motion.p variants={fadeUp} className="text-[15px] text-slate100 dark:text-white
+        <MotionParagraph variants={fadeUp} className="text-[15px] text-slate100 dark:text-white
                       max-w-md leading-relaxed mb-12">
           {t("landing.creatives.description")}
-        </motion.p>
+        </MotionParagraph>
 
         {/* Desktop 3 column */}
         <div
@@ -38,7 +43,7 @@ export default function CreativesSection() {
           style={{ gridTemplateColumns: "1fr auto 1fr" }}
         >
           {/* Left */}
-          <motion.div variants={{
+          <MotionDiv variants={{
     hidden: { opacity: 0, x: -40 },
     show: {
       opacity: 1,
@@ -57,10 +62,10 @@ export default function CreativesSection() {
                           leading-relaxed">
               {t("landing.creatives.creatorToolsDescription")}
             </p>
-          </motion.div>
+          </MotionDiv>
 
           {/* Phone mockup desktop */}
-          <motion.img src={isDark ? "./phone-dark.png" : "./phone-light.png"} alt="" className="w-101 h-220"
+          <MotionImage src={isDark ? "./phone-dark.png" : "./phone-light.png"} alt="" className="w-101 h-220"
           initial={{ opacity: 0, scale: 0.9 }}
   whileInView={{ opacity: 1, scale: 1 }}
   viewport={{ once: true }}
@@ -78,7 +83,7 @@ export default function CreativesSection() {
 
           {/* Right */}
           <div className="flex flex-col gap-60">
-            <motion.div variants={{
+            <MotionDiv variants={{
     hidden: { opacity: 0, x: 40 },
     show: {
       opacity: 1,
@@ -96,8 +101,8 @@ export default function CreativesSection() {
                             leading-relaxed">
                 {t("landing.creatives.createWithoutLimitsDescription")}
               </p>
-            </motion.div>
-            <motion.div variants={{
+            </MotionDiv>
+            <MotionDiv variants={{
     hidden: { opacity: 0, x: 40 },
     show: {
       opacity: 1,
@@ -115,27 +120,27 @@ export default function CreativesSection() {
                             leading-relaxed">
                 {t("landing.creatives.builtForAfricaDescription")}
               </p>
-            </motion.div>
+            </MotionDiv>
           </div>
         </div>
 
         {/* Mobile stacked */}
-        <motion.div  variants={container}
+        <MotionDiv  variants={container}
   initial="hidden"
   whileInView="show"
   viewport={{ once: true }} className="md:hidden">
-        <motion.img variants={fadeUp} src={isDark ? "./phone-dark.png" : "./phone-light.png"} alt="" className="w-101 h-150"/>
+        <MotionImage variants={fadeUp} src={isDark ? "./phone-dark.png" : "./phone-light.png"} alt="" className="w-101 h-150"/>
 
           <div className="flex flex-col gap-4 ">
-            <motion.div variants={fadeUp} className="space-y-2 font-inter"><h3 className="text-xl font-medium text-slate100
+            <MotionDiv variants={fadeUp} className="space-y-2 font-inter"><h3 className="text-xl font-medium text-slate100
                            dark:text-white">
               {t("landing.creatives.createWithoutLimitsTitle")}
             </h3>
             <p className="text-sm text-slate100  dark:text-white
                           leading-relaxed">
               {t("landing.creatives.createWithoutLimitsDescription")}
-            </p></motion.div>
-            <motion.div variants={fadeUp} className="space-y-2 font-inter">
+            </p></MotionDiv>
+            <MotionDiv variants={fadeUp} className="space-y-2 font-inter">
               <h3 className="text-xl font-medium text-slate100
                            dark:text-white">
               {t("landing.creatives.builtForAfricaTitle")}
@@ -144,8 +149,8 @@ export default function CreativesSection() {
                           leading-relaxed">
               {t("landing.creatives.builtForAfricaDescription")}
             </p>
-            </motion.div>
-            <motion.div variants={fadeUp} className="space-y-2 font-inter">
+            </MotionDiv>
+            <MotionDiv variants={fadeUp} className="space-y-2 font-inter">
               <h3 className="text-xl font-medium text-slate100
                            dark:text-white">
               {t("landing.creatives.creatorToolsTitle")}
@@ -154,11 +159,11 @@ export default function CreativesSection() {
                           leading-relaxed">
               {t("landing.creatives.creatorToolsDescription")}
             </p>
-            </motion.div>
+            </MotionDiv>
             
           </div>
-          </motion.div>
-        </motion.div>
+          </MotionDiv>
+        </MotionDiv>
 
       
     </section>
