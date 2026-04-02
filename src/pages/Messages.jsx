@@ -168,6 +168,16 @@ export default function Messages() {
     [activeConversationId, conversations],
   );
 
+  const suggestedCreators = useMemo(() => {
+    const interactedCreatorIds = new Set(
+      conversations
+        .map((conversation) => conversation.participant?.id)
+        .filter((participantId) => participantId != null),
+    );
+
+    return suggestedUsers.filter((participant) => !interactedCreatorIds.has(participant.id));
+  }, [conversations, suggestedUsers]);
+
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
   }, [activeConversationId]);
@@ -195,33 +205,44 @@ export default function Messages() {
     }
 
     try {
-      const requests = [api.getConversations()];
-
-      if (includeSuggested) {
-        requests.push(api.getSuggestedUsers());
-      }
-
-      const [conversationResponse, suggestedResponse] = await Promise.all(requests);
+      const [conversationResult, suggestedResult] = await Promise.allSettled([
+        api.getConversations(),
+        includeSuggested ? api.getSuggestedUsers() : Promise.resolve(null),
+      ]);
 
       if (!isMountedRef.current) return;
 
-      const currentActiveConversationId = activeConversationIdRef.current;
-      const nextConversations = mergeConversationSummaries(
-        conversationsRef.current,
-        conversationResponse?.data?.conversations || [],
-        currentActiveConversationId,
-      );
+      let loadError = null;
 
-      setConversations(nextConversations);
-      if (includeSuggested) {
-        setSuggestedUsers(suggestedResponse?.data?.users || []);
+      if (conversationResult.status === "fulfilled") {
+        const currentActiveConversationId = activeConversationIdRef.current;
+        const nextConversations = mergeConversationSummaries(
+          conversationsRef.current,
+          conversationResult.value?.data?.conversations || [],
+          currentActiveConversationId,
+        );
+
+        setConversations(nextConversations);
+        setActiveConversationId((current) =>
+          nextConversations.some((conversation) => conversation.id === current)
+            ? current
+            : nextConversations[0]?.id || null,
+        );
+      } else {
+        loadError = conversationResult.reason;
       }
 
-      setActiveConversationId((current) =>
-        nextConversations.some((conversation) => conversation.id === current)
-          ? current
-          : nextConversations[0]?.id || null,
-      );
+      if (includeSuggested) {
+        if (suggestedResult.status === "fulfilled") {
+          setSuggestedUsers(suggestedResult.value?.data?.users || []);
+        } else if (!loadError) {
+          loadError = suggestedResult.reason;
+        }
+      }
+
+      if (!silent && loadError) {
+        setError(firstError(loadError?.errors, loadError?.message || t("messages.unableToLoadInbox")));
+      }
     } catch (nextError) {
       if (!silent && isMountedRef.current) {
         setError(firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
@@ -423,7 +444,7 @@ export default function Messages() {
           <div className="space-y-6">
             <SectionCard title={t("messages.inbox")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200"><Spinner/></p>
+                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
               ) : conversations.length ? (
                 <div className="space-y-3">
                   {conversations.map((conversation) => (
@@ -442,10 +463,10 @@ export default function Messages() {
 
             <SectionCard title={t("messages.suggestedCreators")}>
               {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200"><Spinner/></p>
-              ) : suggestedUsers.length ? (
+                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
+              ) : suggestedCreators.length ? (
                 <div className="space-y-3">
-                  {suggestedUsers.map((participant) => (
+                  {suggestedCreators.map((participant) => (
                     <div key={participant.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[#F5F5F5] px-4 py-3 dark:bg-[#262626]">
                       <div className="flex min-w-0 items-center gap-3">
                         <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-11 w-11 rounded-full object-cover" />
