@@ -7,6 +7,24 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [react(), tailwindcss()],
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            const normalizedId = id.split('\\').join('/');
+
+            if (!normalizedId.includes('/node_modules/')) return undefined;
+            if (normalizedId.includes('/react-router-dom/') || normalizedId.includes('/react-router/')) return 'router';
+            if (normalizedId.includes('/react-dom/') || normalizedId.includes('/react/') || normalizedId.includes('/scheduler/')) return 'react-vendor';
+            if (normalizedId.includes('/laravel-echo/') || normalizedId.includes('/pusher-js/')) return 'realtime';
+            if (normalizedId.includes('/hls.js/')) return 'media';
+            if (normalizedId.includes('/react-icons/')) return 'icons';
+
+            return 'vendor';
+          },
+        },
+      },
+    },
     test: {
       environment: 'jsdom',
       setupFiles: './src/test/setup.js',

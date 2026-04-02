@@ -14,7 +14,7 @@ const authState = {
   user: { id: 99, fullName: 'Viewer Example', avatarUrl: '' },
 };
 
-vi.mock('hls.js', () => ({
+vi.mock('hls.js/light', () => ({
   default: class MockHls {
     static Events = { ERROR: hlsMockState.errorEvent };
 
