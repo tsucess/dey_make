@@ -10,9 +10,6 @@ import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 import Notification from "../Notification";
 
-<<<<<<< HEAD
-export default function TopBar(openNotification, closeNotification, isNotificationOpen) {
-=======
 const NOTIFICATION_POLL_INTERVAL_MS = 15000;
 
 function isDocumentHidden() {
@@ -20,7 +17,6 @@ function isDocumentHidden() {
 }
 
 export default function TopBar() {
->>>>>>> bb4759c8301e42bea1ee2da1d16a3372a7725f2b
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -33,16 +29,12 @@ export default function TopBar() {
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState("");
-<<<<<<< HEAD
- 
-=======
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [notificationError, setNotificationError] = useState("");
   const [markingAllNotificationsRead, setMarkingAllNotificationsRead] = useState(false);
   const [busyNotificationId, setBusyNotificationId] = useState(null);
->>>>>>> bb4759c8301e42bea1ee2da1d16a3372a7725f2b
 
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
   const hasLookupResults = lookup.videos.length || lookup.creators.length || lookup.categories.length;
