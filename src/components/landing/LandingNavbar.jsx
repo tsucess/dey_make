@@ -5,6 +5,8 @@ import { IoClose } from "react-icons/io5";
 import { useLanguage } from "../../context/LanguageContext";
 import { motion } from "motion/react";
 
+const MotionNav = motion.nav;
+
 export default function LandingNavbar({ onSignUp }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { t } = useLanguage();
@@ -16,7 +18,7 @@ export default function LandingNavbar({ onSignUp }) {
   ];
 
   return (
-    <motion.nav  initial={{ y: -60, opacity: 0 }}
+    <MotionNav  initial={{ y: -60, opacity: 0 }}
   animate={{ y: 0, opacity: 1 }}
   transition={{ duration: 0.5 }} className="bg-white100/20 dark:bg-slate100 
                     md:border-b-[0.5px] border-slate200 dark:border-slate300">
@@ -109,6 +111,6 @@ export default function LandingNavbar({ onSignUp }) {
           </button>
         </div>
       )}
-    </motion.nav>
+    </MotionNav>
   );
 }

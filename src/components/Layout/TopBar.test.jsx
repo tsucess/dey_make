@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
@@ -19,6 +19,9 @@ vi.mock('../../services/api', async () => {
     ...actual,
     api: {
       searchSuggestions: vi.fn(),
+      getNotifications: vi.fn(),
+      markNotificationRead: vi.fn(),
+      markAllNotificationsRead: vi.fn(),
     },
   };
 });
@@ -48,6 +51,10 @@ describe('TopBar', () => {
     vi.clearAllMocks();
     authState.isAuthenticated = true;
     authState.user = { fullName: 'Test Creator', avatarUrl: '' };
+    api.searchSuggestions.mockResolvedValue({ data: { videos: [], creators: [], categories: [] } });
+    api.getNotifications.mockResolvedValue({ data: { notifications: [] } });
+    api.markNotificationRead.mockResolvedValue({ data: { notification: { id: 1, readAt: '2025-01-01T12:05:00.000Z' } } });
+    api.markAllNotificationsRead.mockResolvedValue({});
   });
 
   it('loads lookup suggestions and navigates to search results', async () => {
@@ -86,5 +93,134 @@ describe('TopBar', () => {
     expect(screen.queryByRole('button', { name: /create/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /notifications/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /profile/i })).not.toBeInTheDocument();
+  });
+
+  it('loads dynamic notifications, shows unread count, and navigates on selection', async () => {
+    api.getNotifications.mockResolvedValue({
+      data: {
+        notifications: [
+          {
+            id: 1,
+            type: 'comment',
+            title: 'Ada commented on your video',
+            body: '“This drop is clean.”',
+            data: { videoId: 44, commentId: 9 },
+            readAt: null,
+            createdAt: '2025-01-01T12:00:00.000Z',
+          },
+          {
+            id: 2,
+            type: 'message',
+            title: 'New message',
+            body: 'Can we collaborate?',
+            data: { conversationId: 8 },
+            readAt: null,
+            createdAt: '2025-01-01T11:00:00.000Z',
+          },
+        ],
+      },
+    });
+    api.markNotificationRead.mockResolvedValue({
+      data: {
+        notification: {
+          id: 1,
+          type: 'comment',
+          title: 'Ada commented on your video',
+          body: '“This drop is clean.”',
+          data: { videoId: 44, commentId: 9 },
+          readAt: '2025-01-01T12:05:00.000Z',
+          createdAt: '2025-01-01T12:00:00.000Z',
+        },
+      },
+    });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalled());
+    expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('2');
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+
+    expect(await screen.findByRole('dialog', { name: /notifications/i })).toBeInTheDocument();
+    expect(screen.getByText('Ada commented on your video')).toBeInTheDocument();
+    expect(screen.getByText('Can we collaborate?')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /mark all as read/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Ada commented on your video').closest('button'));
+
+    await waitFor(() => expect(api.markNotificationRead).toHaveBeenCalledWith(1));
+    await waitFor(() => {
+      expect(screen.getByTestId('location')).toHaveTextContent('/video/44');
+    });
+  });
+
+  it('refreshes notifications in the background without reopening the panel', async () => {
+    const intervals = [];
+    const setIntervalSpy = vi.spyOn(window, 'setInterval').mockImplementation((callback, delay) => {
+      intervals.push({ callback, delay });
+      return intervals.length;
+    });
+    const clearIntervalSpy = vi.spyOn(window, 'clearInterval').mockImplementation(() => {});
+
+    api.getNotifications
+      .mockResolvedValueOnce({
+        data: {
+          notifications: [
+            {
+              id: 1,
+              type: 'comment',
+              title: 'Ada commented on your video',
+              body: '“This drop is clean.”',
+              data: { videoId: 44 },
+              readAt: null,
+              createdAt: '2025-01-01T12:00:00.000Z',
+            },
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          notifications: [
+            {
+              id: 1,
+              type: 'comment',
+              title: 'Ada commented on your video',
+              body: '“This drop is clean.”',
+              data: { videoId: 44 },
+              readAt: null,
+              createdAt: '2025-01-01T12:00:00.000Z',
+            },
+            {
+              id: 2,
+              type: 'message',
+              title: 'New message',
+              body: 'Can we collaborate?',
+              data: { conversationId: 8 },
+              readAt: null,
+              createdAt: '2025-01-01T12:05:00.000Z',
+            },
+          ],
+        },
+      });
+
+    try {
+      renderTopBar();
+
+      await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+      expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('1');
+      const notificationPoller = intervals.find((entry) => entry.delay === 15000);
+
+      expect(notificationPoller).toBeTruthy();
+
+      await act(async () => {
+        await notificationPoller.callback();
+      });
+
+      await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(2));
+      expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('2');
+    } finally {
+      setIntervalSpy.mockRestore();
+      clearIntervalSpy.mockRestore();
+    }
   });
 });

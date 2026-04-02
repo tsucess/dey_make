@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { authState, syncUserSpy } = vi.hoisted(() => ({
   authState: {
-    user: { id: 1, fullName: 'Ada Lovelace', avatarUrl: '' },
+    user: { id: 1, fullName: 'Ada Lovelace', username: 'ada', avatarUrl: '' },
     isAuthenticated: true,
   },
   syncUserSpy: vi.fn(),
@@ -70,7 +70,7 @@ function renderPage(initialEntry = '/profile') {
 describe('Profile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authState.user = { id: 1, fullName: 'Ada Lovelace', avatarUrl: '' };
+    authState.user = { id: 1, fullName: 'Ada Lovelace', username: 'ada', avatarUrl: '' };
     authState.isAuthenticated = true;
   });
 
@@ -82,6 +82,7 @@ describe('Profile', () => {
         profile: {
           id: 1,
           fullName: 'Ada Lovelace',
+          username: 'ada',
           bio: 'First programmer',
           subscriberCount: 2500,
           avatarUrl: '',
@@ -98,6 +99,7 @@ describe('Profile', () => {
         profile: {
           id: 1,
           fullName: 'Ada Byron',
+          username: 'ada.byron',
           bio: 'Computing pioneer',
           subscriberCount: 2500,
           avatarUrl: '',
@@ -108,11 +110,14 @@ describe('Profile', () => {
     renderPage();
 
     await screen.findByText('Ada Lovelace');
+    expect(screen.getByText('@ada')).toBeInTheDocument();
     await screen.findByText('Analytical Engine demo');
 
     await user.click(screen.getByRole('button', { name: /Edit profile/i }));
     await user.clear(screen.getByPlaceholderText('Full name'));
     await user.type(screen.getByPlaceholderText('Full name'), 'Ada Byron');
+    await user.clear(screen.getByPlaceholderText('Username'));
+    await user.type(screen.getByPlaceholderText('Username'), 'ada.byron');
     await user.clear(screen.getByPlaceholderText('Bio'));
     await user.type(screen.getByPlaceholderText('Bio'), 'Computing pioneer');
     await user.click(screen.getByRole('button', { name: /Save profile/i }));
@@ -121,13 +126,15 @@ describe('Profile', () => {
 
     expect(api.updateProfile).toHaveBeenCalledWith({
       fullName: 'Ada Byron',
+      username: 'ada.byron',
       bio: 'Computing pioneer',
       avatarUrl: null,
     });
 
     await screen.findByText('Profile updated successfully.');
     expect(screen.getByText('Ada Byron')).toBeInTheDocument();
-    expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron' }));
+    expect(screen.getByText('@ada.byron')).toBeInTheDocument();
+    expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron', username: 'ada.byron' }));
   });
 
   it('loads a public creator profile and toggles subscription state', async () => {
@@ -138,6 +145,7 @@ describe('Profile', () => {
         user: {
           id: 5,
           fullName: 'Grace Hopper',
+          username: 'grace.hopper',
           bio: 'Compiler trailblazer',
           subscriberCount: 4100,
           avatarUrl: '',
@@ -166,6 +174,7 @@ describe('Profile', () => {
     await waitFor(() => expect(api.getUserPosts).toHaveBeenCalledWith('5'));
 
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+    expect(screen.getByText('@grace.hopper')).toBeInTheDocument();
     expect(screen.getByText('COBOL for creators')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Edit profile/i })).not.toBeInTheDocument();
 
@@ -183,6 +192,7 @@ describe('Profile', () => {
         user: {
           id: 5,
           fullName: 'Grace Hopper',
+          username: 'grace.hopper',
           bio: 'Compiler trailblazer',
           subscriberCount: 4100,
           avatarUrl: '',

@@ -27,7 +27,7 @@ function AuthHarness() {
       <div data-testid="loading">{String(isLoading)}</div>
       <div data-testid="auth">{String(isAuthenticated)}</div>
       <div data-testid="name">{user?.name || user?.fullName || ''}</div>
-      <button type="button" onClick={() => login({ email: 'ada@example.com', password: 'secret' })}>
+      <button type="button" onClick={() => login({ identifier: 'ada', password: 'secret' })}>
         Login
       </button>
     </div>
@@ -79,7 +79,7 @@ describe('AuthContext', () => {
 
     await waitFor(() => expect(screen.getByTestId('auth')).toHaveTextContent('true'));
 
-    expect(api.login).toHaveBeenCalledWith({ email: 'ada@example.com', password: 'secret' });
+    expect(api.login).toHaveBeenCalledWith({ identifier: 'ada', password: 'secret' });
     expect(getStoredToken()).toBe('fresh-token');
     expect(screen.getByTestId('name')).toHaveTextContent('Ada Lovelace');
   });

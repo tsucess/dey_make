@@ -1,49 +1,143 @@
-import { div } from "motion/react-client";
-import { useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { IoMdClose } from "react-icons/io";
+import { useLanguage } from "../context/LanguageContext";
+import { formatRelativeTime } from "../utils/content";
 
-export default function Notification({isVisible, closeNotification}){
-    const [notification] = useState(['house'])
-    return <section className={`bg-black/15 backdrop-blur-xs backdrop-brightness-75 absolute top-0 right-0 w-full h-full justify-end z-100  ${isVisible ? 'flex': 'hidden'}`}>
-        <aside className="bg-white w-full md:w-1/2 px-6 py-10 flex flex-col gap-10">
-        <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-black font-bricolage text-xl font-medium"> <IoIosArrowBack /> Notifications</div>
-            <button onClick={closeNotification} className="w-10 h-10 rounded-full bg-white300 flex justify-center items-center"> <IoMdClose className="text-slate900 w-5 h-5"/></button>
+export default function Notification({
+  isVisible,
+  closeNotification,
+  notifications = [],
+  loading = false,
+  error = "",
+  unreadCount = 0,
+  markingAllRead = false,
+  busyNotificationId = null,
+  onRetry,
+  onSelectNotification,
+  onMarkNotificationRead,
+  onMarkAllRead,
+}) {
+  const { t } = useLanguage();
+
+  if (!isVisible) return null;
+
+  return (
+    <section
+      className="absolute inset-0 z-100 flex justify-end bg-black/15 backdrop-blur-xs backdrop-brightness-75"
+      onClick={closeNotification}
+    >
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label={t("common.notifications")}
+        className="flex h-full w-full flex-col gap-6 bg-white px-6 py-8 dark:bg-slate100 md:w-1/2"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xl font-medium font-bricolage text-black dark:text-white">
+            <IoIosArrowBack className="h-5 w-5" />
+            <div>
+              <p>{t("topbar.notificationsTitle")}</p>
+              <p className="text-sm font-inter font-normal text-slate700 dark:text-slate200">
+                {unreadCount
+                  ? t("topbar.unreadNotifications", { count: unreadCount })
+                  : t("topbar.allCaughtUp")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {notifications.length ? (
+              <button
+                type="button"
+                onClick={onMarkAllRead}
+                disabled={!unreadCount || markingAllRead}
+                className="rounded-full bg-orange100 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {markingAllRead ? t("topbar.markingAllRead") : t("topbar.markAllAsRead")}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={closeNotification}
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white300 dark:bg-black100"
+            >
+              <IoMdClose className="h-5 w-5 text-slate900 dark:text-white" />
+            </button>
+          </div>
         </div>
 
-        {
-            notification.length === 0 ? <div className=" flex-1 flex flex-col gap-10 items-center justify-center">
-                <img src="./notification icon.png" alt="" />
-                <div className="flex flex-col gap-2 items-center">
-                    <h2 className="text-black text-xl font-inter text-center font-medium">No Notificatons</h2>
-                    <p className="text-sm font-inter text-slate700 text-center font-medium">We’ll let you know when there is something to update you.</p>
-
-                </div>
-
-            </div> : <div className="flex-1 flex-col flex gap-2 overflow-y-scroll">
-                <div className="flex flex-col gap-1.5">
-                    <h2 className="font-inter font-medium text-xl text-black">Today</h2>
-                    <div className="flex flex-col gap-1.25">
-                        <div className="flex items-center justify-between gap-2">
-                            <div className="flex gap-3 items-center">
-                                <img src="" alt="" />
-                                <div className="flex items-center gap-0.5 font-inter">
-                                    <span className="text-black font-medium text-base">Jason Eton liked your post.  </span>
-                                    <span className="text-slate700 text-sm">9h</span>
-                                </div>
-
-                            </div>
-                            <img src="" alt="" />
-                        </div>
-
-                    </div>
-                </div>
-
+        {loading ? (
+          <div className="flex flex-1 items-center justify-center text-sm text-slate700 dark:text-slate200">
+            {t("topbar.loadingNotifications")}
+          </div>
+        ) : error ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+            <p className="text-sm text-red-600">{error}</p>
+            <button
+              type="button"
+              onClick={onRetry}
+              className="rounded-full bg-orange100 px-4 py-2 text-sm font-semibold text-black"
+            >
+              {t("common.tryAgain")}
+            </button>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
+            <img src="/notification icon.png" alt="" className="h-24 w-24 object-contain" />
+            <div className="space-y-2">
+              <h2 className="text-xl font-medium font-inter text-black dark:text-white">{t("topbar.noNotificationsTitle")}</h2>
+              <p className="text-sm font-medium font-inter text-slate700 dark:text-slate200">
+                {t("topbar.noNotificationsBody")}
+              </p>
             </div>
-        }
+          </div>
+        ) : (
+          <div className="flex flex-1 flex-col gap-3 overflow-y-auto pr-1">
+            {notifications.map((notification) => {
+              const isRead = Boolean(notification.readAt);
+              const isBusy = busyNotificationId === notification.id;
 
-        </aside>
+              return (
+                <article
+                  key={notification.id}
+                  className={`flex items-start justify-between gap-3 rounded-[1.5rem] border px-4 py-4 transition-colors ${
+                    isRead
+                      ? "border-black/5 bg-[#F6F6F6] dark:border-white/10 dark:bg-black100"
+                      : "border-orange100/30 bg-orange100/10 dark:border-orange100/20 dark:bg-orange100/10"
+                  }`}
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelectNotification?.(notification)}
+                    className="min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex items-center gap-2">
+                      {!isRead ? <span className="h-2.5 w-2.5 rounded-full bg-orange100" aria-hidden="true" /> : null}
+                      <p className="truncate text-sm text-slate500 dark:text-slate200">
+                        {formatRelativeTime(notification.createdAt)}
+                      </p>
+                    </div>
+                    <h3 className="mt-2 text-base font-semibold font-inter text-black dark:text-white">{notification.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-slate700 dark:text-slate200">{notification.body}</p>
+                  </button>
+
+                  {!isRead ? (
+                    <button
+                      type="button"
+                      onClick={() => onMarkNotificationRead?.(notification.id)}
+                      disabled={isBusy}
+                      className="shrink-0 rounded-full border border-black/10 px-3 py-1.5 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-white"
+                    >
+                      {isBusy ? t("topbar.markingRead") : t("topbar.markRead")}
+                    </button>
+                  ) : null}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </aside>
     </section>
-
+  );
 }

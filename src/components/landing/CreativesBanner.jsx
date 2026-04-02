@@ -2,6 +2,9 @@ import { motion } from "motion/react"
 import { useLanguage } from "../../context/LanguageContext";
 import { fadeUp } from "../../utils/animation";
 
+const MotionParagraph = motion.p;
+const MotionImage = motion.img;
+
 export default function CreativesBanner({ onSignUp }) {
   const { t } = useLanguage();
 
@@ -27,12 +30,12 @@ export default function CreativesBanner({ onSignUp }) {
               <br />
               {t("landing.banner.titleLineTwo")}
             </h2>
-            <motion.p variants={fadeUp}
+            <MotionParagraph variants={fadeUp}
               className="text-base font-inter text-slate100 leading-relaxed max-w-sm"
               
             >
               {t("landing.banner.description")}
-            </motion.p>
+            </MotionParagraph>
             <button
               onClick={onSignUp}
               className="font-semibold text-base px-6 md:px-16 py-3.5 rounded-xl
@@ -44,7 +47,7 @@ export default function CreativesBanner({ onSignUp }) {
           </div>
 
           {/* Phone — always light since it's on yellow bg */}
-          <motion.img initial={{ opacity: 0, scale: 0.9 }}
+          <MotionImage initial={{ opacity: 0, scale: 0.9 }}
   whileInView={{ opacity: 1, scale: 1 }}
   animate={{ y: [0, -8, 0] }}
   transition={{

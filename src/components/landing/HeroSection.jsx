@@ -3,6 +3,10 @@ import { useLanguage } from "../../context/LanguageContext";
 import { motion, useMotionValue, useTransform } from "motion/react";
 import { fadeUp, staggerContainer } from "../../utils/animation";
 
+const MotionSection = motion.section;
+const MotionParagraph = motion.p;
+const MotionDiv = motion.div;
+
 
 function scrollToAbout() {
   var el = document.getElementById("about");
@@ -16,7 +20,7 @@ export default function HeroSection({ onSignUp }) {
 const smoothX = useTransform(x, [-20, 20], [-10, 10]);
 
   return (
-    <motion.section variants={staggerContainer}
+    <MotionSection variants={staggerContainer}
   initial="hidden"
   animate="show" className="flex flex-col items-start md:items-center text-center
                         px-6 py-12 md:py-20
@@ -32,7 +36,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
       
 
       {/* Headline */}
-      <motion.p variants={fadeUp}
+      <MotionParagraph variants={fadeUp}
       onMouseMove={(e) => {
         const moveX = (e.clientX / window.innerWidth - 0.5) * 20;
         x.set(moveX);
@@ -42,14 +46,14 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
                    leading-tight font-inter mb-1"
       >
         {t("landing.hero.headline")}
-      </motion.p>
-      <motion.p variants={fadeUp}
+      </MotionParagraph>
+      <MotionParagraph variants={fadeUp}
         className="font-extrabold text-slate100 dark:text-white
                    leading-none font-inter mb-5"
         style={{ fontSize: "clamp(48px, 10vw, 80px)" }}
       >
         DeyMake.
-      </motion.p>
+      </MotionParagraph>
 
       {/* Subtext */}
       <p
@@ -61,7 +65,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
       </p>
 
       {/* Buttons */}
-      <motion.div variants={fadeUp} className="flex justify-start md:justify-center gap-3 mb-12">
+      <MotionDiv variants={fadeUp} className="flex justify-start md:justify-center gap-3 mb-12">
         <button
           onClick={onSignUp}
           className="bg-orange100 font-inter hover:bg-[#e09510] text-slate100
@@ -83,15 +87,15 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
         >
           {t("landing.hero.learnMore")}
         </button>
-      </motion.div>
+      </MotionDiv>
 
       {/* Desktop floating cards */}
-      <motion.div
+      <MotionDiv
   animate={{ y: [0, -10, 0] }}
-  transition={{ duration: 4, repeat: Infinity }} className="md:hidden flex justify-center w-full"><img src={isDark ? "./home_dark_m.png" : "./home_m.png"} alt="" className="w-80" /></motion.div>
-      <motion.div
+  transition={{ duration: 4, repeat: Infinity }} className="md:hidden flex justify-center w-full"><img src={isDark ? "./home_dark_m.png" : "./home_m.png"} alt="" className="w-80" /></MotionDiv>
+      <MotionDiv
   animate={{ y: [0, -10, 0] }}
-  transition={{ duration: 4, repeat: Infinity }} className=" hidden md:block"><img src={isDark ? "./home_dark.png" : "./home.png"} alt="" /></motion.div>
-    </motion.section>
+  transition={{ duration: 4, repeat: Infinity }} className=" hidden md:block"><img src={isDark ? "./home_dark.png" : "./home.png"} alt="" /></MotionDiv>
+    </MotionSection>
   );
 }
