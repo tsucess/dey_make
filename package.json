@@ -12,6 +12,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "agora-rtc-sdk-ng": "^4.24.3",
     "hls.js": "^1.6.15",
     "laravel-echo": "^2.3.3",
     "motion": "^12.38.0",

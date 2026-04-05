@@ -1,14 +1,13 @@
+import AgoraRTC from "agora-rtc-sdk-ng";
 import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
-import MentionText from "../components/MentionText";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
-import { clearLiveCreationSession, getLiveCreationSession } from "../live/liveSessionStore";
-import { normalizeMentionHandle } from "../utils/mentions";
+import { clearLiveCreationSession } from "../live/liveSessionStore";
 import {
   buildShareUrl,
   buildVideoLink,
@@ -28,48 +27,61 @@ function stopMediaStream(stream) {
   stream?.getTracks?.().forEach((track) => track.stop());
 }
 
-const LIVE_SIGNAL_POLL_INTERVAL_MS = 1500;
-const LIVE_PEER_CONFIGURATION = {
-  iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
-};
 const LIVE_RECORDING_MIME_TYPES = [
   "video/webm;codecs=vp9,opus",
   "video/webm;codecs=vp8,opus",
   "video/webm",
 ];
 
-function clearLivePoll(ref) {
-  if (ref.current) {
-    window.clearInterval(ref.current);
-    ref.current = null;
-  }
+function closeAgoraTracks(tracks = []) {
+  tracks.forEach((track) => {
+    try {
+      track?.stop?.();
+      track?.close?.();
+    } catch {
+      // Ignore cleanup errors.
+    }
+  });
 }
 
-function closePeerConnection(connection) {
-  if (!connection) return;
+function buildMediaStreamFromAgoraTracks(tracks = []) {
+  if (typeof MediaStream === "undefined") return null;
 
-  try {
-    connection.onicecandidate = null;
-    connection.ontrack = null;
-    connection.onconnectionstatechange = null;
-    connection.close?.();
-  } catch {
-    // Ignore cleanup errors.
-  }
+  const mediaTracks = tracks
+    .map((track) => track?.getMediaStreamTrack?.())
+    .filter(Boolean);
+
+  return mediaTracks.length ? new MediaStream(mediaTracks) : null;
 }
 
-function serializeIceCandidate(candidate) {
-  if (!candidate) return null;
+function LiveStageTile({ stream, label, muted = false }) {
+  const playbackRef = useRef(null);
 
-  if (typeof candidate.toJSON === "function") {
-    return candidate.toJSON();
-  }
+  useEffect(() => {
+    if (!playbackRef.current) return undefined;
 
-  return {
-    candidate: candidate.candidate,
-    sdpMid: candidate.sdpMid ?? null,
-    sdpMLineIndex: candidate.sdpMLineIndex ?? null,
-  };
+    playbackRef.current.srcObject = stream || null;
+
+    return () => {
+      if (playbackRef.current) {
+        playbackRef.current.srcObject = null;
+      }
+    };
+  }, [stream]);
+
+  if (!stream) return null;
+
+  return (
+    <video
+      ref={playbackRef}
+      aria-label={label}
+      className="h-full w-full object-cover"
+      autoPlay
+      muted={muted}
+      playsInline
+      controls={!muted}
+    />
+  );
 }
 
 function createLiveRecorder(stream) {
@@ -163,15 +175,6 @@ async function uploadSelectedFile(file, type, callbacks = {}) {
   return uploadResponse?.data?.upload || null;
 }
 
-function registerMentionProfile(lookup, profile) {
-  const handle = normalizeMentionHandle(profile?.username);
-  const id = profile?.id;
-
-  if (!handle || !id || lookup.has(handle)) return;
-
-  lookup.set(handle, `/users/${id}`);
-}
-
 function ActionButton({ children, active, disabled, onClick }) {
   return (
     <button
@@ -222,7 +225,6 @@ function CommentCard({
   onSubmitReply,
   onToggleReplies,
   onToggleReaction,
-  resolveMentionHref,
   compact = false,
 }) {
   const { t } = useLanguage();
@@ -236,9 +238,7 @@ function CommentCard({
             <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
-          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>
-            <MentionText text={comment.body || comment.text} resolveMentionHref={resolveMentionHref} />
-          </p>
+          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>{comment.body || comment.text}</p>
 
           <div className={`flex flex-wrap items-center ${compact ? "gap-4" : "gap-3"} text-xs text-slate500 dark:text-slate200`}>
             <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={comment.currentUserState?.liked ? "text-orange100" : ""}>
@@ -267,9 +267,7 @@ function CommentCard({
                       <p className="text-xs font-medium text-black dark:text-white">{getProfileName(reply.user)}</p>
                       <span className="text-[11px] text-slate500 dark:text-slate200">{formatRelativeTime(reply.createdAt)}</span>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">
-                      <MentionText text={reply.body || reply.text} resolveMentionHref={resolveMentionHref} />
-                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">{reply.body || reply.text}</p>
                   </div>
                 </div>
               ))}
@@ -306,14 +304,8 @@ export default function VideoDetails({ mode = "video" }) {
   const isLiveRoom = mode === "live";
   const viewRecordedRef = useRef(new Set());
   const recordedPlaybackRef = useRef(null);
-  const livePreviewRef = useRef(null);
-  const livePlaybackRef = useRef(null);
-  const viewerPeerConnectionRef = useRef(null);
-  const viewerSignalCursorRef = useRef(0);
-  const viewerPollRef = useRef(null);
-  const broadcasterSignalCursorRef = useRef(0);
-  const broadcasterPollRef = useRef(null);
-  const broadcasterConnectionsRef = useRef(new Map());
+  const agoraClientRef = useRef(null);
+  const agoraLocalTracksRef = useRef([]);
   const liveRecorderRef = useRef(null);
   const liveRecordingChunksRef = useRef([]);
   const liveRecordingStopPromiseRef = useRef(null);
@@ -332,30 +324,20 @@ export default function VideoDetails({ mode = "video" }) {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [localLiveStream, setLocalLiveStream] = useState(null);
-  const [remoteLiveStream, setRemoteLiveStream] = useState(null);
+  const [remoteLiveParticipants, setRemoteLiveParticipants] = useState([]);
   const [livePreviewStatus, setLivePreviewStatus] = useState("idle");
   const [liveConnectionStatus, setLiveConnectionStatus] = useState("idle");
+  const [liveStageRole, setLiveStageRole] = useState("audience");
   const creatorId = video?.author?.id || video?.creator?.id;
   const isVideoCurrentlyLive = isActiveLiveVideo(video);
   const canSubscribeToAuthor = Boolean(creatorId) && user?.id !== creatorId;
   const canManageLive = isLiveRoom && Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
   const processingStatus = getVideoProcessingStatus(video);
   const showProcessingBadge = processingStatus !== "completed";
-  const shouldUseLocalLivePreview = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video");
-  const shouldReceiveRemoteLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && !canManageLive && video?.type === "video" && isAuthenticated);
+  const resolvedLiveStageRole = canManageLive ? "host" : liveStageRole;
+  const shouldUseLocalLivePreview = Boolean(isLiveRoom && resolvedLiveStageRole === "host" && video?.type === "video" && isAuthenticated);
+  const shouldReceiveRemoteLiveStream = Boolean(isLiveRoom && video?.type === "video" && isAuthenticated && (isVideoCurrentlyLive || canManageLive));
   const shouldBroadcastLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
-
-  useEffect(() => {
-    if (livePreviewRef.current) {
-      livePreviewRef.current.srcObject = localLiveStream || null;
-    }
-  }, [localLiveStream]);
-
-  useEffect(() => {
-    if (livePlaybackRef.current) {
-      livePlaybackRef.current.srcObject = remoteLiveStream || null;
-    }
-  }, [remoteLiveStream]);
 
   useEffect(() => {
     const playbackElement = recordedPlaybackRef.current;
@@ -434,68 +416,12 @@ export default function VideoDetails({ mode = "video" }) {
   }, [id]);
 
   useEffect(() => {
-    let ignore = false;
-
-    if (!shouldUseLocalLivePreview) {
-      setLocalLiveStream((current) => {
-        stopMediaStream(current);
-        return null;
-      });
-      setLivePreviewStatus("idle");
-      return;
+    if (canManageLive) {
+      setLiveStageRole("host");
+    } else if (!isVideoCurrentlyLive) {
+      setLiveStageRole("audience");
     }
-
-    const liveCreationSession = getLiveCreationSession(video?.id);
-
-    if (liveCreationSession?.stream) {
-      setLocalLiveStream((current) => current || liveCreationSession.stream);
-      setLivePreviewStatus("ready");
-      return undefined;
-    }
-
-    if (localLiveStream) {
-      setLivePreviewStatus("ready");
-      return undefined;
-    }
-
-    async function connectCamera() {
-      if (!navigator?.mediaDevices?.getUserMedia) {
-        if (!ignore) setLivePreviewStatus("error");
-        return;
-      }
-
-      if (!ignore) setLivePreviewStatus("requesting");
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-
-        if (ignore) {
-          stopMediaStream(stream);
-          return;
-        }
-
-        setLocalLiveStream((current) => {
-          stopMediaStream(current);
-          return stream;
-        });
-        setLivePreviewStatus("ready");
-      } catch {
-        if (!ignore) {
-          setLocalLiveStream((current) => {
-            stopMediaStream(current);
-            return null;
-          });
-          setLivePreviewStatus("error");
-        }
-      }
-    }
-
-    connectCamera();
-
-    return () => {
-      ignore = true;
-    };
-  }, [localLiveStream, shouldUseLocalLivePreview, t, video?.id]);
+  }, [canManageLive, isVideoCurrentlyLive, video?.id]);
 
   useEffect(() => {
     if (!shouldBroadcastLiveStream || liveRecorderRef.current) {
@@ -605,293 +531,138 @@ export default function VideoDetails({ mode = "video" }) {
 
   useEffect(() => {
     let ignore = false;
-    clearLivePoll(viewerPollRef);
-    viewerSignalCursorRef.current = 0;
-    setRemoteLiveStream(null);
-    closePeerConnection(viewerPeerConnectionRef.current);
-    viewerPeerConnectionRef.current = null;
+
+    async function cleanupAgoraSession() {
+      closeAgoraTracks(agoraLocalTracksRef.current);
+      agoraLocalTracksRef.current = [];
+
+      const currentClient = agoraClientRef.current;
+      agoraClientRef.current = null;
+
+      if (currentClient) {
+        try {
+          currentClient.removeAllListeners?.();
+          await currentClient.leave();
+        } catch {
+          // Ignore cleanup failures.
+        }
+      }
+    }
+
+    setRemoteLiveParticipants([]);
 
     if (!shouldReceiveRemoteLiveStream || !video?.id) {
       setLiveConnectionStatus("idle");
-      return undefined;
-    }
-
-    if (typeof RTCPeerConnection === "undefined") {
-      setLiveConnectionStatus("error");
-      return undefined;
-    }
-
-    const peerConnection = new RTCPeerConnection(LIVE_PEER_CONFIGURATION);
-    const pendingCandidates = [];
-    const fallbackRemoteStream = typeof MediaStream === "undefined" ? null : new MediaStream();
-
-    viewerPeerConnectionRef.current = peerConnection;
-    setLiveConnectionStatus("connecting");
-
-    if (typeof peerConnection.addTransceiver === "function") {
-      try {
-        peerConnection.addTransceiver("video", { direction: "recvonly" });
-      } catch {
-        // Ignore unsupported transceiver directions.
-      }
-
-      try {
-        peerConnection.addTransceiver("audio", { direction: "recvonly" });
-      } catch {
-        // Ignore unsupported transceiver directions.
-      }
-    }
-
-    peerConnection.ontrack = (event) => {
-      if (ignore) return;
-
-      const nextStream = event.streams?.[0];
-
-      if (nextStream) {
-        setRemoteLiveStream(nextStream);
-        setLiveConnectionStatus("ready");
-        return;
-      }
-
-      if (fallbackRemoteStream && event.track) {
-        fallbackRemoteStream.addTrack(event.track);
-        setRemoteLiveStream(fallbackRemoteStream);
-        setLiveConnectionStatus("ready");
-      }
-    };
-
-    peerConnection.onicecandidate = (event) => {
-      if (!event.candidate) return;
-
-      api.sendLiveSignal(video.id, {
-        type: "candidate",
-        candidate: serializeIceCandidate(event.candidate),
-      }).catch(() => {});
-    };
-
-    peerConnection.onconnectionstatechange = () => {
-      if (ignore) return;
-
-      if (peerConnection.connectionState === "connected") {
-        setLiveConnectionStatus("ready");
-      } else if (["failed", "disconnected"].includes(peerConnection.connectionState)) {
-        setLiveConnectionStatus("error");
-      }
-    };
-
-    async function flushPendingCandidates() {
-      while (pendingCandidates.length) {
-        const candidate = pendingCandidates.shift();
-
-        try {
-          await peerConnection.addIceCandidate(candidate);
-        } catch {
-          // Ignore individual ICE candidate failures.
-        }
-      }
-    }
-
-    async function pollSignals() {
-      try {
-        const response = await api.getLiveSignals(video.id, { after: viewerSignalCursorRef.current });
-        if (ignore) return;
-
-        const signals = response?.data?.signals || [];
-        viewerSignalCursorRef.current = response?.data?.latestSignalId ?? viewerSignalCursorRef.current;
-
-        for (const signal of signals) {
-          if (signal.type === "answer" && signal.payload?.sdp) {
-            await peerConnection.setRemoteDescription({
-              type: "answer",
-              sdp: signal.payload.sdp,
-            });
-            await flushPendingCandidates();
-          }
-
-          if (signal.type === "candidate" && signal.payload?.candidate) {
-            if (peerConnection.remoteDescription?.type) {
-              await peerConnection.addIceCandidate(signal.payload.candidate);
-            } else {
-              pendingCandidates.push(signal.payload.candidate);
-            }
-          }
-        }
-      } catch {
-        if (!ignore) setLiveConnectionStatus("error");
-      }
-    }
-
-    async function connectToLive() {
-      try {
-        const offer = await peerConnection.createOffer();
-        if (ignore) return;
-
-        await peerConnection.setLocalDescription(offer);
-        await api.sendLiveSignal(video.id, {
-          type: "offer",
-          sdp: offer?.sdp || peerConnection.localDescription?.sdp || "",
-        });
-        if (ignore) return;
-
-        await pollSignals();
-        if (ignore) return;
-
-        viewerPollRef.current = window.setInterval(pollSignals, LIVE_SIGNAL_POLL_INTERVAL_MS);
-      } catch {
-        if (!ignore) setLiveConnectionStatus("error");
-      }
-    }
-
-    connectToLive();
-
-    return () => {
-      ignore = true;
-      clearLivePoll(viewerPollRef);
-      viewerSignalCursorRef.current = 0;
-      setRemoteLiveStream(null);
-      closePeerConnection(peerConnection);
-
-      if (viewerPeerConnectionRef.current === peerConnection) {
-        viewerPeerConnectionRef.current = null;
-      }
-    };
-  }, [shouldReceiveRemoteLiveStream, video?.id]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    function closeBroadcasterConnections() {
-      broadcasterConnectionsRef.current.forEach((entry) => closePeerConnection(entry.peerConnection));
-      broadcasterConnectionsRef.current.clear();
-    }
-
-    clearLivePoll(broadcasterPollRef);
-    broadcasterSignalCursorRef.current = 0;
-    closeBroadcasterConnections();
-
-    if (!shouldBroadcastLiveStream || !video?.id) {
-      return undefined;
-    }
-
-    if (typeof RTCPeerConnection === "undefined") {
-      return undefined;
-    }
-
-    function createBroadcasterConnection(recipientId) {
-      const peerConnection = new RTCPeerConnection(LIVE_PEER_CONFIGURATION);
-      const entry = { peerConnection, pendingCandidates: [] };
-
-      broadcasterConnectionsRef.current.set(recipientId, entry);
-
-      localLiveStream.getTracks().forEach((track) => {
-        try {
-          peerConnection.addTrack(track, localLiveStream);
-        } catch {
-          // Ignore duplicate track attachment failures.
-        }
+      setLivePreviewStatus("idle");
+      setLocalLiveStream((current) => {
+        stopMediaStream(current);
+        return null;
       });
-
-      peerConnection.onicecandidate = (event) => {
-        if (!event.candidate) return;
-
-        api.sendLiveSignal(video.id, {
-          recipientId,
-          type: "candidate",
-          candidate: serializeIceCandidate(event.candidate),
-        }).catch(() => {});
-      };
-
-      peerConnection.onconnectionstatechange = () => {
-        if (["closed", "failed", "disconnected"].includes(peerConnection.connectionState)) {
-          closePeerConnection(peerConnection);
-          broadcasterConnectionsRef.current.delete(recipientId);
-        }
-      };
-
-      return entry;
+      cleanupAgoraSession();
+      return undefined;
     }
 
-    function getOrCreateBroadcasterConnection(recipientId) {
-      return broadcasterConnectionsRef.current.get(recipientId) || createBroadcasterConnection(recipientId);
-    }
+    async function connectToAgora() {
+      await cleanupAgoraSession();
 
-    async function flushPendingCandidates(entry) {
-      while (entry.pendingCandidates.length) {
-        const candidate = entry.pendingCandidates.shift();
+      if (ignore) return;
 
-        try {
-          await entry.peerConnection.addIceCandidate(candidate);
-        } catch {
-          // Ignore individual ICE candidate failures.
-        }
-      }
-    }
-
-    async function handleBroadcasterSignal(signal) {
-      const senderId = signal.senderId;
-      if (!senderId) return;
-
-      if (signal.type === "offer" && signal.payload?.sdp) {
-        const existing = broadcasterConnectionsRef.current.get(senderId);
-
-        if (existing?.peerConnection.remoteDescription?.type || existing?.peerConnection.localDescription?.type) {
-          closePeerConnection(existing.peerConnection);
-          broadcasterConnectionsRef.current.delete(senderId);
-        }
-
-        const entry = getOrCreateBroadcasterConnection(senderId);
-        await entry.peerConnection.setRemoteDescription({
-          type: "offer",
-          sdp: signal.payload.sdp,
-        });
-
-        const answer = await entry.peerConnection.createAnswer();
-        await entry.peerConnection.setLocalDescription(answer);
-        await api.sendLiveSignal(video.id, {
-          recipientId: senderId,
-          type: "answer",
-          sdp: answer?.sdp || entry.peerConnection.localDescription?.sdp || "",
-        });
-        await flushPendingCandidates(entry);
+      if (resolvedLiveStageRole === "host") {
+        setLivePreviewStatus("requesting");
+      } else {
+        setLivePreviewStatus("idle");
       }
 
-      if (signal.type === "candidate" && signal.payload?.candidate) {
-        const entry = getOrCreateBroadcasterConnection(senderId);
+      setLiveConnectionStatus(isVideoCurrentlyLive ? "connecting" : "idle");
 
-        if (entry.peerConnection.remoteDescription?.type) {
-          await entry.peerConnection.addIceCandidate(signal.payload.candidate);
-        } else {
-          entry.pendingCandidates.push(signal.payload.candidate);
-        }
-      }
-    }
-
-    async function pollSignals() {
       try {
-        const response = await api.getLiveSignals(video.id, { after: broadcasterSignalCursorRef.current });
+        const response = await api.getLiveAgoraSession(video.id, { role: resolvedLiveStageRole });
         if (ignore) return;
 
-        const signals = response?.data?.signals || [];
-        broadcasterSignalCursorRef.current = response?.data?.latestSignalId ?? broadcasterSignalCursorRef.current;
+        const session = response?.data?.session || {};
+        const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+        agoraClientRef.current = client;
 
-        for (const signal of signals) {
-          await handleBroadcasterSignal(signal);
+        const syncRemoteParticipants = () => {
+          if (ignore) return;
+
+          const nextParticipants = (client.remoteUsers || [])
+            .map((remoteUser, index) => ({
+              uid: `${remoteUser.uid || index}`,
+              stream: buildMediaStreamFromAgoraTracks([remoteUser.videoTrack, remoteUser.audioTrack]),
+            }))
+            .filter((entry) => entry.stream);
+
+          setRemoteLiveParticipants(nextParticipants);
+
+          if (nextParticipants.length) {
+            setLiveConnectionStatus("ready");
+          } else if (isVideoCurrentlyLive) {
+            setLiveConnectionStatus("connecting");
+          } else {
+            setLiveConnectionStatus("idle");
+          }
+        };
+
+        client.on("user-published", async (remoteUser, mediaType) => {
+          await client.subscribe(remoteUser, mediaType);
+          syncRemoteParticipants();
+        });
+        client.on("user-unpublished", syncRemoteParticipants);
+        client.on("user-left", syncRemoteParticipants);
+
+        await client.join(session.appId, session.channelName, session.token, session.uid);
+        await client.setClientRole(resolvedLiveStageRole === "host" ? "host" : "audience");
+
+        if (resolvedLiveStageRole === "host") {
+          const tracks = await AgoraRTC.createMicrophoneAndCameraTracks();
+
+          if (ignore) {
+            closeAgoraTracks(tracks);
+            await client.leave();
+            return;
+          }
+
+          agoraLocalTracksRef.current = tracks;
+          await client.publish(tracks);
+
+          setLocalLiveStream((current) => {
+            stopMediaStream(current);
+            return buildMediaStreamFromAgoraTracks(tracks);
+          });
+          setLivePreviewStatus("ready");
+        } else {
+          setLocalLiveStream((current) => {
+            stopMediaStream(current);
+            return null;
+          });
         }
-      } catch {
-        // Ignore polling errors and retry on the next poll.
+
+        syncRemoteParticipants();
+      } catch (nextError) {
+        if (ignore) return;
+
+        setRemoteLiveParticipants([]);
+        setLocalLiveStream((current) => {
+          stopMediaStream(current);
+          return null;
+        });
+        setLiveConnectionStatus("error");
+        if (resolvedLiveStageRole === "host") {
+          setLivePreviewStatus("error");
+        }
+        setError((current) => current || firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
       }
     }
 
-    pollSignals();
-    broadcasterPollRef.current = window.setInterval(pollSignals, LIVE_SIGNAL_POLL_INTERVAL_MS);
+    connectToAgora();
 
     return () => {
       ignore = true;
-      clearLivePoll(broadcasterPollRef);
-      broadcasterSignalCursorRef.current = 0;
-      closeBroadcasterConnections();
+      setRemoteLiveParticipants([]);
+      cleanupAgoraSession();
     };
-  }, [localLiveStream, shouldBroadcastLiveStream, video?.id]);
+  }, [isVideoCurrentlyLive, resolvedLiveStageRole, shouldReceiveRemoteLiveStream, t, video?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -1240,7 +1011,16 @@ export default function VideoDetails({ mode = "video" }) {
 
   const creatorProfile = video.author || video.creator;
   const isLiveWatchLayout = Boolean(isLiveRoom && isVideoCurrentlyLive);
-  const showRemoteLivePlayer = Boolean(shouldReceiveRemoteLiveStream && remoteLiveStream);
+  const liveStageTiles = [
+    ...(shouldUseLocalLivePreview && localLiveStream ? [{ key: `local-${user?.id || "host"}`, stream: localLiveStream, muted: true, label: t("videoDetails.liveCameraPreview") }] : []),
+    ...remoteLiveParticipants.map((participant, index) => ({
+      key: `remote-${participant.uid}`,
+      stream: participant.stream,
+      muted: false,
+      label: index === 0 ? t("videoDetails.liveStreamPlayback") : `${t("videoDetails.liveStreamPlayback")} ${index + 1}`,
+    })),
+  ];
+  const shouldShowLiveStage = liveStageTiles.length > 0;
   const livePlaceholderMessage = shouldUseLocalLivePreview && livePreviewStatus === "requesting"
     ? t("videoDetails.loadingLivePreview")
     : shouldUseLocalLivePreview && livePreviewStatus === "error"
@@ -1273,6 +1053,15 @@ export default function VideoDetails({ mode = "video" }) {
           className="rounded-full bg-orange100 px-6 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
         >
           {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("profile.subscribe")}
+        </button>
+      ) : null}
+      {isLiveRoom && isVideoCurrentlyLive && isAuthenticated && !canManageLive ? (
+        <button
+          type="button"
+          onClick={() => setLiveStageRole((current) => (current === "host" ? "audience" : "host"))}
+          className={`rounded-full px-6 py-3 text-sm font-semibold transition-colors ${resolvedLiveStageRole === "host" ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}
+        >
+          {resolvedLiveStageRole === "host" ? t("videoDetails.leaveStage") : t("videoDetails.joinStage")}
         </button>
       ) : null}
     </>
@@ -1319,12 +1108,6 @@ export default function VideoDetails({ mode = "video" }) {
   const creatorBio = creatorProfile?.bio?.trim() || t("profile.emptyBio");
   const videoDescription = video.description || video.caption || t("videoDetails.noDescription");
   const hasTopStatusPills = showProcessingBadge || isVideoCurrentlyLive;
-  const mentionHrefByHandle = new Map();
-  registerMentionProfile(mentionHrefByHandle, video.author);
-  registerMentionProfile(mentionHrefByHandle, video.creator);
-  comments.forEach((comment) => registerMentionProfile(mentionHrefByHandle, comment.user));
-  Object.values(repliesByComment).flat().forEach((reply) => registerMentionProfile(mentionHrefByHandle, reply.user));
-  const resolveMentionHref = (handle) => mentionHrefByHandle.get(normalizeMentionHandle(handle)) || null;
   const recordedCreatorIdentity = creatorId ? (
     <Link to={`/users/${creatorId}`} className="flex items-center gap-3 rounded-2xl transition-opacity hover:opacity-80">
       <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
@@ -1380,7 +1163,6 @@ export default function VideoDetails({ mode = "video" }) {
               onSubmitReply={handleSubmitReply}
               onToggleReplies={handleToggleReplies}
               onToggleReaction={handleCommentReaction}
-              resolveMentionHref={resolveMentionHref}
             />
           ))
         ) : (
@@ -1411,7 +1193,6 @@ export default function VideoDetails({ mode = "video" }) {
                 onSubmitReply={handleSubmitReply}
                 onToggleReplies={handleToggleReplies}
                 onToggleReaction={handleCommentReaction}
-                resolveMentionHref={resolveMentionHref}
                 compact
               />
             ))
@@ -1471,24 +1252,19 @@ export default function VideoDetails({ mode = "video" }) {
             <section className={isLiveWatchLayout ? "overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
               <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-[2rem]"}`}>
                 {video.type === "video" ? (
-                  shouldUseLocalLivePreview && localLiveStream ? (
-                    <video
-                      ref={livePreviewRef}
-                      aria-label={t("videoDetails.liveCameraPreview")}
-                      className="h-full w-full object-cover"
-                      autoPlay
-                      muted
-                      playsInline
-                    />
-                  ) : showRemoteLivePlayer ? (
-                    <video
-                      ref={livePlaybackRef}
-                      aria-label={t("videoDetails.liveStreamPlayback")}
-                      className="h-full w-full object-cover"
-                      autoPlay
-                      playsInline
-                      controls
-                    />
+                  shouldShowLiveStage ? (
+                    <div className={`grid h-full w-full ${liveStageTiles.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                      {liveStageTiles.map((tile) => (
+                        <div key={tile.key} className="relative min-h-0">
+                          <LiveStageTile stream={tile.stream} label={tile.label} muted={tile.muted} />
+                          {tile.muted ? (
+                            <span className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">
+                              {t("videoDetails.onStage")}
+                            </span>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
                   ) : isVideoCurrentlyLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !video.mediaUrl) ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-white">
                       <div className="max-w-lg">
@@ -1542,9 +1318,7 @@ export default function VideoDetails({ mode = "video" }) {
                       {actionButtons}
                     </div>
 
-                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
-                      <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
-                    </p>
+                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
                   </>
                 )}
               </div>
@@ -1573,9 +1347,7 @@ export default function VideoDetails({ mode = "video" }) {
                   {actionButtons}
                 </div>
 
-                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
-                  <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
-                </p>
+                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
               </section>
             ) : null}
 

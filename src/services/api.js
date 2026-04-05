@@ -302,6 +302,7 @@ export const api = {
   createVideo: (payload) => request("/videos", { method: "POST", body: payload }),
   updateVideo: (id, payload) => request(`/videos/${id}`, { method: "PATCH", body: payload }),
   publishVideo: (id) => request(`/videos/${id}/publish`, { method: "POST" }),
+  getLiveAgoraSession: (id, options = {}) => request(`/videos/${id}/live/session${buildQueryString({ role: options.role })}`),
   startVideoLive: (id) => request(`/videos/${id}/live/start`, { method: "POST" }),
   stopVideoLive: (id) => request(`/videos/${id}/live/stop`, { method: "POST" }),
   sendLiveSignal: (id, payload) => request(`/videos/${id}/live/signals`, { method: "POST", body: payload }),
