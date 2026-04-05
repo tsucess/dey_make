@@ -409,6 +409,30 @@ describe('VideoDetails', () => {
     expect(screen.getByRole('button', { name: 'Suscrito' })).toBeInTheDocument();
   });
 
+  it('links comment authors to their profile pages', async () => {
+    const comment = buildComment();
+
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ commentsCount: 1 }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [comment] } });
+    api.recordView.mockResolvedValue({});
+
+    renderPage();
+
+    const commentBody = await screen.findByText('Great drop');
+    const commentCard = commentBody.closest('article');
+
+    expect(commentCard).not.toBeNull();
+    const authorLinks = within(commentCard).getAllByRole('link', { name: /Creator Uno/i });
+
+    expect(authorLinks).toHaveLength(2);
+    authorLinks.forEach((link) => expect(link).toHaveAttribute('href', '/users/5'));
+  });
+
   it('renders clickable mention links in video descriptions and comments', async () => {
     api.getVideo.mockResolvedValue({
       data: {

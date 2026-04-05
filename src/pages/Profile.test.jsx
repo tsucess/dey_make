@@ -60,6 +60,7 @@ function renderPage(initialEntry = '/profile') {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/subscribers" element={<div>Subscribers page</div>} />
         <Route path="/users/:id" element={<Profile />} />
         <Route path="/login" element={<div>Login page</div>} />
       </Routes>
@@ -135,6 +136,31 @@ describe('Profile', () => {
     expect(screen.getByText('Ada Byron')).toBeInTheDocument();
     expect(screen.getByText('@ada.byron')).toBeInTheDocument();
     expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron', username: 'ada.byron' }));
+  });
+
+  it('opens the subscribers page from the authenticated profile', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({ data: { videos: [] } });
+
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByRole('button', { name: /subscribers/i }));
+
+    expect(await screen.findByText('Subscribers page')).toBeInTheDocument();
   });
 
   it('loads a public creator profile and toggles subscription state', async () => {

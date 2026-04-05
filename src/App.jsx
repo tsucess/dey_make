@@ -14,6 +14,7 @@ import CreateUpload from "./pages/CreateUpload";
 import Messages from "./pages/Messages";
 import OAuthCallback from "./pages/OAuthCallback";
 import Profile from "./pages/Profile";
+import ProfileSubscribers from "./pages/ProfileSubscribers";
 import SearchResults from "./pages/SearchResults";
 import Settings from "./pages/Settings";
 import VideoDetails from "./pages/VideoDetails";
@@ -113,6 +114,7 @@ export default function App() {
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/subscribers" element={<ProfileSubscribers />} />
             <Route path="/search" element={<SearchResults />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

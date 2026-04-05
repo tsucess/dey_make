@@ -568,6 +568,13 @@ export default function Profile() {
                       </button>
                       <button
                         type="button"
+                        onClick={() => navigate("/profile/subscribers")}
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                      >
+                        {t("content.subscribers")}
+                      </button>
+                      <button
+                        type="button"
                         onClick={handleShareProfile}
                         className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >

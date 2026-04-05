@@ -310,6 +310,7 @@ export const api = {
   getProfile: () => request("/me/profile"),
   updateProfile: (payload) => request("/me/profile", { method: "PATCH", body: payload }),
   getProfileFeed: (feed) => request(`/me/${feed}`),
+  getProfileSubscribers: () => request("/me/subscribers"),
   getUser: (id) => request(`/users/${id}`),
   getUserPosts: (id) => request(`/users/${id}/posts`),
   searchUsers: (query) => request(`/users/search${buildQueryString({ q: query })}`),
