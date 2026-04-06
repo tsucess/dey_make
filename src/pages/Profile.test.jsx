@@ -61,6 +61,8 @@ function renderPage(initialEntry = '/profile') {
       <Routes>
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/subscribers" element={<div>Subscribers page</div>} />
+        <Route path="/analytics/live" element={<div>Live dashboard page</div>} />
+        <Route path="/video/:id/analytics" element={<div>Analytics page</div>} />
         <Route path="/users/:id" element={<Profile />} />
         <Route path="/login" element={<div>Login page</div>} />
       </Routes>
@@ -92,7 +94,7 @@ describe('Profile', () => {
     });
     api.getProfileFeed.mockResolvedValue({
       data: {
-        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120 }],
+        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120, likes: 9, commentsCount: 4, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } }],
       },
     });
     api.updateProfile.mockResolvedValue({
@@ -113,6 +115,10 @@ describe('Profile', () => {
     await screen.findByText('Ada Lovelace');
     expect(screen.getByText('@ada')).toBeInTheDocument();
     await screen.findByText('Analytical Engine demo');
+    expect(screen.getByLabelText('9 Like')).toBeInTheDocument();
+    expect(screen.getByLabelText('4 Comments')).toBeInTheDocument();
+    expect(screen.getByLabelText('17 peak viewers')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View analytics' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Edit profile/i }));
     await user.clear(screen.getByPlaceholderText('Full name'));
@@ -138,6 +144,35 @@ describe('Profile', () => {
     expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron', username: 'ada.byron' }));
   });
 
+  it('opens post-live analytics from the authenticated creator profile card', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({
+      data: {
+        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120, likes: 9, commentsCount: 4, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } }],
+      },
+    });
+
+    renderPage();
+
+    await screen.findByText('Analytical Engine demo');
+    await user.click(screen.getByRole('button', { name: 'View analytics' }));
+
+    expect(await screen.findByText('Analytics page')).toBeInTheDocument();
+  });
+
   it('opens the subscribers page from the authenticated profile', async () => {
     const user = userEvent.setup();
 
@@ -161,6 +196,31 @@ describe('Profile', () => {
     await user.click(screen.getByRole('button', { name: /subscribers/i }));
 
     expect(await screen.findByText('Subscribers page')).toBeInTheDocument();
+  });
+
+  it('opens the live dashboard from the authenticated profile', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({ data: { videos: [] } });
+
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByRole('button', { name: 'Live dashboard' }));
+
+    expect(await screen.findByText('Live dashboard page')).toBeInTheDocument();
   });
 
   it('loads a public creator profile and toggles subscription state', async () => {

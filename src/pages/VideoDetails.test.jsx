@@ -14,8 +14,8 @@ const authState = {
   user: { id: 99, fullName: 'Viewer Example', avatarUrl: '' },
 };
 
-vi.mock('hls.js', () => ({
-  default: class MockHls {
+vi.mock('../utils/loadHls', () => ({
+  loadHls: vi.fn(async () => class MockHls {
     static Events = { ERROR: hlsMockState.errorEvent };
 
     static isSupported() {
@@ -32,7 +32,23 @@ vi.mock('hls.js', () => ({
       this.destroy = vi.fn();
       hlsMockState.lastInstance = this;
     }
-  },
+  }),
+}));
+
+vi.mock('../utils/loadAgoraRtc', () => ({
+  loadAgoraRtc: vi.fn(async () => ({
+    createClient: vi.fn(() => ({
+      remoteUsers: [],
+      on: vi.fn(),
+      join: vi.fn().mockResolvedValue('joined'),
+      setClientRole: vi.fn().mockResolvedValue(undefined),
+      publish: vi.fn().mockResolvedValue(undefined),
+      subscribe: vi.fn().mockResolvedValue(undefined),
+      leave: vi.fn().mockResolvedValue(undefined),
+      removeAllListeners: vi.fn(),
+    })),
+    createMicrophoneAndCameraTracks: vi.fn(async () => []),
+  })),
 }));
 
 vi.mock('../context/LanguageContext', async () => {
@@ -234,6 +250,7 @@ function renderPage(initialEntry = '/video/10') {
       <Routes>
         <Route path="/video/:id" element={<VideoDetails />} />
         <Route path="/live/:id" element={<LiveRoom />} />
+        <Route path="/video/:id/analytics" element={<div>Analytics page</div>} />
         <Route path="/create" element={<div>Draft editor</div>} />
       </Routes>
     </MemoryRouter>,
@@ -307,6 +324,27 @@ describe('VideoDetails', () => {
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('¡Dile al creador lo que piensas!')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay comentarios. Empieza la conversación.')).toBeInTheDocument();
+  });
+
+  it('shows a view analytics CTA for the creator on their ended live video page', async () => {
+    const user = userEvent.setup();
+    authState.user = { id: 5, fullName: 'Creator Uno', avatarUrl: '' };
+
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 47 } }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    renderPage();
+
+    await screen.findByRole('heading', { name: 'Alpha Session' });
+    await user.click(screen.getByRole('button', { name: 'Ver analíticas' }));
+
+    expect(await screen.findByText('Analytics page')).toBeInTheDocument();
   });
 
   it('uses hls.js for recorded videos when a Cloudinary streamUrl is available', async () => {

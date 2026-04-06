@@ -1,4 +1,3 @@
-import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
@@ -7,6 +6,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { clearLiveCreationSession, getLiveCreationSession } from "../live/liveSessionStore";
+import { loadHls } from "../utils/loadHls";
 import {
   buildShareUrl,
   buildVideoLink,
@@ -214,27 +214,14 @@ function CommentCard({
   compact = false,
 }) {
   const { t } = useLanguage();
-  const commentAuthorId = comment.user?.id;
 
   return (
     <article className={compact ? "border-b border-black/10 pb-5 last:border-b-0 dark:border-white/10" : "rounded-3xl bg-white300 p-4 dark:bg-black100"}>
       <div className="flex gap-3">
-        {commentAuthorId ? (
-          <Link to={`/users/${commentAuthorId}`} className="shrink-0 rounded-full transition-opacity hover:opacity-80">
-            <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
-          </Link>
-        ) : (
-          <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
-        )}
+        <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            {commentAuthorId ? (
-              <Link to={`/users/${commentAuthorId}`} className="text-sm font-medium text-black transition-opacity hover:opacity-80 dark:text-white">
-                {getProfileName(comment.user)}
-              </Link>
-            ) : (
-              <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
-            )}
+            <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
           <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>{comment.body || comment.text}</p>
@@ -260,22 +247,10 @@ function CommentCard({
               {loadingReplies ? <p className="text-xs text-slate500 dark:text-slate200">{t("videoDetails.loadingReplies")}</p> : null}
               {replies.map((reply) => (
                 <div key={reply.id} className="flex gap-3">
-                  {reply.user?.id ? (
-                    <Link to={`/users/${reply.user.id}`} className="shrink-0 rounded-full transition-opacity hover:opacity-80">
-                      <img src={getProfileAvatar(reply.user)} alt={getProfileName(reply.user)} className="h-9 w-9 rounded-full object-cover" />
-                    </Link>
-                  ) : (
-                    <img src={getProfileAvatar(reply.user)} alt={getProfileName(reply.user)} className="h-9 w-9 rounded-full object-cover" />
-                  )}
+                  <img src={getProfileAvatar(reply.user)} alt={getProfileName(reply.user)} className="h-9 w-9 rounded-full object-cover" />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      {reply.user?.id ? (
-                        <Link to={`/users/${reply.user.id}`} className="text-xs font-medium text-black transition-opacity hover:opacity-80 dark:text-white">
-                          {getProfileName(reply.user)}
-                        </Link>
-                      ) : (
-                        <p className="text-xs font-medium text-black dark:text-white">{getProfileName(reply.user)}</p>
-                      )}
+                      <p className="text-xs font-medium text-black dark:text-white">{getProfileName(reply.user)}</p>
                       <span className="text-[11px] text-slate500 dark:text-slate200">{formatRelativeTime(reply.createdAt)}</span>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">{reply.body || reply.text}</p>
@@ -376,6 +351,7 @@ export default function VideoDetails({ mode = "video" }) {
     const fallbackUrl = video?.mediaUrl || "";
     const streamUrl = video?.streamUrl || "";
     let hls = null;
+    let cancelled = false;
     let hasFallenBackToMp4 = false;
 
     const setPlaybackSource = (sourceUrl) => {
@@ -414,22 +390,36 @@ export default function VideoDetails({ mode = "video" }) {
       return undefined;
     }
 
-    if (!Hls.isSupported()) {
-      setPlaybackSource(fallbackUrl);
+    const initializeHlsPlayback = async () => {
+      try {
+        const Hls = await loadHls();
 
-      return undefined;
-    }
+        if (cancelled) return;
 
-    hls = new Hls();
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data?.fatal) {
-        fallbackToMp4();
+        if (!Hls?.isSupported?.()) {
+          setPlaybackSource(fallbackUrl);
+          return;
+        }
+
+        hls = new Hls();
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data?.fatal) {
+            fallbackToMp4();
+          }
+        });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(playbackElement);
+      } catch {
+        if (!cancelled) {
+          setPlaybackSource(fallbackUrl);
+        }
       }
-    });
-    hls.loadSource(streamUrl);
-    hls.attachMedia(playbackElement);
+    };
+
+    initializeHlsPlayback();
 
     return () => {
+      cancelled = true;
       hls?.destroy();
     };
   }, [isVideoCurrentlyLive, video?.id, video?.mediaUrl, video?.streamUrl, video?.type]);

@@ -1,28 +1,32 @@
+import { Suspense, lazy } from "react";
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import LandingPage from "./pages/LandingPage";
-import SignUp from "./pages/SignUp";
-import Login from "./pages/Login";
-import VerifyEmail from "./pages/VerifyEmail";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AppLayout from "./components/Layout/AppLayout";
-import Homepage from "./pages/Homepage";
-import LivePage from "./pages/LivePage";
-import Leaderboard from "./pages/Leaderboard";
-import CreateUpload from "./pages/CreateUpload";
-import Messages from "./pages/Messages";
-import OAuthCallback from "./pages/OAuthCallback";
-import Profile from "./pages/Profile";
-import ProfileSubscribers from "./pages/ProfileSubscribers";
-import SearchResults from "./pages/SearchResults";
-import Settings from "./pages/Settings";
-import VideoDetails from "./pages/VideoDetails";
-import LiveRoom from "./pages/LiveRoom";
 import { useLanguage } from "./context/LanguageContext";
-import CreateLive from "./components/CreateLive";
-import PreviewLive from "./components/PreviewLive";
 import Spinner from "./components/Layout/Spinner";
+
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const Login = lazy(() => import("./pages/Login"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
+const Homepage = lazy(() => import("./pages/Homepage"));
+const LivePage = lazy(() => import("./pages/LivePage"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const CreateUpload = lazy(() => import("./pages/CreateUpload"));
+const Messages = lazy(() => import("./pages/Messages"));
+const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
+const Profile = lazy(() => import("./pages/Profile"));
+const ProfileSubscribers = lazy(() => import("./pages/ProfileSubscribers"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
+const Settings = lazy(() => import("./pages/Settings"));
+const VideoDetails = lazy(() => import("./pages/VideoDetails"));
+const LiveRoom = lazy(() => import("./pages/LiveRoom"));
+const PostLiveAnalytics = lazy(() => import("./pages/PostLiveAnalytics"));
+const CreatorLiveDashboard = lazy(() => import("./pages/CreatorLiveDashboard"));
+const CreateLive = lazy(() => import("./components/CreateLive"));
+const PreviewLive = lazy(() => import("./components/PreviewLive"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -31,6 +35,18 @@ function FullPageLoader() {
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
       <Spinner big/>
     </div>
+  );
+}
+
+function RouteSuspense({ children }) {
+  return <Suspense fallback={<FullPageLoader />}>{children}</Suspense>;
+}
+
+function renderLazyRoute(Component) {
+  return (
+    <RouteSuspense>
+      <Component />
+    </RouteSuspense>
   );
 }
 
@@ -68,7 +84,11 @@ function PendingVerificationRoute() {
 function LandingRoute() {
   const navigate = useNavigate();
 
-  return <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} />;
+  return (
+    <RouteSuspense>
+      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} />
+    </RouteSuspense>
+  );
 }
 
 function RootRedirect() {
@@ -90,40 +110,42 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
         <Route element={<PublicOnlyRoute />}>
           <Route path="/welcome" element={<LandingRoute />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/login" element={renderLazyRoute(Login)} />
+          <Route path="/signup" element={renderLazyRoute(SignUp)} />
+          <Route path="/forgot-password" element={renderLazyRoute(ForgotPassword)} />
+          <Route path="/reset-password" element={renderLazyRoute(ResetPassword)} />
         </Route>
 
         <Route element={<PendingVerificationRoute />}>
-          <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-email" element={renderLazyRoute(VerifyEmail)} />
         </Route>
 
-        <Route path="/auth/callback" element={<OAuthCallback />} />
+        <Route path="/auth/callback" element={renderLazyRoute(OAuthCallback)} />
 
-        <Route element={<AppLayout />}>
-          <Route path="/users/:id" element={<Profile />} />
+        <Route element={renderLazyRoute(AppLayout)}>
+          <Route path="/users/:id" element={renderLazyRoute(Profile)} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route element={<AppLayout />}>
-            <Route path="/home" element={<Homepage />} />
-            <Route path="/live" element={<LivePage />} />
-            <Route path="/live/:id" element={<LiveRoom />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/profile/subscribers" element={<ProfileSubscribers />} />
-            <Route path="/search" element={<SearchResults />} />
-            <Route path="/settings" element={<Settings />} />
+          <Route element={renderLazyRoute(AppLayout)}>
+            <Route path="/home" element={renderLazyRoute(Homepage)} />
+            <Route path="/live" element={renderLazyRoute(LivePage)} />
+            <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} />
+            <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
+            <Route path="/messages" element={renderLazyRoute(Messages)} />
+            <Route path="/profile" element={renderLazyRoute(Profile)} />
+            <Route path="/profile/subscribers" element={renderLazyRoute(ProfileSubscribers)} />
+            <Route path="/analytics/live" element={renderLazyRoute(CreatorLiveDashboard)} />
+            <Route path="/search" element={renderLazyRoute(SearchResults)} />
+            <Route path="/settings" element={renderLazyRoute(Settings)} />
+            <Route path="/video/:id/analytics" element={renderLazyRoute(PostLiveAnalytics)} />
           </Route>
-          <Route path="/create" element={<CreateUpload />} />
-          <Route path="/create-live" element={<CreateLive />} />
-          <Route path="/preview-live" element={<PreviewLive />} />
+          <Route path="/create" element={renderLazyRoute(CreateUpload)} />
+          <Route path="/create-live" element={renderLazyRoute(CreateLive)} />
+          <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
 
-        <Route path="/video/:id" element={<VideoDetails />} />
+        <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

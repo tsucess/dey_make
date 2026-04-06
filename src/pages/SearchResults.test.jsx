@@ -50,6 +50,7 @@ function renderPage(initialEntry = '/search?q=jazz') {
       <Routes>
         <Route path="/search" element={<SearchResults />} />
         <Route path="/video/:id" element={<div>Video page</div>} />
+        <Route path="/video/:id/analytics" element={<div>Analytics page</div>} />
         <Route path="/users/:id" element={<div>Creator page</div>} />
       </Routes>
     </MemoryRouter>,
@@ -151,5 +152,29 @@ describe('SearchResults', () => {
 
     await waitFor(() => expect(api.subscribeToCreator).toHaveBeenCalledWith(3));
     expect(screen.getByRole('button', { name: /subscribed/i })).toBeInTheDocument();
+  });
+
+  it('shows a view analytics CTA for the authenticated creator on their ended live cards', async () => {
+    const user = userEvent.setup();
+
+    api.search.mockResolvedValue({
+      data: {
+        videos: [{ id: 7, title: 'Jazz Nights', thumbnailUrl: '', creator: { id: 99, fullName: 'Viewer Example' }, category: { label: 'Jazz' }, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 21 } }],
+        creators: [],
+        categories: [],
+      },
+      meta: {
+        videos: { total: 1 },
+        creators: { total: 0 },
+        categories: { total: 0 },
+      },
+    });
+
+    renderPage();
+
+    await screen.findByText('Jazz Nights');
+    await user.click(screen.getByRole('button', { name: 'View analytics' }));
+
+    expect(await screen.findByText('Analytics page')).toBeInTheDocument();
   });
 });
