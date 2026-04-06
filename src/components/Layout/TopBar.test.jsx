@@ -223,4 +223,36 @@ describe('TopBar', () => {
       clearIntervalSpy.mockRestore();
     }
   });
+
+  it('refreshes notifications immediately when the window regains focus', async () => {
+    api.getNotifications
+      .mockResolvedValueOnce({ data: { notifications: [] } })
+      .mockResolvedValueOnce({
+        data: {
+          notifications: [
+            {
+              id: 7,
+              type: 'subscription',
+              title: 'New subscriber',
+              body: 'Creator Subscriber subscribed to your profile.',
+              data: { creatorId: 12 },
+              readAt: null,
+              createdAt: '2025-01-01T12:05:00.000Z',
+            },
+          ],
+        },
+      });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+    expect(screen.getByRole('button', { name: /notifications/i })).not.toHaveTextContent('1');
+
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'));
+    });
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(2));
+    expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('1');
+  });
 });

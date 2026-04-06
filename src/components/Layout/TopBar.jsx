@@ -23,6 +23,7 @@ export default function TopBar() {
   const location = useLocation();
   const lookupRef = useRef(null);
   const isMountedRef = useRef(true);
+  const notificationsRefreshInFlightRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [lookup, setLookup] = useState({ videos: [], creators: [], categories: [] });
@@ -47,8 +48,12 @@ export default function TopBar() {
     setIsVisible((prev) => !prev);
   }
 
-  const loadNotifications = useCallback(async ({ silent = false } = {}) => {
+  const loadNotifications = useCallback(async ({ silent = false, skipIfHidden = false } = {}) => {
     if (!isAuthenticated) return;
+    if (skipIfHidden && isDocumentHidden()) return;
+    if (notificationsRefreshInFlightRef.current) return;
+
+    notificationsRefreshInFlightRef.current = true;
 
     if (!silent) {
       setLoadingNotifications(true);
@@ -67,6 +72,7 @@ export default function TopBar() {
         setNotificationError(firstError(nextError.errors, nextError.message || t("topbar.unableToLoadNotifications")));
       }
     } finally {
+      notificationsRefreshInFlightRef.current = false;
       if (!silent && isMountedRef.current) setLoadingNotifications(false);
     }
   }, [isAuthenticated, t]);
@@ -135,18 +141,34 @@ export default function TopBar() {
     let polling = false;
 
     const intervalId = window.setInterval(async () => {
-      if (polling || !isMountedRef.current || isDocumentHidden()) return;
+      if (polling || !isMountedRef.current) return;
 
       polling = true;
 
       try {
-        await loadNotifications({ silent: true });
+        await loadNotifications({ silent: true, skipIfHidden: true });
       } finally {
         polling = false;
       }
     }, NOTIFICATION_POLL_INTERVAL_MS);
 
     return () => window.clearInterval(intervalId);
+  }, [isAuthenticated, loadNotifications]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    function refreshNotificationsOnAttention() {
+      loadNotifications({ silent: true, skipIfHidden: true });
+    }
+
+    window.addEventListener("focus", refreshNotificationsOnAttention);
+    document.addEventListener("visibilitychange", refreshNotificationsOnAttention);
+
+    return () => {
+      window.removeEventListener("focus", refreshNotificationsOnAttention);
+      document.removeEventListener("visibilitychange", refreshNotificationsOnAttention);
+    };
   }, [isAuthenticated, loadNotifications]);
 
   useEffect(() => {
