@@ -9,6 +9,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { buildVideoLink, getProfileAvatar, getProfileName } from "../utils/content";
 import { getActiveMentionCandidate, normalizeMentionHandle } from "../utils/mentions";
+import { captureThumbnailFromVideoElement, captureThumbnailFromVideoFile, uploadThumbnailFile } from "../utils/thumbnail";
 
 const uploadTypeOptions = [
   { id: "image", icon: IoImageOutline, accept: "image/png,image/jpeg" },
@@ -137,6 +138,7 @@ export default function CreateUpload() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const fileInputRef = useRef(null);
+  const thumbnailInputRef = useRef(null);
   const fieldInputRefs = useRef({});
   const livePreviewRef = useRef(null);
   const mentionBlurTimeoutRef = useRef(null);
@@ -147,6 +149,8 @@ export default function CreateUpload() {
   const [selectedType, setSelectedType] = useState("image");
   const [selectedFile, setSelectedFile] = useState(null);
   const [existingMediaUrl, setExistingMediaUrl] = useState("");
+  const [selectedThumbnailFile, setSelectedThumbnailFile] = useState(null);
+  const [existingThumbnailUrl, setExistingThumbnailUrl] = useState("");
   const [liveCameraStream, setLiveCameraStream] = useState(null);
   const [liveCameraStatus, setLiveCameraStatus] = useState("idle");
   const [liveCameraError, setLiveCameraError] = useState("");
@@ -182,7 +186,9 @@ export default function CreateUpload() {
   ]), [t]);
   const currentType = uploadTypes.find((type) => type.id === selectedType);
   const selectedFilePreviewUrl = useMemo(() => (selectedFile ? URL.createObjectURL(selectedFile) : ""), [selectedFile]);
+  const selectedThumbnailPreviewUrl = useMemo(() => (selectedThumbnailFile ? URL.createObjectURL(selectedThumbnailFile) : ""), [selectedThumbnailFile]);
   const previewUrl = selectedFilePreviewUrl || existingMediaUrl;
+  const thumbnailPreviewUrl = selectedThumbnailPreviewUrl || existingThumbnailUrl;
   const isLoading = loadingCategories || loadingDraft;
   const showUploadStatus = uploadStatus.phase !== "idle";
   const uploadStatusMessage = useMemo(
@@ -490,6 +496,8 @@ export default function CreateUpload() {
           setSelectedType(nextVideo.type || "image");
           setSelectedFile(null);
           setExistingMediaUrl(nextVideo.mediaUrl || nextVideo.thumbnailUrl || "");
+          setSelectedThumbnailFile(null);
+          setExistingThumbnailUrl(nextVideo.thumbnailUrl || "");
           setForm({
             title: nextVideo.title || "",
             caption: nextVideo.caption || "",
@@ -518,6 +526,10 @@ export default function CreateUpload() {
     if (selectedFilePreviewUrl) URL.revokeObjectURL(selectedFilePreviewUrl);
   }, [selectedFilePreviewUrl]);
 
+  useEffect(() => () => {
+    if (selectedThumbnailPreviewUrl) URL.revokeObjectURL(selectedThumbnailPreviewUrl);
+  }, [selectedThumbnailPreviewUrl]);
+
   function handleFileChange(event) {
     const file = event.target.files?.[0];
     if (file) {
@@ -527,7 +539,17 @@ export default function CreateUpload() {
       setSelectedFile(file);
       const nextType = detectUploadType(file);
       if (nextType) setSelectedType(nextType);
+      if (nextType === "video") {
+        setExistingThumbnailUrl("");
+      } else {
+        setSelectedThumbnailFile(null);
+        setExistingThumbnailUrl("");
+      }
     }
+  }
+
+  function handleThumbnailChange(event) {
+    setSelectedThumbnailFile(event.target.files?.[0] || null);
   }
 
   async function handleSubmit(action) {
@@ -563,6 +585,7 @@ export default function CreateUpload() {
     try {
       let upload = null;
       const nextMediaType = detectedType || selectedType;
+      let thumbnailUrl = existingThumbnailUrl || null;
 
       if (selectedFile) {
         setUploadStatus({
@@ -603,6 +626,28 @@ export default function CreateUpload() {
         }));
       }
 
+      if (nextMediaType === "video") {
+        if (selectedThumbnailFile) {
+          const thumbnailUpload = await uploadThumbnailFile(selectedThumbnailFile);
+          thumbnailUrl = thumbnailUpload?.url || thumbnailUrl;
+        } else if (!thumbnailUrl) {
+          try {
+            const generatedThumbnail = isLiveCameraFlow
+              ? await captureThumbnailFromVideoElement(livePreviewRef.current, form.title.trim() || "live-stream")
+              : selectedFile
+                ? await captureThumbnailFromVideoFile(selectedFile)
+                : null;
+
+            if (generatedThumbnail) {
+              const thumbnailUpload = await uploadThumbnailFile(generatedThumbnail);
+              thumbnailUrl = thumbnailUpload?.url || thumbnailUrl;
+            }
+          } catch {
+            // Best-effort fallback: continue without a generated thumbnail if capture fails.
+          }
+        }
+      }
+
       const payload = {
         type: selectedType,
         categoryId,
@@ -615,6 +660,7 @@ export default function CreateUpload() {
       };
 
       if (upload?.id) payload.uploadId = upload.id;
+      if (thumbnailUrl) payload.thumbnailUrl = thumbnailUrl;
 
       const response = isEditingDraft
         ? await api.updateVideo(draftId, payload)
@@ -631,8 +677,14 @@ export default function CreateUpload() {
         setExistingMediaUrl(nextVideo.mediaUrl);
       }
 
+      setExistingThumbnailUrl(nextVideo?.thumbnailUrl || thumbnailUrl || "");
+
       if (selectedFile) {
         setSelectedFile(null);
+      }
+
+      if (selectedThumbnailFile) {
+        setSelectedThumbnailFile(null);
       }
 
       setUploadStatus(createUploadStatusState());
@@ -812,6 +864,53 @@ export default function CreateUpload() {
               </button>
             </>
           )}
+
+          <>
+            <input
+              ref={thumbnailInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={handleThumbnailChange}
+            />
+
+            <section className="mb-8 rounded-[2rem] bg-white300 p-5 dark:bg-black100">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-2">
+                  <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.thumbnailTitle")}</h2>
+                  <p className="max-w-2xl text-sm text-slate500 dark:text-slate200">{t("upload.thumbnailHint")}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => thumbnailInputRef.current?.click()}
+                  className="rounded-full bg-white px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-slate150 dark:bg-[#1B1B1B] dark:text-white"
+                >
+                  {thumbnailPreviewUrl ? t("upload.thumbnailReplace") : t("upload.thumbnailUpload")}
+                </button>
+              </div>
+
+              <div className="mt-5 grid gap-4 md:grid-cols-[220px,minmax(0,1fr)] md:items-center">
+                <div className="aspect-video overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5">
+                  {thumbnailPreviewUrl ? (
+                    <img src={thumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center text-slate500 dark:text-slate200">
+                      <IoImageOutline className="h-10 w-10" />
+                      <p className="text-sm">{t("upload.thumbnailAuto")}</p>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-sm text-slate500 dark:text-slate200">
+                  {selectedThumbnailFile
+                    ? t("upload.thumbnailSelected", { name: selectedThumbnailFile.name })
+                    : existingThumbnailUrl
+                      ? t("upload.thumbnailCurrent")
+                      : t("upload.thumbnailAuto")}
+                </p>
+              </div>
+            </section>
+          </>
 
           <div className="space-y-4 md:space-y-5">
             {textFields.map(({ key, placeholder }) => (

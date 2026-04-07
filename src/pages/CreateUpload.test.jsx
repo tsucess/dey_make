@@ -41,7 +41,14 @@ vi.mock('../services/api', async () => {
   };
 });
 
+vi.mock('../utils/thumbnail', () => ({
+  captureThumbnailFromVideoElement: vi.fn(),
+  captureThumbnailFromVideoFile: vi.fn(),
+  uploadThumbnailFile: vi.fn(),
+}));
+
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD } from '../services/api';
+import { captureThumbnailFromVideoElement, captureThumbnailFromVideoFile, uploadThumbnailFile } from '../utils/thumbnail';
 import CreateUpload from './CreateUpload';
 
 function buildMediaStream() {
@@ -78,6 +85,9 @@ describe('CreateUpload', () => {
       writable: true,
       value: null,
     });
+    captureThumbnailFromVideoElement.mockResolvedValue(new File(['thumb'], 'live-thumb.jpg', { type: 'image/jpeg' }));
+    captureThumbnailFromVideoFile.mockResolvedValue(new File(['thumb'], 'video-thumb.jpg', { type: 'image/jpeg' }));
+    uploadThumbnailFile.mockResolvedValue({ url: 'https://cdn.example.com/thumb.jpg' });
   });
 
   it('disables category selection when categories are unavailable', async () => {
@@ -86,6 +96,7 @@ describe('CreateUpload', () => {
     renderPage();
 
     await screen.findByText(/Signed in as Test Creator/i);
+    expect(screen.getByRole('button', { name: /Upload thumbnail/i })).toBeInTheDocument();
     expect(screen.getAllByText(/@username or #username/i)).toHaveLength(1);
     expect(screen.queryByPlaceholderText(/Tag people/i)).not.toBeInTheDocument();
 
@@ -219,9 +230,63 @@ describe('CreateUpload', () => {
     await waitFor(() => expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
       type: 'video',
       uploadId: 109,
+      thumbnailUrl: 'https://cdn.example.com/thumb.jpg',
       isDraft: false,
       isLive: false,
     })));
+    expect(captureThumbnailFromVideoFile).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses a manually uploaded thumbnail instead of auto-capturing one for videos', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({
+      data: {
+        categories: [{ id: 2, label: 'Music' }],
+      },
+    });
+    api.presignUpload.mockResolvedValue({
+      data: {
+        strategy: 'client-direct-upload',
+        method: 'POST',
+        endpoint: 'https://api.cloudinary.com/v1_1/demo/video/upload',
+        fields: { signature: 'signed' },
+      },
+    });
+    api.uploadFileDirect.mockResolvedValue({
+      secure_url: 'https://res.cloudinary.com/demo/video/upload/v1/deymake/uploads/videos/user-1/manual.mp4',
+      bytes: 10,
+      duration: 3,
+    });
+    api.uploadFile.mockResolvedValue({ data: { upload: { id: 321 } } });
+    api.createVideo.mockResolvedValue({
+      data: {
+        video: { id: 90, isDraft: false, mediaUrl: 'https://cdn.example.com/manual.mp4', thumbnailUrl: 'https://cdn.example.com/manual-thumb.jpg' },
+      },
+    });
+    uploadThumbnailFile.mockResolvedValue({ url: 'https://cdn.example.com/manual-thumb.jpg' });
+
+    const { container } = renderPage();
+
+    await user.click(screen.getByRole('button', { name: /Videos\s*MP4,\s*MOV,\s*AVI/i }));
+
+    const [mediaInput, thumbnailInput] = await waitFor(() => {
+      const inputs = container.querySelectorAll('input[type="file"]');
+      return inputs.length === 2 ? inputs : null;
+    });
+
+    fireEvent.change(mediaInput, { target: { files: [new File(['video'], 'manual.mp4', { type: 'video/mp4' })] } });
+    fireEvent.change(thumbnailInput, { target: { files: [new File(['thumb'], 'manual-cover.jpg', { type: 'image/jpeg' })] } });
+
+    await user.click(screen.getByRole('button', { name: /^Upload$/i }));
+
+    await waitFor(() => expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
+      type: 'video',
+      uploadId: 321,
+      thumbnailUrl: 'https://cdn.example.com/manual-thumb.jpg',
+    })));
+    expect(uploadThumbnailFile).toHaveBeenCalledWith(expect.objectContaining({ name: 'manual-cover.jpg' }));
+    expect(captureThumbnailFromVideoFile).not.toHaveBeenCalled();
   });
 
   it('shows mention suggestions while typing and inserts the selected username', async () => {
@@ -301,7 +366,8 @@ describe('CreateUpload', () => {
     await screen.findByText(/Signed in as Test Creator/i);
     expect(screen.getByRole('heading', { name: /Set up your live stream/i })).toBeInTheDocument();
     expect(screen.getByText(/Turn on your camera/i)).toBeInTheDocument();
-    expect(container.querySelector('input[type="file"]')).toBeNull();
+    expect(screen.getByRole('button', { name: /Upload thumbnail/i })).toBeInTheDocument();
+    expect(container.querySelectorAll('input[type="file"]')).toHaveLength(1);
     await waitFor(() => expect(globalThis.navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ video: true, audio: true }));
     expect(await screen.findByLabelText(/Live camera preview/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Save draft/i })).not.toBeInTheDocument();
@@ -314,8 +380,10 @@ describe('CreateUpload', () => {
     expect(api.uploadFile).not.toHaveBeenCalled();
     expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
       type: 'video',
+      thumbnailUrl: 'https://cdn.example.com/thumb.jpg',
       isDraft: false,
       isLive: true,
     }));
+    expect(captureThumbnailFromVideoElement).toHaveBeenCalledTimes(1);
   });
 });

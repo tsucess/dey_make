@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -13,14 +13,17 @@ export default function CreateLive() {
   const location = useLocation();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const thumbnailInputRef = useRef(null);
   const [form, setForm] = useState({
     title: "",
     description: "",
     categoryId: "",
   });
+  const [thumbnailFile, setThumbnailFile] = useState(null);
   const [categories, setCategories] = useState([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [error, setError] = useState("");
+  const thumbnailPreviewUrl = useMemo(() => (thumbnailFile ? URL.createObjectURL(thumbnailFile) : ""), [thumbnailFile]);
 
   useEffect(() => {
     const liveSetup = location.state?.liveSetup;
@@ -32,7 +35,12 @@ export default function CreateLive() {
       description: liveSetup.description || "",
       categoryId: liveSetup.categoryId ? `${liveSetup.categoryId}` : "",
     });
+    setThumbnailFile(liveSetup.thumbnailFile || null);
   }, [location.key, location.state]);
+
+  useEffect(() => () => {
+    if (thumbnailPreviewUrl) URL.revokeObjectURL(thumbnailPreviewUrl);
+  }, [thumbnailPreviewUrl]);
 
   useEffect(() => {
     let ignore = false;
@@ -70,9 +78,14 @@ export default function CreateLive() {
           title: form.title.trim(),
           description: form.description.trim(),
           categoryId: parseCategoryId(form.categoryId),
+          thumbnailFile,
         },
       },
     });
+  }
+
+  function handleThumbnailChange(event) {
+    setThumbnailFile(event.target.files?.[0] || null);
   }
 
   return (
@@ -121,6 +134,45 @@ export default function CreateLive() {
               ))}
             </select>
             {!isLoadingCategories && categories.length === 0 ? <p className="text-xs text-slate500 dark:text-slate200">{t("upload.category.help")}</p> : null}
+
+            <input
+              ref={thumbnailInputRef}
+              type="file"
+              accept="image/png,image/jpeg"
+              className="hidden"
+              onChange={handleThumbnailChange}
+            />
+
+            <div className="rounded-3xl bg-white px-5 py-5 dark:bg-[#1B1B1B]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="space-y-2">
+                  <h3 className="text-base font-semibold text-black dark:text-white">{t("upload.thumbnailTitle")}</h3>
+                  <p className="text-sm text-slate500 dark:text-slate200">{t("upload.thumbnailHint")}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => thumbnailInputRef.current?.click()}
+                  className="rounded-full bg-white300 px-5 py-3 text-sm font-medium text-black transition-colors hover:bg-slate150 dark:bg-black100 dark:text-white"
+                >
+                  {thumbnailPreviewUrl ? t("upload.thumbnailReplace") : t("upload.thumbnailUpload")}
+                </button>
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-[220px,minmax(0,1fr)] md:items-center">
+                <div className="aspect-video overflow-hidden rounded-3xl bg-white300 dark:bg-black100">
+                  {thumbnailPreviewUrl ? (
+                    <img src={thumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center px-5 text-center text-sm text-slate500 dark:text-slate200">
+                      {t("upload.thumbnailAuto")}
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-slate500 dark:text-slate200">
+                  {thumbnailFile ? t("upload.thumbnailSelected", { name: thumbnailFile.name }) : t("upload.thumbnailAuto")}
+                </p>
+              </div>
+            </div>
           </div>
         </section>
 
