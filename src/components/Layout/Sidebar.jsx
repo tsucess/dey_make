@@ -6,23 +6,12 @@ import {
   HiHome, HiChartBar, HiChatAlt2,
   HiCog, HiUser
 } from "react-icons/hi";
-
-function LiveNavIcon({ className = "w-5 h-5 shrink-0" }) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M7 8a7 7 0 0 0 0 8" strokeLinecap="round" />
-      <path d="M17 8a7 7 0 0 1 0 8" strokeLinecap="round" />
-      <path d="M10 10.5a3 3 0 0 0 0 3" strokeLinecap="round" />
-      <path d="M14 10.5a3 3 0 0 1 0 3" strokeLinecap="round" />
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
-    </svg>
-  );
-}
+import { MdOutlineSurroundSound } from "react-icons/md";
 
 function getNavItems(t) {
   return [
     { to: "/home", icon: HiHome, label: t("common.homepage") },
-    { to: "/live", icon: LiveNavIcon, label: t("common.live") },
+    { to: "/live", icon: MdOutlineSurroundSound, label: t("common.live") },
     { to: "/leaderboard", icon: HiChartBar, label: t("common.leaderboard") },
     { to: "/messages", icon: HiChatAlt2, label: t("common.messages") },
     { to: "/settings", icon: HiCog, label: t("common.settings") },
