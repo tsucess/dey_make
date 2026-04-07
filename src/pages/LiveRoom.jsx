@@ -765,7 +765,7 @@ export default function LiveRoom() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
-      <div className="mx-auto max-w-[1400px] space-y-4">
+      <div className="mx-auto max-w-350 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
             <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
@@ -777,12 +777,12 @@ export default function LiveRoom() {
 
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
-        {loading ? <div className="rounded-[2rem] bg-white p-8 text-sm text-slate600 shadow-sm dark:bg-[#171717] dark:text-slate200">{t("videoDetails.loading")}</div> : null}
+        {loading ? <div className="rounded-4xl bg-white p-8 text-sm text-slate600 shadow-sm dark:bg-[#171717] dark:text-slate200">{t("videoDetails.loading")}</div> : null}
 
         {video ? (
           <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr),400px]">
             <div className="space-y-6">
-              <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
+              <section className="overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
                 <div className="relative aspect-video bg-black">
                   <style>{`@keyframes live-heart-float {0% {transform: translate3d(-50%, 0, 0) scale(.42) rotate(var(--heart-rotate)); opacity: 0;} 10% {opacity: 1;} 32% {transform: translate3d(calc(-50% + var(--heart-sway)), calc(var(--heart-rise) * -.28), 0) scale(.95) rotate(calc(var(--heart-rotate) * .55)); opacity: .98;} 68% {transform: translate3d(calc(-50% + calc(var(--heart-drift) * .58)), calc(var(--heart-rise) * -.72), 0) scale(1.08) rotate(calc(var(--heart-rotate) * .82)); opacity: .9;} 100% {transform: translate3d(calc(-50% + var(--heart-drift)), calc(var(--heart-rise) * -1), 0) scale(1.2) rotate(var(--heart-rotate)); opacity: 0;}} @keyframes live-heart-spark {0%,100% {transform: translate(-50%, 0) scale(.35); opacity: 0;} 24% {opacity: .95;} 72% {transform: translate(calc(-50% + var(--spark-drift)), -18px) scale(1.12); opacity: 0;}} @keyframes live-heart-glow {0%,100% {transform: translate(-50%, -50%) scale(.62); opacity: 0;} 16% {opacity: .68;} 60% {transform: translate(-50%, -50%) scale(1.2); opacity: .26;}}`}</style>
                   {stageTiles.length ? (
@@ -805,7 +805,7 @@ export default function LiveRoom() {
                   )}
                   <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
                     {isCreator && liveMoments.length ? (
-                      <div className="absolute left-4 top-4 z-10 flex max-w-[280px] flex-col gap-3">
+                      <div className="absolute left-4 top-4 z-10 flex max-w-70 flex-col gap-3">
                         {liveMoments.map((moment) => (
                           <article
                             key={moment.id}
@@ -819,8 +819,8 @@ export default function LiveRoom() {
                         ))}
                       </div>
                     ) : null}
-                    <div className="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-pink-500/10 via-orange-400/8 to-transparent" />
-                    <div className="absolute bottom-4 right-3 h-20 w-20 rounded-full bg-gradient-to-br from-pink-500/35 via-orange-400/20 to-transparent blur-2xl" />
+                    <div className="absolute inset-y-0 right-0 w-24 bg-linear-to-l from-pink-500/10 via-orange-400/8 to-transparent" />
+                    <div className="absolute bottom-4 right-3 h-20 w-20 rounded-full bg-linear-to-br from-pink-500/35 via-orange-400/20 to-transparent blur-2xl" />
                     {floatingHearts.map((heart) => (
                       <div
                         key={heart.id}
@@ -928,7 +928,7 @@ export default function LiveRoom() {
             </div>
 
             <aside className="flex flex-col gap-4 self-start xl:sticky xl:top-6">
-              <section className="rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.liveAnalytics")}</h2>
                   {isLive ? <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-500">{t("videoDetails.liveNow")}</span> : null}
@@ -941,7 +941,7 @@ export default function LiveRoom() {
                     { key: "likes", label: t("videoDetails.like"), value: formatCompactNumber(liveLikes) },
                     { key: "comments", label: t("videoDetails.comments"), value: formatCompactNumber(liveComments) },
                   ].map((metric) => (
-                    <div key={metric.key} className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                    <div key={metric.key} className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{metric.label}</p>
                       <p className="mt-2 text-2xl font-semibold text-black dark:text-white">{metric.value}</p>
                     </div>
@@ -949,7 +949,7 @@ export default function LiveRoom() {
                 </div>
               </section>
 
-              <section className="rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.liveEngagement")}</h2>
@@ -960,7 +960,7 @@ export default function LiveRoom() {
 
                 <div className="mt-4 space-y-3">
                   {engagementFeed.length ? engagementFeed.map((item) => (
-                    <article key={item.id} className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-3 dark:bg-[#1F1F1F]">
+                    <article key={item.id} className="rounded-3xl bg-[#F7F7F7] px-4 py-3 dark:bg-[#1F1F1F]">
                       <div className="flex gap-3">
                         <img src={getProfileAvatar(item.actor)} alt={getProfileName(item.actor, t("videoDetails.you"))} className="h-10 w-10 rounded-full object-cover" />
                         <div className="min-w-0 flex-1">
@@ -975,11 +975,11 @@ export default function LiveRoom() {
                         </div>
                       </div>
                     </article>
-                  )) : <div className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noLiveEngagement")}</div>}
+                  )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noLiveEngagement")}</div>}
                 </div>
               </section>
 
-              <section className="max-h-[75vh] overflow-hidden rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="max-h-[75vh] overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
                   <span className="text-sm text-slate500 dark:text-slate200">{comments.length}</span>
@@ -988,7 +988,7 @@ export default function LiveRoom() {
                 <div className="mt-4 flex gap-3">
                   <img src={getProfileAvatar(user)} alt={getProfileName(user, t("videoDetails.you"))} className="h-11 w-11 rounded-full object-cover" />
                   <div className="flex-1 space-y-3">
-                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={3} placeholder={t("videoDetails.commentPlaceholder")} className="w-full resize-none rounded-[1.5rem] bg-[#F7F7F7] px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate500 dark:bg-[#1F1F1F] dark:text-white dark:placeholder:text-slate200" />
+                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={3} placeholder={t("videoDetails.commentPlaceholder")} className="w-full resize-none rounded-3xl bg-[#F7F7F7] px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate500 dark:bg-[#1F1F1F] dark:text-white dark:placeholder:text-slate200" />
                     <button type="button" disabled={submittingComment || !commentBody.trim()} onClick={handleSubmitComment} className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">
                       {submittingComment ? t("videoDetails.posting") : t("videoDetails.postComment")}
                     </button>
@@ -1014,8 +1014,8 @@ export default function LiveRoom() {
               </section>
 
               {!isLive ? (
-                <section className="rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
-                  <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="aspect-video w-full rounded-[1.5rem] object-cover" />
+                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                  <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="aspect-video w-full rounded-3xl object-cover" />
                 </section>
               ) : null}
             </aside>

@@ -6,7 +6,7 @@ export default function LandingFooter({ onSignUp }) {
   return (
     <footer
       className=" pt-12
-                 bg-white100 dark:bg-slate100 flex flex-col  gap-4 overflow-hidden"
+                 bg-white100 dark:bg-slate100 flex flex-col  gap-8 overflow-hidden"
     >
     
         <div className="flex justify-between items-end md:items-center w-full md:w-auto gap-2 md:gap-10 px-6 md:px-12">
@@ -48,7 +48,7 @@ export default function LandingFooter({ onSignUp }) {
         </div>
         </div>
         {/* Logo */}
-         <img src="./footer_img.png" alt="DeyMake" className="w-full h-auto"/>
+         <img src="./footer_img.svg" alt="DeyMake" className="w-full h-auto -mb-30"/>
     </footer>
   );
 }

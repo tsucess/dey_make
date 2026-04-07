@@ -1454,7 +1454,7 @@ export default function VideoDetails({ mode = "video" }) {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className={`grid gap-8 ${isLiveWatchLayout ? "xl:grid-cols-[minmax(0,1.2fr),400px]" : "lg:grid-cols-[minmax(0,1fr),340px] xl:grid-cols-[minmax(0,1fr),380px]"}`}>
+        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col md:flex-row"}`}>
           <div className="space-y-6">
             <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
               <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-4xl"}`}>
@@ -1547,7 +1547,7 @@ export default function VideoDetails({ mode = "video" }) {
             ) : null}
           </div>
 
-          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10"}>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10 "}>
             {isLiveWatchLayout ? (
               <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

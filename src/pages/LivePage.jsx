@@ -7,7 +7,7 @@ import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
 
 function StateCard({ title, body, actionLabel, onAction }) {
   return (
-    <div className="rounded-[2rem] bg-white300 px-6 py-10 text-center dark:bg-black200">
+    <div className="rounded-4xl bg-white300 px-6 py-10 text-center dark:bg-black200">
       <h2 className="text-xl font-semibold text-black dark:text-white">{title}</h2>
       <p className="mt-2 text-sm text-slate600 dark:text-slate200">{body}</p>
       {onAction ? (
@@ -53,7 +53,7 @@ export default function LivePage() {
 
   return (
     <div className="min-h-full w-full bg-white px-4 pb-24 pt-4 dark:bg-slate100 md:px-6 md:py-5">
-      <section className="rounded-[2rem] bg-gradient-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
+      <section className="rounded-4xl bg-linear-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
         <p className="text-sm font-medium uppercase tracking-[0.3em] text-white/70">{t("common.live")}</p>
         <h1 className="mt-3 text-3xl font-semibold font-bricolage">{t("livePage.title")}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-white/80 md:text-base">{t("livePage.description")}</p>
