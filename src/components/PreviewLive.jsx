@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { setLiveCreationSession } from "../live/liveSessionStore";
 import { api, firstError } from "../services/api";
+import { captureThumbnailFromVideoElement, uploadThumbnailFile } from "../utils/thumbnail";
 
 function stopMediaStream(stream) {
   stream?.getTracks?.().forEach((track) => track.stop());
@@ -22,6 +23,10 @@ export default function PreviewLive() {
   const [cameraState, setCameraState] = useState("idle");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const selectedThumbnailPreviewUrl = useMemo(
+    () => (liveSetup?.thumbnailFile ? URL.createObjectURL(liveSetup.thumbnailFile) : ""),
+    [liveSetup?.thumbnailFile],
+  );
 
   useEffect(() => {
     streamRef.current = stream;
@@ -82,6 +87,10 @@ export default function PreviewLive() {
     };
   }, [liveSetup, t]);
 
+  useEffect(() => () => {
+    if (selectedThumbnailPreviewUrl) URL.revokeObjectURL(selectedThumbnailPreviewUrl);
+  }, [selectedThumbnailPreviewUrl]);
+
   async function handleGoLive() {
     if (!liveSetup) return;
     if (!streamRef.current) {
@@ -93,14 +102,33 @@ export default function PreviewLive() {
     setError("");
 
     try {
-      const response = await api.createVideo({
+      let thumbnailUrl = null;
+
+      if (liveSetup.thumbnailFile) {
+        const thumbnailUpload = await uploadThumbnailFile(liveSetup.thumbnailFile);
+        thumbnailUrl = thumbnailUpload?.url || null;
+      } else {
+        try {
+          const generatedThumbnail = await captureThumbnailFromVideoElement(previewRef.current, liveSetup.title || "live-stream");
+          const thumbnailUpload = await uploadThumbnailFile(generatedThumbnail);
+          thumbnailUrl = thumbnailUpload?.url || null;
+        } catch {
+          // Best-effort fallback: keep going even if automatic thumbnail capture fails.
+        }
+      }
+
+      const payload = {
         type: "video",
         title: liveSetup.title || null,
         description: liveSetup.description || null,
         categoryId: liveSetup.categoryId || null,
         isLive: true,
         isDraft: false,
-      });
+      };
+
+      if (thumbnailUrl) payload.thumbnailUrl = thumbnailUrl;
+
+      const response = await api.createVideo(payload);
       const video = response?.data?.video;
 
       if (!video?.id) throw new Error(t("upload.errors.unableToComplete"));
@@ -176,6 +204,19 @@ export default function PreviewLive() {
           <div className="space-y-2 rounded-3xl bg-white300 px-5 py-4 dark:bg-black100">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{t("upload.category.label")}</p>
             <p className="text-sm font-medium text-black dark:text-white">{liveSetup.categoryId || t("upload.liveFlow.noCategory")}</p>
+          </div>
+
+          <div className="space-y-3 rounded-3xl bg-white300 px-5 py-4 dark:bg-black100">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{t("upload.thumbnailTitle")}</p>
+            <div className="aspect-video overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5">
+              {selectedThumbnailPreviewUrl ? (
+                <img src={selectedThumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full items-center justify-center px-5 text-center text-sm text-slate500 dark:text-slate200">
+                  {t("upload.thumbnailAuto")}
+                </div>
+              )}
+            </div>
           </div>
 
           <p className="rounded-2xl bg-orange200/20 px-4 py-3 text-sm text-slate700 dark:text-slate200">{t("upload.liveFlow.saveDraftAfterLive")}</p>
