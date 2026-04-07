@@ -277,9 +277,9 @@ const en = {
       closeMenu: "Close menu",
     },
     hero: {
-      badge: "Coming soon — Request early access",
+      badge: "Coming soon. Request early access",
       headline: "Create. Post. Grow.",
-      description: "DeyMake is a creator-first content platform where short videos, long-form content, and communities live in one place. Built for people who DeyMake.",
+      description: "DeyMake is a user-first content platform where short videos, long-form content, and communities live in one place. Built for people who dey make.",
       joinWaitlist: "Join the waitlist",
       learnMore: "Learn more",
     },
@@ -359,7 +359,7 @@ const en = {
       earlyAccessAnswer: "Fill out the waitlist form above and you will be among the first to know when we launch.",
     },
     footer: {
-      copyright: "©2025 DeyMake. All rights reserved.",
+      copyright: "©2026 DeyMake. All rights reserved.",
       joinWaitlist: "Join waitlist",
       terms: "Terms",
       privacy: "Privacy",
@@ -966,7 +966,7 @@ const fr = {
       closeMenu: "Fermer le menu",
     },
     hero: {
-      badge: "Bientôt disponible — demandez un accès anticipé",
+      badge: "Bientôt disponible. demandez un accès anticipé",
       headline: "Créez. Publiez. Grandissez.",
       description: "DeyMake est une plateforme de contenu pensée pour les créateurs, où les vidéos courtes, les formats longs et les communautés vivent au même endroit. Conçue pour celles et ceux qui créent.",
       joinWaitlist: "Rejoindre la liste d’attente",
@@ -1646,7 +1646,7 @@ const es = {
       closeMenu: "Cerrar menú",
     },
     hero: {
-      badge: "Próximamente — solicita acceso anticipado",
+      badge: "Próximamente. solicita acceso anticipado",
       headline: "Crea. Publica. Crece.",
       description: "DeyMake es una plataforma de contenido pensada para creadores donde los videos cortos, el contenido de larga duración y las comunidades conviven en un solo lugar. Hecha para la gente que crea.",
       joinWaitlist: "Únete a la lista de espera",

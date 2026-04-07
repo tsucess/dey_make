@@ -5,23 +5,22 @@ export default function LandingFooter({ onSignUp }) {
 
   return (
     <footer
-      className="px-6 md:px-12 pb-7 pt-12
-                 bg-white100 dark:bg-slate100 flex flex-col md:flex-row items-center
-                   justify-between gap-4 md:mx-auto"
+      className=" pt-12
+                 bg-white100 dark:bg-slate100 flex flex-col  gap-4 overflow-hidden"
     >
     
-        <div className="flex justify-between items-center w-full md:w-auto gap-2 md:gap-10">
-        {/* Logo */}
-        <img src="./logo-footer.png" alt="DeyMake" className="w-25 h-7 md:w-30"/>
+        <div className="flex justify-between items-end md:items-center w-full md:w-auto gap-2 md:gap-10 px-6 md:px-12">
+        
+       
 
         {/* Copyright */}
         <p className="text-xs md:text-sm text-black font-inter font-medium dark:text-white">
           {t("landing.footer.copyright")}
         </p>
-        </div>
+        
 
         {/* Links */}
-        <div className="flex items-center gap-5">
+        <div className="flex flex-col items-end gap-3 md:items-center md:flex-row md:gap-5">
           <button
             onClick={onSignUp}
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
@@ -47,6 +46,9 @@ export default function LandingFooter({ onSignUp }) {
             {t("landing.footer.privacy")}
           </a>
         </div>
+        </div>
+        {/* Logo */}
+         <img src="./footer_img.png" alt="DeyMake" className="w-full h-auto"/>
     </footer>
   );
 }
