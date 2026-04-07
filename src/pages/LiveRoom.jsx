@@ -1023,29 +1023,5 @@ export default function LiveRoom() {
         ) : null}
       </div>
     </div>
-<<<<<<< HEAD
-
-    <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10"}>
-            {isLiveWatchLayout ? (
-              <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  {creatorIdentity}
-                  <div className="flex flex-wrap gap-3">{creatorControls}</div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {actionButtons}
-                </div>
-
-                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
-              </section>
-            ) : null}
-
-            {commentsSection}
-          </aside>
-
-  </section>;
-=======
   );
->>>>>>> main
 }
