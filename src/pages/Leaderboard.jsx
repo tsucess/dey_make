@@ -4,6 +4,7 @@ import { IoMdArrowDropright } from "react-icons/io";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { formatCountLabel, getProfileAvatar, getProfileName } from "../utils/content";
+import Spinner from "../components/Layout/Spinner";
 
 function getTabs(t) {
   return [
@@ -185,8 +186,9 @@ export default function Leaderboard() {
 
         {loading ? (
           <div className="mt-8 w-full rounded-3xl bg-[#F3F3F3] px-6 py-12 text-center text-sm text-slate100 dark:bg-[#343434] dark:text-white">
-            {t("leaderboard.loading")}
+            <Spinner/>
           </div>
+          
         ) : (
           <>
             <div className="mt-8 flex w-full items-end justify-center gap-2 md:mt-10">

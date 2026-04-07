@@ -22,6 +22,10 @@ function resolveApiBaseUrl() {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const TOKEN_STORAGE_KEY = "deymake.auth.token";
+export const DIRECT_UPLOAD_LARGE_FILE_THRESHOLD = 95 * 1024 * 1024;
+const DIRECT_UPLOAD_MIN_CHUNK_SIZE = 5 * 1024 * 1024;
+const DIRECT_UPLOAD_DEFAULT_CHUNK_SIZE = 20 * 1024 * 1024;
+export const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
 
 function buildQueryString(params = {}) {
   const searchParams = new URLSearchParams();
@@ -73,47 +77,56 @@ async function request(path, options = {}) {
     body,
     headers = {},
     token = getStoredToken(),
+    timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
   } = options;
   const isFormData = body instanceof FormData;
   const locale = getPreferredRequestLocale(body, headers);
-
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method,
-    headers: {
-      Accept: "application/json",
-      ...(locale ? { "Accept-Language": locale, "X-Locale": locale } : {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
-      ...headers,
-    },
-    body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
-  });
-  const text = await response.text();
-  let json = null;
+  const controller = typeof AbortController === "function" && timeoutMs > 0 ? new AbortController() : null;
+  const timeoutId = controller
+    ? globalThis.setTimeout(() => controller.abort(), timeoutMs)
+    : null;
 
   try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    json = text ? { message: text } : null;
-  }
+    const response = await fetch(`${API_BASE_URL}${path}`, {
+      method,
+      headers: {
+        Accept: "application/json",
+        ...(locale ? { "Accept-Language": locale, "X-Locale": locale } : {}),
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(!isFormData && body ? { "Content-Type": "application/json" } : {}),
+        ...headers,
+      },
+      body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+    const text = await response.text();
+    let json = null;
 
-  if (!response.ok) {
-    throw new ApiError(json?.message || "Request failed.", response.status, json?.errors || {});
-  }
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch {
+      json = text ? { message: text } : null;
+    }
 
-  return json;
+    if (!response.ok) {
+      throw new ApiError(json?.message || "Request failed.", response.status, json?.errors || {});
+    }
+
+    return json;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+
+    if (error?.name === "AbortError") {
+      throw new ApiError("Request timed out.", 408, { request: ["Request timed out."] });
+    }
+
+    throw new ApiError("Unable to reach the server.", 503, { request: ["Unable to reach the server."] });
+  } finally {
+    if (timeoutId !== null) globalThis.clearTimeout(timeoutId);
+  }
 }
 
-async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
-  const endpoint = uploadConfig?.endpoint;
-  const onProgress = options?.onProgress;
-
-  if (!endpoint) {
-    throw new ApiError("Upload endpoint is unavailable.", 500, {
-      file: ["Upload endpoint is unavailable."],
-    });
-  }
-
+function buildDirectUploadFormData(filePart, uploadConfig = {}, fileName) {
   const formData = new FormData();
 
   Object.entries(uploadConfig?.fields || {}).forEach(([key, value]) => {
@@ -121,14 +134,66 @@ async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
     formData.append(key, `${value}`);
   });
 
-  formData.append("file", file);
+  formData.append("file", filePart, fileName);
+
+  return formData;
+}
+
+function parseDirectUploadResponse(xhr) {
+  const text = xhr.responseText || "";
+
+  try {
+    return text ? JSON.parse(text) : null;
+  } catch {
+    return text ? { message: text } : null;
+  }
+}
+
+function createDirectUploadId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `upload-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeDirectUploadChunkSize(value) {
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    return DIRECT_UPLOAD_DEFAULT_CHUNK_SIZE;
+  }
+
+  return Math.max(DIRECT_UPLOAD_MIN_CHUNK_SIZE, Math.floor(numericValue));
+}
+
+function sendDirectUploadRequest(file, uploadConfig = {}, options = {}) {
+  const endpoint = uploadConfig?.endpoint;
+  const onProgress = options?.onProgress;
+
+  if (!endpoint) {
+    return Promise.reject(new ApiError("Upload endpoint is unavailable.", 500, {
+      file: ["Upload endpoint is unavailable."],
+    }));
+  }
+
+  const total = options?.total ?? file?.size ?? 0;
+  const loadedOffset = options?.loadedOffset ?? 0;
+  const formData = buildDirectUploadFormData(
+    options?.filePart ?? file,
+    uploadConfig,
+    options?.fileName ?? file?.name ?? "upload.bin",
+  );
 
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
 
     xhr.open(uploadConfig?.method || "POST", endpoint);
 
-    Object.entries(uploadConfig?.headers || {}).forEach(([key, value]) => {
+    Object.entries({
+      ...(uploadConfig?.headers || {}),
+      ...(options?.headers || {}),
+    }).forEach(([key, value]) => {
       if (value === undefined || value === null) return;
       xhr.setRequestHeader(key, `${value}`);
     });
@@ -136,30 +201,29 @@ async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
     xhr.upload.addEventListener("progress", (event) => {
       if (!onProgress) return;
 
-      const total = event.total || file?.size || 0;
-      const percent = total > 0 ? Math.round((event.loaded / total) * 100) : 0;
+      const loaded = Math.min(total, loadedOffset + (event.loaded || 0));
+      const percent = total > 0 ? Math.round((loaded / total) * 100) : 0;
 
       onProgress({
-        loaded: event.loaded,
+        loaded,
         total,
         percent: Math.max(0, Math.min(100, percent)),
       });
     });
 
     xhr.addEventListener("load", () => {
-      const text = xhr.responseText || "";
-      let data = null;
-
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = text ? { message: text } : null;
-      }
+      const data = parseDirectUploadResponse(xhr);
 
       if (xhr.status >= 200 && xhr.status < 300) {
         if (onProgress) {
-          const total = file?.size || 0;
-          onProgress({ loaded: total, total, percent: 100 });
+          const loaded = Math.min(total, options?.completedLoaded ?? total);
+          const percent = total > 0 ? Math.round((loaded / total) * 100) : 100;
+
+          onProgress({
+            loaded,
+            total,
+            percent: Math.max(0, Math.min(100, percent)),
+          });
         }
 
         resolve(data || {});
@@ -184,9 +248,45 @@ async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
   });
 }
 
+async function uploadFileDirect(file, uploadConfig = {}, options = {}) {
+  const fileSize = file?.size ?? 0;
+
+  if (fileSize <= DIRECT_UPLOAD_LARGE_FILE_THRESHOLD || typeof file?.slice !== "function") {
+    return sendDirectUploadRequest(file, uploadConfig, options);
+  }
+
+  const chunkSize = normalizeDirectUploadChunkSize(uploadConfig?.chunkSize);
+  const uploadId = createDirectUploadId();
+  let lastResponse = {};
+
+  for (let start = 0; start < fileSize; start += chunkSize) {
+    const end = Math.min(start + chunkSize, fileSize);
+    const chunk = file.slice(start, end);
+
+    lastResponse = await sendDirectUploadRequest(file, uploadConfig, {
+      ...options,
+      filePart: chunk,
+      fileName: file?.name,
+      total: fileSize,
+      loadedOffset: start,
+      completedLoaded: end,
+      headers: {
+        "Content-Range": `bytes ${start}-${end - 1}/${fileSize}`,
+        "X-Unique-Upload-Id": uploadId,
+      },
+    });
+  }
+
+  return lastResponse;
+}
+
 export const api = {
   login: (payload) => request("/auth/login", { method: "POST", body: payload }),
   register: (payload) => request("/auth/register", { method: "POST", body: payload }),
+  verifyEmailCode: (payload) => request("/auth/verify-email-code", { method: "POST", body: payload }),
+  resendVerificationCode: (payload) => request("/auth/resend-verification-code", { method: "POST", body: payload }),
+  forgotPassword: (payload) => request("/auth/forgot-password", { method: "POST", body: payload }),
+  resetPassword: (payload) => request("/auth/reset-password", { method: "POST", body: payload }),
   getOAuthRedirectUrl: (provider) => `${API_BASE_URL}/auth/oauth/${encodeURIComponent(provider)}/redirect`,
   me: () => request("/auth/me"),
   logout: () => request("/auth/logout", { method: "POST" }),
@@ -202,6 +302,7 @@ export const api = {
   createVideo: (payload) => request("/videos", { method: "POST", body: payload }),
   updateVideo: (id, payload) => request(`/videos/${id}`, { method: "PATCH", body: payload }),
   publishVideo: (id) => request(`/videos/${id}/publish`, { method: "POST" }),
+  getLiveAgoraSession: (id, options = {}) => request(`/videos/${id}/live/session${buildQueryString({ role: options.role })}`),
   startVideoLive: (id) => request(`/videos/${id}/live/start`, { method: "POST" }),
   stopVideoLive: (id) => request(`/videos/${id}/live/stop`, { method: "POST" }),
   sendLiveSignal: (id, payload) => request(`/videos/${id}/live/signals`, { method: "POST", body: payload }),
@@ -209,6 +310,7 @@ export const api = {
   getProfile: () => request("/me/profile"),
   updateProfile: (payload) => request("/me/profile", { method: "PATCH", body: payload }),
   getProfileFeed: (feed) => request(`/me/${feed}`),
+  getProfileSubscribers: () => request("/me/subscribers"),
   getUser: (id) => request(`/users/${id}`),
   getUserPosts: (id) => request(`/users/${id}/posts`),
   searchUsers: (query) => request(`/users/search${buildQueryString({ q: query })}`),
@@ -217,6 +319,9 @@ export const api = {
   searchVideos: (query) => request(`/search/videos${buildQueryString({ q: query })}`),
   searchCreators: (query) => request(`/search/creators${buildQueryString({ q: query })}`),
   searchCategories: (query) => request(`/search/categories${buildQueryString({ q: query })}`),
+  getNotifications: () => request("/notifications"),
+  markNotificationRead: (id) => request(`/notifications/${id}/read`, { method: "POST" }),
+  markAllNotificationsRead: () => request("/notifications/read-all", { method: "POST" }),
   getPreferences: () => request("/me/preferences"),
   updatePreferences: (payload) => request("/me/preferences", { method: "PATCH", body: payload }),
   getDeveloperOverview: () => request("/developer"),
@@ -236,8 +341,12 @@ export const api = {
   getVideo: (id) => request(`/videos/${id}`),
   getRelatedVideos: (id) => request(`/videos/${id}/related`),
   getVideoComments: (id) => request(`/videos/${id}/comments`),
+  getLiveEngagements: (id, options = {}) => request(`/videos/${id}/live/engagements${buildQueryString({ limit: options.limit, includeSummary: options.includeSummary ? 1 : undefined })}`),
   getCommentReplies: (id) => request(`/comments/${id}/replies`),
   recordView: (id) => request(`/videos/${id}/view`, { method: "POST" }),
+  recordLivePresence: (id, payload) => request(`/videos/${id}/live/presence`, { method: "POST", body: payload }),
+  leaveLivePresence: (id, payload) => request(`/videos/${id}/live/presence/leave`, { method: "POST", body: payload }),
+  likeLiveVideo: (id) => request(`/videos/${id}/live/like`, { method: "POST" }),
   likeVideo: (id) => request(`/videos/${id}/like`, { method: "POST" }),
   unlikeVideo: (id) => request(`/videos/${id}/like`, { method: "DELETE" }),
   dislikeVideo: (id) => request(`/videos/${id}/dislike`, { method: "POST" }),

@@ -9,11 +9,13 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { ApiError, firstError } from "../services/api";
 
+const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
+
 export default function SignUp({ onNavigateToLogin, onSuccess }) {
   const navigate = useNavigate();
   const { register } = useAuth();
   const { t } = useLanguage();
-  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const [form, setForm] = useState({ fullName: "", username: "", email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [agreed, setAgreed] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -33,6 +35,11 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
       newErrors.fullName = t("auth.validation.fullNameRequired");
     } else if (form.fullName.trim().length < 2) {
       newErrors.fullName = t("auth.validation.nameMin");
+    }
+    if (!form.username.trim()) {
+      newErrors.username = t("auth.validation.usernameRequired");
+    } else if (!USERNAME_PATTERN.test(form.username.trim())) {
+      newErrors.username = t("auth.validation.usernameInvalid");
     }
     if (!form.email.trim()) {
       newErrors.email = t("auth.validation.emailRequired");
@@ -68,13 +75,25 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
     setSubmitError("");
 
     try {
-      await register(form);
+      const result = await register({
+        ...form,
+        fullName: form.fullName.trim(),
+        username: form.username.trim(),
+        email: form.email.trim(),
+      });
+
+      if (result?.verification?.required) {
+        navigate("/verify-email", { replace: true });
+        return;
+      }
+
       onSuccess?.();
       navigate("/home", { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors({
           fullName: error.errors?.fullName?.[0] || "",
+          username: error.errors?.username?.[0] || "",
           email: error.errors?.email?.[0] || "",
           password: error.errors?.password?.[0] || "",
           agreed: "",
@@ -118,12 +137,37 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                         placeholder-slate500 dark:placeholder-slate500
                         ${errors.fullName
                           ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
           {errors.fullName && (
             <p className="text-red-500 text-[0.75rem] mt-1 ml-1">
               {errors.fullName}
+            </p>
+          )}
+        </div>
+
+        {/* Username */}
+        <div className="mb-3">
+          <input
+            type="text"
+            name="username"
+            placeholder={t("auth.username")}
+            value={form.username}
+            onChange={handleChange}
+            autoCapitalize="none"
+            autoCorrect="off"
+            className={`w-full px-4 py-3 rounded-md text-sm
+                        outline-none transition-colors
+                        placeholder-slate500 dark:placeholder-slate500
+                        ${errors.username
+                          ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
+                          : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                        }`}
+          />
+          {errors.username && (
+            <p className="text-red-500 text-[0.75rem] mt-1 ml-1">
+              {errors.username}
             </p>
           )}
         </div>
@@ -141,7 +185,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                         placeholder-slate500 dark:placeholder-slate500
                         ${errors.email
                           ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
           {errors.email && (
@@ -165,7 +209,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                           placeholder-slate500 dark:placeholder-slate500
                           ${errors.password
                             ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                            : "bg-white300 dark:bg-[#2d2d2d] text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                            : "bg-white300 dark:bg-[#2d2d2d] text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                           }`}
             />
             <button

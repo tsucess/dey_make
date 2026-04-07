@@ -1,6 +1,8 @@
 import { useLanguage } from "../../context/LanguageContext";
 import { motion } from "motion/react";
 
+const MotionDiv = motion.div;
+
 export default function WhySection() {
   const { t } = useLanguage();
   const features = [
@@ -42,11 +44,11 @@ export default function WhySection() {
                       max-w-175 mx-auto">
         {features.map((f) => (
           <div key={f.title} className="flex flex-col items-center font-inter">
-            <motion.div whileHover={{ scale: 1.2 }}
+            <MotionDiv whileHover={{ scale: 1.2 }}
               className="w-28"
             >
               {f.icon}
-            </motion.div>
+            </MotionDiv>
             <h3 className="text-xl font-semibold text-slate100
                            dark:text-white mb-2.5">
               {f.title}

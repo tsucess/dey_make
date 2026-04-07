@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   FALLBACK_AVATAR,
   FALLBACK_THUMBNAIL,
+  buildVideoAnalyticsLink,
   buildVideoLink,
   buildShareUrl,
   formatCompactNumber,
@@ -10,6 +11,7 @@ import {
   getProfileAvatar,
   getProfileName,
   getVideoThumbnail,
+  hasPostLiveAnalytics,
   mapVideoToCardProps,
 } from './content';
 
@@ -51,7 +53,17 @@ describe('content helpers', () => {
       tags: ['Technology'],
       live: true,
       processingStatus: 'processing',
+      creatorId: null,
+      hasAnalytics: false,
+      analyticsHref: null,
     });
+  });
+
+  it('detects post-live analytics links for ended lives', () => {
+    const video = { id: 21, isLive: false, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } };
+
+    expect(hasPostLiveAnalytics(video)).toBe(true);
+    expect(buildVideoAnalyticsLink(video)).toBe('/video/21/analytics');
   });
 
   it('normalizes video processing status safely', () => {

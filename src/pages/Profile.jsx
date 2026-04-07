@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FaRegCommentDots, FaRegHeart } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
+  buildVideoAnalyticsLink,
   buildVideoLink,
+  formatCompactNumber,
   formatCountLabel,
   formatSubscriberLabel,
+  hasPostLiveAnalytics,
   getProfileAvatar,
   getProfileName,
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+
+const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
 
 function getProfileTabs(t, isOwnProfile) {
   const tabs = [
@@ -40,8 +46,34 @@ function ViewsBadge({ views }) {
   );
 }
 
-function FeedTile({ video, onOpen }) {
+function FeedTile({ video, onOpen, onViewAnalytics, showAnalyticsCta = false }) {
   const { t } = useLanguage();
+  const metrics = [
+    {
+      key: "views",
+      icon: <IoMdArrowDropright className="h-4 w-4" />,
+      value: formatCompactNumber(video.views || 0),
+      label: `${formatCompactNumber(video.views || 0)} ${t("content.views")}`,
+    },
+    {
+      key: "likes",
+      icon: <FaRegHeart className="h-3.5 w-3.5" />,
+      value: formatCompactNumber(video.likes || 0),
+      label: `${formatCompactNumber(video.likes || 0)} ${t("videoDetails.like")}`,
+    },
+    {
+      key: "comments",
+      icon: <FaRegCommentDots className="h-3.5 w-3.5" />,
+      value: formatCompactNumber(video.commentsCount || 0),
+      label: `${formatCompactNumber(video.commentsCount || 0)} ${t("videoDetails.comments")}`,
+    },
+    ...(video.liveAnalytics?.peakViewers ? [{
+      key: "peak-viewers",
+      icon: <span className="text-[10px] font-black tracking-[0.2em]">PK</span>,
+      value: formatCompactNumber(video.liveAnalytics.peakViewers),
+      label: `${formatCompactNumber(video.liveAnalytics.peakViewers)} ${t("videoDetails.peakViewers")}`,
+    }] : []),
+  ];
 
   return (
     <article
@@ -51,9 +83,29 @@ function FeedTile({ video, onOpen }) {
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
       <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
         <p className="line-clamp-2 text-sm font-medium text-white md:text-base">{getVideoTitle(video)}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-white">
+          {metrics.map((metric) => (
+            <span key={metric.key} aria-label={metric.label} className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-xs font-medium backdrop-blur-xs">
+              {metric.icon}
+              <span>{metric.value}</span>
+            </span>
+          ))}
+        </div>
       </div>
+      {showAnalyticsCta && hasPostLiveAnalytics(video) ? (
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            onViewAnalytics?.(video);
+          }}
+          className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold text-black shadow-sm backdrop-blur-xs transition hover:bg-white"
+        >
+          {t("videoDetails.viewAnalytics")}
+        </button>
+      ) : null}
       {video.isLive ? <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">{t("content.liveBadge")}</span> : null}
-      <div className="absolute bottom-4 right-4">
+      <div className="absolute right-4 top-4 md:right-4 md:top-4">
         <ViewsBadge views={video.views || 0} />
       </div>
     </article>
@@ -92,7 +144,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
-  const [form, setForm] = useState({ fullName: "", bio: "", avatarUrl: "" });
+  const [form, setForm] = useState({ fullName: "", username: "", bio: "", avatarUrl: "" });
   const [editing, setEditing] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
@@ -171,6 +223,7 @@ export default function Profile() {
           setProfile(nextProfile);
           setForm({
             fullName: nextProfile?.fullName || "",
+            username: nextProfile?.username || "",
             bio: nextProfile?.bio || "",
             avatarUrl: nextProfile?.avatarUrl || "",
           });
@@ -272,6 +325,16 @@ export default function Profile() {
       return;
     }
 
+    if (!form.username.trim()) {
+      setError(t("profile.usernameRequired"));
+      return;
+    }
+
+    if (!USERNAME_PATTERN.test(form.username.trim())) {
+      setError(t("profile.usernameInvalid"));
+      return;
+    }
+
     setSaving(true);
     setError("");
     setFeedback("");
@@ -279,6 +342,7 @@ export default function Profile() {
     try {
       const response = await api.updateProfile({
         fullName: form.fullName.trim(),
+        username: form.username.trim(),
         bio: form.bio.trim() || null,
         avatarUrl: form.avatarUrl.trim() || null,
       });
@@ -287,6 +351,7 @@ export default function Profile() {
       setProfile(nextProfile);
       setForm({
         fullName: nextProfile?.fullName || "",
+        username: nextProfile?.username || "",
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || "",
       });
@@ -348,6 +413,7 @@ export default function Profile() {
       setForm((current) => ({
         ...current,
         fullName: nextProfile?.fullName || current.fullName,
+        username: nextProfile?.username || current.username,
         bio: nextProfile?.bio || "",
         avatarUrl: nextProfile?.avatarUrl || uploadedAvatarUrl,
       }));
@@ -424,6 +490,10 @@ export default function Profile() {
     navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${nextVideo.id}` : buildVideoLink(nextVideo));
   }
 
+  function handleViewAnalytics(nextVideo) {
+    navigate(buildVideoAnalyticsLink(nextVideo));
+  }
+
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
       <img src="./header_profile.png" alt="" className="h-56 w-full md:h-64" />
@@ -467,6 +537,7 @@ export default function Profile() {
 
                   <div className="space-y-1">
                     <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
+                    {profile?.username ? <p className="text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
                     <p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
@@ -484,11 +555,20 @@ export default function Profile() {
                       className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
                     />
                     <input
+                      type="text"
+                      value={form.username}
+                      onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                      placeholder={t("profile.usernamePlaceholder")}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                    />
+                    <input
                       type="url"
                       value={form.avatarUrl}
                       onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
                       placeholder={t("profile.avatarUrlPlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white md:col-span-2"
                     />
                     <textarea
                       value={form.bio}
@@ -521,6 +601,7 @@ export default function Profile() {
                           setEditing(false);
                           setForm({
                             fullName: profile?.fullName || "",
+                            username: profile?.username || "",
                             bio: profile?.bio || "",
                             avatarUrl: profile?.avatarUrl || "",
                           });
@@ -538,6 +619,20 @@ export default function Profile() {
                         className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.editProfile")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/analytics/live")}
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                      >
+                        {t("profile.liveDashboard")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => navigate("/profile/subscribers")}
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                      >
+                        {t("content.subscribers")}
                       </button>
                       <button
                         type="button"
@@ -694,7 +789,13 @@ export default function Profile() {
           ) : visiblePosts.length ? (
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-8 md:gap-6">
               {visiblePosts.map((post) => (
-                <FeedTile key={post.id} video={post} onOpen={handleOpenFeedItem} />
+                <FeedTile
+                  key={post.id}
+                  video={post}
+                  onOpen={handleOpenFeedItem}
+                  onViewAnalytics={handleViewAnalytics}
+                  showAnalyticsCta={isOwnProfile && activeConfig.feed === "posts"}
+                />
               ))}
             </div>
           ) : (

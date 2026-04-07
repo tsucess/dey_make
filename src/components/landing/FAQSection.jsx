@@ -4,6 +4,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { motion } from "motion/react";
 
+const MotionParagraph = motion.p;
+
 export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState(0);
   const { isDark } = useTheme();
@@ -65,12 +67,12 @@ export default function FAQSection() {
               />
             </button>
             {openIndex === i && (
-              <motion.p  initial={{ height: 0, opacity: 0 }}
+              <MotionParagraph  initial={{ height: 0, opacity: 0 }}
   animate={{ height: "auto", opacity: 1 }}
   exit={{ height: 0, opacity: 0 }} className="text-sm md:text-base text-slate100 font-inter dark:text-white
                             leading-relaxed pb-5 max-w-lg">
                 {faq.a}
-              </motion.p>
+              </MotionParagraph>
             )}
           </div>
         ))}

@@ -3,6 +3,7 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
+import Spinner from "../components/Layout/Spinner";
 
 const INBOX_POLL_INTERVAL_MS = 15000;
 const ACTIVE_CONVERSATION_POLL_INTERVAL_MS = 5000;
@@ -146,7 +147,7 @@ function SectionCard({ title, children }) {
 export default function Messages() {
   const { t } = useLanguage();
   const { user } = useAuth();
-  const isMountedRef = useRef(true);
+  const isMountedRef = useRef(false);
   const activeConversationIdRef = useRef(null);
   const conversationsRef = useRef([]);
   const messagesRef = useRef([]);
@@ -155,7 +156,8 @@ export default function Messages() {
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draftMessage, setDraftMessage] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loadingConversations, setLoadingConversations] = useState(true);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [busyUserId, setBusyUserId] = useState(null);
   const [sending, setSending] = useState(false);
@@ -166,6 +168,16 @@ export default function Messages() {
     () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
     [activeConversationId, conversations],
   );
+
+  const suggestedCreators = useMemo(() => {
+    const interactedCreatorIds = new Set(
+      conversations
+        .map((conversation) => conversation.participant?.id)
+        .filter((participantId) => participantId != null),
+    );
+
+    return suggestedUsers.filter((participant) => !interactedCreatorIds.has(participant.id));
+  }, [conversations, suggestedUsers]);
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
@@ -183,51 +195,69 @@ export default function Messages() {
     messagesRef.current = [];
   }, [activeConversationId]);
 
-  useEffect(() => () => {
-    isMountedRef.current = false;
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   const loadInbox = useCallback(async ({ silent = false, includeSuggested = true } = {}) => {
     if (!silent) {
-      setLoading(true);
+      setLoadingConversations(true);
+      if (includeSuggested) setLoadingSuggestions(true);
       setError("");
     }
 
-    try {
-      const requests = [api.getConversations()];
+    const requests = [
+      api.getConversations()
+        .then((response) => {
+          if (!isMountedRef.current) return;
 
-      if (includeSuggested) {
-        requests.push(api.getSuggestedUsers());
-      }
+          const currentActiveConversationId = activeConversationIdRef.current;
+          const nextConversations = mergeConversationSummaries(
+            conversationsRef.current,
+            response?.data?.conversations || [],
+            currentActiveConversationId,
+          );
 
-      const [conversationResponse, suggestedResponse] = await Promise.all(requests);
+          setConversations(nextConversations);
+          setActiveConversationId((current) =>
+            nextConversations.some((conversation) => conversation.id === current)
+              ? current
+              : nextConversations[0]?.id || null,
+          );
+        })
+        .catch((nextError) => {
+          if (!silent && isMountedRef.current) {
+            setError((current) => current || firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
+          }
+        })
+        .finally(() => {
+          if (!silent && isMountedRef.current) setLoadingConversations(false);
+        }),
+    ];
 
-      if (!isMountedRef.current) return;
-
-      const currentActiveConversationId = activeConversationIdRef.current;
-      const nextConversations = mergeConversationSummaries(
-        conversationsRef.current,
-        conversationResponse?.data?.conversations || [],
-        currentActiveConversationId,
+    if (includeSuggested) {
+      requests.push(
+        api.getSuggestedUsers()
+          .then((response) => {
+            if (!isMountedRef.current) return;
+            setSuggestedUsers(response?.data?.users || []);
+          })
+          .catch((nextError) => {
+            if (!silent && isMountedRef.current) {
+              setError((current) => current || firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadSuggestions")));
+            }
+          })
+          .finally(() => {
+            if (!silent && isMountedRef.current) setLoadingSuggestions(false);
+          }),
       );
-
-      setConversations(nextConversations);
-      if (includeSuggested) {
-        setSuggestedUsers(suggestedResponse?.data?.users || []);
-      }
-
-      setActiveConversationId((current) =>
-        nextConversations.some((conversation) => conversation.id === current)
-          ? current
-          : nextConversations[0]?.id || null,
-      );
-    } catch (nextError) {
-      if (!silent && isMountedRef.current) {
-        setError(firstError(nextError?.errors, nextError?.message || t("messages.unableToLoadInbox")));
-      }
-    } finally {
-      if (!silent && isMountedRef.current) setLoading(false);
     }
+
+    await Promise.allSettled(requests);
   }, [t]);
 
   const loadConversationMessages = useCallback(async (conversationId, { silent = false, after } = {}) => {
@@ -421,8 +451,8 @@ export default function Messages() {
         <div className="grid gap-6 lg:grid-cols-[340px,minmax(0,1fr)]">
           <div className="space-y-6">
             <SectionCard title={t("messages.inbox")}>
-              {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingConversations")}</p>
+              {loadingConversations ? (
+                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
               ) : conversations.length ? (
                 <div className="space-y-3">
                   {conversations.map((conversation) => (
@@ -440,11 +470,11 @@ export default function Messages() {
             </SectionCard>
 
             <SectionCard title={t("messages.suggestedCreators")}>
-              {loading ? (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingSuggestions")}</p>
-              ) : suggestedUsers.length ? (
+              {loadingSuggestions ? (
+                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
+              ) : suggestedCreators.length ? (
                 <div className="space-y-3">
-                  {suggestedUsers.map((participant) => (
+                  {suggestedCreators.map((participant) => (
                     <div key={participant.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[#F5F5F5] px-4 py-3 dark:bg-[#262626]">
                       <div className="flex min-w-0 items-center gap-3">
                         <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-11 w-11 rounded-full object-cover" />
@@ -472,7 +502,7 @@ export default function Messages() {
             </SectionCard>
           </div>
 
-          <section className="flex min-h-[540px] flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
+          <section className="flex min-h-135 flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
             {activeConversation ? (
               <>
                 <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8">

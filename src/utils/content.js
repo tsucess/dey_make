@@ -114,6 +114,23 @@ export function buildVideoLink(videoOrId, options = {}) {
   return `${isLive ? "/live" : "/video"}/${id}`;
 }
 
+export function buildVideoAnalyticsLink(videoOrId) {
+  const id = videoOrId?.id ?? videoOrId;
+  return `/video/${id}/analytics`;
+}
+
+export function hasPostLiveAnalytics(video) {
+  return Boolean(
+    !isActiveLiveVideo(video) && (
+      video?.liveEndedAt
+      || video?.liveStartedAt
+      || video?.liveAnalytics?.peakViewers
+      || video?.liveLikes
+      || video?.liveComments
+    )
+  );
+}
+
 export function buildShareUrl(videoOrId, options = {}) {
   const path = buildVideoLink(videoOrId, options);
   if (typeof window === "undefined") return path;
@@ -152,5 +169,8 @@ export function mapVideoToCardProps(video) {
     tags: getVideoTags(video),
     live: isActiveLiveVideo(video),
     processingStatus: getVideoProcessingStatus(video),
+    creatorId: video?.author?.id || video?.creator?.id || null,
+    hasAnalytics: hasPostLiveAnalytics(video),
+    analyticsHref: hasPostLiveAnalytics(video) ? buildVideoAnalyticsLink(video) : null,
   };
 }

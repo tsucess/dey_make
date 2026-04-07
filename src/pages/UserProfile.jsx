@@ -62,7 +62,7 @@ function FeedTile({ video, onOpen }) {
 export default function Profile() {
   const { id: routeProfileId } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, syncUser } = useAuth();
+  const { user, syncUser } = useAuth();
   const { t } = useLanguage();
   const avatarInputRef = useRef(null);
   const isOwnProfile = !routeProfileId || String(user?.id) === String(routeProfileId);
@@ -74,7 +74,6 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isAvatarPreviewOpen, setIsAvatarPreviewOpen] = useState(false);
   const [error, setError] = useState("");
@@ -90,7 +89,6 @@ export default function Profile() {
   );
   const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
-  const canSubscribe = !isOwnProfile && Boolean(profile?.id) && user?.id !== profile?.id;
 
   useEffect(() => {
     if (!feedback) return undefined;
@@ -181,60 +179,6 @@ export default function Profile() {
     };
   }, [activeConfig.feed, activeConfig.label, isOwnProfile, routeProfileId, t]);
 
-  function requireAuth() {
-    if (isAuthenticated) return true;
-    navigate("/login");
-    return false;
-  }
-
-  async function handleSaveProfile() {
-    if (!isOwnProfile) return;
-
-    if (!form.fullName.trim()) {
-      setError(t("profile.fullNameRequired"));
-      return;
-    }
-
-    setSaving(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      const response = await api.updateProfile({
-        fullName: form.fullName.trim(),
-        bio: form.bio.trim() || null,
-        avatarUrl: form.avatarUrl.trim() || null,
-      });
-      const nextProfile = response?.data?.profile;
-
-      setProfile(nextProfile);
-      setForm({
-        fullName: nextProfile?.fullName || "",
-        bio: nextProfile?.bio || "",
-        avatarUrl: nextProfile?.avatarUrl || "",
-      });
-      syncUser?.(nextProfile);
-      setEditing(false);
-      setFeedback(t("profile.updated"));
-    } catch (nextError) {
-      setError(firstError(nextError.errors, nextError.message || t("profile.unableToUpdate")));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleShareProfile() {
-    const sharePath = profile?.id ? `/users/${profile.id}` : (isOwnProfile ? "/profile" : `/users/${routeProfileId}`);
-    const shareUrl = `${window.location.origin}${sharePath}`;
-
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      setFeedback(t("profile.shareCopied"));
-    } catch {
-      setFeedback(t("profile.shareFallback", { url: shareUrl }));
-    }
-  }
-
   async function handleAvatarFileChange(event) {
     if (!isOwnProfile) return;
 
@@ -281,34 +225,6 @@ export default function Profile() {
     } finally {
       setUploadingAvatar(false);
       event.target.value = "";
-    }
-  }
-
-  async function handleSubscribe() {
-    if (!canSubscribe || !requireAuth()) return;
-
-    setSaving(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      const response = profile?.currentUserState?.subscribed
-        ? await api.unsubscribeFromCreator(profile.id)
-        : await api.subscribeToCreator(profile.id);
-      const creator = response?.data?.creator;
-
-      setProfile((current) => current ? {
-        ...current,
-        subscriberCount: creator?.subscriberCount ?? current.subscriberCount,
-        currentUserState: {
-          ...current.currentUserState,
-          subscribed: creator?.subscribed ?? current.currentUserState?.subscribed,
-        },
-      } : current);
-    } catch (nextError) {
-      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.unableToUpdateSubscription")));
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -410,75 +326,6 @@ export default function Profile() {
                     <button>Message</button>
                 </div>
 
-                {/* <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-                  {editing ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleSaveProfile}
-                        disabled={saving}
-                        className="min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {saving ? t("profile.saving") : t("profile.saveProfile")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditing(false);
-                          setForm({
-                            fullName: profile?.fullName || "",
-                            bio: profile?.bio || "",
-                            avatarUrl: profile?.avatarUrl || "",
-                          });
-                        }}
-                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
-                      >
-                        {t("profile.cancel")}
-                      </button>
-                    </>
-                  ) : isOwnProfile ? (
-                    <div className="flex gap-4 justify-center">
-                      <button
-                        type="button"
-                        onClick={() => setEditing(true)}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("profile.editProfile")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("profile.shareProfile")}
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 md:flex-row md:justify-center">
-                      {canSubscribe ? (
-                        <button
-                          type="button"
-                          onClick={handleSubscribe}
-                          disabled={saving}
-                          className="md:min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {saving
-                            ? t("profile.saving")
-                            : profile?.currentUserState?.subscribed
-                              ? t("profile.unsubscribe")
-                              : t("profile.subscribe")}
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("profile.shareProfile")}
-                      </button>
-                    </div>
-                  )}
-                </div> */}
               </div>
             )}
           </div>

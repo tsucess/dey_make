@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiSearch, HiPlus } from "react-icons/hi";
 import { IoNotificationsOutline } from "react-icons/io5";
@@ -10,33 +10,80 @@ import { buildSearchPath, normalizeSearchQuery } from "../../utils/search";
 import { CreateDropdown } from "./CreateDropdown";
 import Notification from "../Notification";
 
+const NOTIFICATION_POLL_INTERVAL_MS = 15000;
+
+function isDocumentHidden() {
+  return typeof document !== "undefined" && document.visibilityState === "hidden";
+}
+
 export default function TopBar() {
   const { user, isAuthenticated } = useAuth();
   const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const lookupRef = useRef(null);
+  const isMountedRef = useRef(true);
+  const notificationsRefreshInFlightRef = useRef(false);
   const [isVisible, setIsVisible] = useState(false);
   const [query, setQuery] = useState("");
   const [lookup, setLookup] = useState({ videos: [], creators: [], categories: [] });
   const [isLookupOpen, setIsLookupOpen] = useState(false);
   const [loadingLookup, setLoadingLookup] = useState(false);
   const [lookupError, setLookupError] = useState("");
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [notificationError, setNotificationError] = useState("");
+  const [markingAllNotificationsRead, setMarkingAllNotificationsRead] = useState(false);
+  const [busyNotificationId, setBusyNotificationId] = useState(null);
 
   const normalizedQuery = useMemo(() => normalizeSearchQuery(query), [query]);
   const hasLookupResults = lookup.videos.length || lookup.creators.length || lookup.categories.length;
+  const unreadNotificationCount = useMemo(
+    () => notifications.filter((notification) => !notification.readAt).length,
+    [notifications],
+  );
 
   function toggleVisiblity() {
     setIsVisible((prev) => !prev);
   }
 
-  function openNotification(){
-    setIsNotificationOpen(true)
+  const loadNotifications = useCallback(async ({ silent = false, skipIfHidden = false } = {}) => {
+    if (!isAuthenticated) return;
+    if (skipIfHidden && isDocumentHidden()) return;
+    if (notificationsRefreshInFlightRef.current) return;
+
+    notificationsRefreshInFlightRef.current = true;
+
+    if (!silent) {
+      setLoadingNotifications(true);
+      setNotificationError("");
+    }
+
+    try {
+      const response = await api.getNotifications();
+
+      if (!isMountedRef.current) return;
+
+      setNotifications(response?.data?.notifications || []);
+      setNotificationError("");
+    } catch (nextError) {
+      if (!silent && isMountedRef.current) {
+        setNotificationError(firstError(nextError.errors, nextError.message || t("topbar.unableToLoadNotifications")));
+      }
+    } finally {
+      notificationsRefreshInFlightRef.current = false;
+      if (!silent && isMountedRef.current) setLoadingNotifications(false);
+    }
+  }, [isAuthenticated, t]);
+
+  function openNotification() {
+    setIsNotificationOpen(true);
+    loadNotifications({ silent: true });
   }
 
-  function closeNotification(){
-    setIsNotificationOpen(false)
+  function closeNotification() {
+    setIsNotificationOpen(false);
   }
 
   function closeLookup() {
@@ -59,6 +106,14 @@ export default function TopBar() {
   }
 
   useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
 
     if (location.pathname.startsWith("/search")) {
@@ -67,6 +122,54 @@ export default function TopBar() {
 
     closeLookup();
   }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      setNotificationError("");
+      setLoadingNotifications(false);
+      setIsNotificationOpen(false);
+      return;
+    }
+
+    loadNotifications();
+  }, [isAuthenticated, loadNotifications]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    let polling = false;
+
+    const intervalId = window.setInterval(async () => {
+      if (polling || !isMountedRef.current) return;
+
+      polling = true;
+
+      try {
+        await loadNotifications({ silent: true, skipIfHidden: true });
+      } finally {
+        polling = false;
+      }
+    }, NOTIFICATION_POLL_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [isAuthenticated, loadNotifications]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return undefined;
+
+    function refreshNotificationsOnAttention() {
+      loadNotifications({ silent: true, skipIfHidden: true });
+    }
+
+    window.addEventListener("focus", refreshNotificationsOnAttention);
+    document.addEventListener("visibilitychange", refreshNotificationsOnAttention);
+
+    return () => {
+      window.removeEventListener("focus", refreshNotificationsOnAttention);
+      document.removeEventListener("visibilitychange", refreshNotificationsOnAttention);
+    };
+  }, [isAuthenticated, loadNotifications]);
 
   useEffect(() => {
     if (normalizedQuery.length < 2) {
@@ -128,6 +231,63 @@ export default function TopBar() {
 
   const showLookup = isLookupOpen && normalizedQuery.length >= 2;
 
+  function resolveNotificationDestination(notification) {
+    const data = notification?.data || {};
+
+    if (data.conversationId) return "/messages";
+    if (data.videoId) return buildVideoLink({ id: data.videoId, isLive: notification?.type === "live" });
+    if (data.creatorId) return `/users/${data.creatorId}`;
+    if (data.membershipId || data.planId) return "/profile";
+
+    return null;
+  }
+
+  async function handleMarkNotificationRead(notificationId) {
+    setBusyNotificationId(notificationId);
+
+    try {
+      const response = await api.markNotificationRead(notificationId);
+      const nextNotification = response?.data?.notification;
+
+      setNotifications((current) => current.map((notification) => (
+        notification.id === notificationId ? { ...notification, ...(nextNotification || {}), readAt: nextNotification?.readAt || notification.readAt || new Date().toISOString() } : notification
+      )));
+    } catch (nextError) {
+      setNotificationError(firstError(nextError.errors, nextError.message || t("topbar.unableToUpdateNotification")));
+    } finally {
+      if (isMountedRef.current) setBusyNotificationId(null);
+    }
+  }
+
+  async function handleMarkAllNotificationsRead() {
+    if (!unreadNotificationCount) return;
+
+    setMarkingAllNotificationsRead(true);
+
+    try {
+      await api.markAllNotificationsRead();
+      const readAt = new Date().toISOString();
+      setNotifications((current) => current.map((notification) => ({ ...notification, readAt: notification.readAt || readAt })));
+    } catch (nextError) {
+      setNotificationError(firstError(nextError.errors, nextError.message || t("topbar.unableToUpdateNotification")));
+    } finally {
+      if (isMountedRef.current) setMarkingAllNotificationsRead(false);
+    }
+  }
+
+  async function handleSelectNotification(notification) {
+    if (!notification?.readAt) {
+      await handleMarkNotificationRead(notification.id);
+    }
+
+    const destination = resolveNotificationDestination(notification);
+
+    if (destination) {
+      navigate(destination);
+      closeNotification();
+    }
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
     submitSearch();
@@ -148,7 +308,20 @@ export default function TopBar() {
 
   return (
     <>
-    <Notification isVisible={isNotificationOpen} closeNotification={closeNotification}/>
+    <Notification
+      isVisible={isNotificationOpen}
+      closeNotification={closeNotification}
+      notifications={notifications}
+      loading={loadingNotifications}
+      error={notificationError}
+      unreadCount={unreadNotificationCount}
+      markingAllRead={markingAllNotificationsRead}
+      busyNotificationId={busyNotificationId}
+      onRetry={() => loadNotifications()}
+      onSelectNotification={handleSelectNotification}
+      onMarkNotificationRead={handleMarkNotificationRead}
+      onMarkAllRead={handleMarkAllNotificationsRead}
+    />
     <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
                        bg-white dark:bg-slate100
                        sticky top-0 z-10 ">
@@ -284,8 +457,13 @@ export default function TopBar() {
                                rounded-full border-none cursor-pointer
                                bg-transparent
                                hover:bg-gray-100 dark:hover:bg-[#2d2d2d]
-                               transition-colors">
+                               transition-colors relative">
               <IoNotificationsOutline  className="w-5 h-5 text-black dark:text-white"/>
+              {unreadNotificationCount ? (
+                <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                  {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                </span>
+              ) : null}
             </button>
             
 

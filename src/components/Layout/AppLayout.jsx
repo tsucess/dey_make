@@ -10,6 +10,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useAuth } from "../../context/AuthContext";
 import { buildSearchPath } from "../../utils/search";
+import { useState } from "react";
+import Notification from "../Notification";
 
 function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/home")) return t("app.name");
@@ -56,6 +58,15 @@ export default function AppLayout() {
   const isHomepage = location.pathname === "/home";
   const isProfile = location.pathname === "/profile";
   const mobileTitle = getMobileTitle(location.pathname, t);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  function openNotification(){
+    setIsNotificationOpen(true)
+  }
+
+  function closeNotification(){
+    setIsNotificationOpen(false)
+  }
 
   function openSearch() {
     navigate(buildSearchPath());
@@ -73,10 +84,11 @@ export default function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* TopBar — desktop only */}
         <div className="hidden md:block">
-          <TopBar />
+          <TopBar openNotification={openNotification} closeNotification={closeNotification} isNotificationOpen={isNotificationOpen}/>
         </div>
 
         {/* Mobile TopBar */}
+        <Notification isVisible={isNotificationOpen} closeNotification={closeNotification}/>
         <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
           {isHomepage ? (
             <img src="/logo-footer.png" alt={t("app.name")} className="h-10 w-auto" />
@@ -89,17 +101,12 @@ export default function AppLayout() {
           <div className="flex items-center gap-3">
             {isHomepage ? (
               <>
-                <MobileActionButton
-                  onClick={toggleTheme}
-                  ariaLabel={isDark ? t("layout.switchToLightMode") : t("layout.switchToDarkMode")}
-                >
-                  {isDark ? <MdSunny className="h-5 w-5" /> : <IoMoonOutline className="h-5 w-5" />}
-                </MobileActionButton>
+              
                 <MobileActionButton onClick={openSearch} ariaLabel={t("layout.openSearch")}>
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
                 {isAuthenticated ? (
-                  <MobileActionButton ariaLabel={t("common.notifications")}>
+                  <MobileActionButton onClick={openNotification} ariaLabel={t("common.notifications")}>
                     <IoNotificationsOutline className="h-5 w-5" />
                   </MobileActionButton>
                 ) : null}

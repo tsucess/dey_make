@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { authState, syncUserSpy } = vi.hoisted(() => ({
   authState: {
-    user: { id: 1, fullName: 'Ada Lovelace', avatarUrl: '' },
+    user: { id: 1, fullName: 'Ada Lovelace', username: 'ada', avatarUrl: '' },
     isAuthenticated: true,
   },
   syncUserSpy: vi.fn(),
@@ -60,6 +60,9 @@ function renderPage(initialEntry = '/profile') {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/subscribers" element={<div>Subscribers page</div>} />
+        <Route path="/analytics/live" element={<div>Live dashboard page</div>} />
+        <Route path="/video/:id/analytics" element={<div>Analytics page</div>} />
         <Route path="/users/:id" element={<Profile />} />
         <Route path="/login" element={<div>Login page</div>} />
       </Routes>
@@ -70,7 +73,7 @@ function renderPage(initialEntry = '/profile') {
 describe('Profile', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    authState.user = { id: 1, fullName: 'Ada Lovelace', avatarUrl: '' };
+    authState.user = { id: 1, fullName: 'Ada Lovelace', username: 'ada', avatarUrl: '' };
     authState.isAuthenticated = true;
   });
 
@@ -82,6 +85,7 @@ describe('Profile', () => {
         profile: {
           id: 1,
           fullName: 'Ada Lovelace',
+          username: 'ada',
           bio: 'First programmer',
           subscriberCount: 2500,
           avatarUrl: '',
@@ -90,7 +94,7 @@ describe('Profile', () => {
     });
     api.getProfileFeed.mockResolvedValue({
       data: {
-        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120 }],
+        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120, likes: 9, commentsCount: 4, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } }],
       },
     });
     api.updateProfile.mockResolvedValue({
@@ -98,6 +102,7 @@ describe('Profile', () => {
         profile: {
           id: 1,
           fullName: 'Ada Byron',
+          username: 'ada.byron',
           bio: 'Computing pioneer',
           subscriberCount: 2500,
           avatarUrl: '',
@@ -108,11 +113,18 @@ describe('Profile', () => {
     renderPage();
 
     await screen.findByText('Ada Lovelace');
+    expect(screen.getByText('@ada')).toBeInTheDocument();
     await screen.findByText('Analytical Engine demo');
+    expect(screen.getByLabelText('9 Like')).toBeInTheDocument();
+    expect(screen.getByLabelText('4 Comments')).toBeInTheDocument();
+    expect(screen.getByLabelText('17 peak viewers')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'View analytics' })).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Edit profile/i }));
     await user.clear(screen.getByPlaceholderText('Full name'));
     await user.type(screen.getByPlaceholderText('Full name'), 'Ada Byron');
+    await user.clear(screen.getByPlaceholderText('Username'));
+    await user.type(screen.getByPlaceholderText('Username'), 'ada.byron');
     await user.clear(screen.getByPlaceholderText('Bio'));
     await user.type(screen.getByPlaceholderText('Bio'), 'Computing pioneer');
     await user.click(screen.getByRole('button', { name: /Save profile/i }));
@@ -121,13 +133,94 @@ describe('Profile', () => {
 
     expect(api.updateProfile).toHaveBeenCalledWith({
       fullName: 'Ada Byron',
+      username: 'ada.byron',
       bio: 'Computing pioneer',
       avatarUrl: null,
     });
 
     await screen.findByText('Profile updated successfully.');
     expect(screen.getByText('Ada Byron')).toBeInTheDocument();
-    expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron' }));
+    expect(screen.getByText('@ada.byron')).toBeInTheDocument();
+    expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron', username: 'ada.byron' }));
+  });
+
+  it('opens post-live analytics from the authenticated creator profile card', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({
+      data: {
+        videos: [{ id: 5, title: 'Analytical Engine demo', thumbnailUrl: 'https://cdn.example/demo.jpg', views: 120, likes: 9, commentsCount: 4, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } }],
+      },
+    });
+
+    renderPage();
+
+    await screen.findByText('Analytical Engine demo');
+    await user.click(screen.getByRole('button', { name: 'View analytics' }));
+
+    expect(await screen.findByText('Analytics page')).toBeInTheDocument();
+  });
+
+  it('opens the subscribers page from the authenticated profile', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({ data: { videos: [] } });
+
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByRole('button', { name: /subscribers/i }));
+
+    expect(await screen.findByText('Subscribers page')).toBeInTheDocument();
+  });
+
+  it('opens the live dashboard from the authenticated profile', async () => {
+    const user = userEvent.setup();
+
+    api.getProfile.mockResolvedValue({
+      data: {
+        profile: {
+          id: 1,
+          fullName: 'Ada Lovelace',
+          username: 'ada',
+          bio: 'First programmer',
+          subscriberCount: 2500,
+          avatarUrl: '',
+        },
+      },
+    });
+    api.getProfileFeed.mockResolvedValue({ data: { videos: [] } });
+
+    renderPage();
+
+    await screen.findByText('Ada Lovelace');
+    await user.click(screen.getByRole('button', { name: 'Live dashboard' }));
+
+    expect(await screen.findByText('Live dashboard page')).toBeInTheDocument();
   });
 
   it('loads a public creator profile and toggles subscription state', async () => {
@@ -138,6 +231,7 @@ describe('Profile', () => {
         user: {
           id: 5,
           fullName: 'Grace Hopper',
+          username: 'grace.hopper',
           bio: 'Compiler trailblazer',
           subscriberCount: 4100,
           avatarUrl: '',
@@ -166,6 +260,7 @@ describe('Profile', () => {
     await waitFor(() => expect(api.getUserPosts).toHaveBeenCalledWith('5'));
 
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+    expect(screen.getByText('@grace.hopper')).toBeInTheDocument();
     expect(screen.getByText('COBOL for creators')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Edit profile/i })).not.toBeInTheDocument();
 
@@ -183,6 +278,7 @@ describe('Profile', () => {
         user: {
           id: 5,
           fullName: 'Grace Hopper',
+          username: 'grace.hopper',
           bio: 'Compiler trailblazer',
           subscriberCount: 4100,
           avatarUrl: '',

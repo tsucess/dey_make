@@ -1,12 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { buildVideoLink, FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 
-export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live, processingStatus = "completed" }) {
+export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = [], live, processingStatus = "completed", creatorId = null, hasAnalytics = false, analyticsHref = null }) {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { user } = useAuth();
   const showProcessingBadge = processingStatus !== "completed";
   const processingLabel = processingStatus === "failed" ? t("content.processingFailedBadge") : t("content.processingBadge");
+  const showAnalyticsButton = Boolean(!live && hasAnalytics && creatorId && user?.id === creatorId);
 
   return (
     <div
@@ -31,6 +34,18 @@ export default function VideoCard({ id, thumb, title, author, avatarUrl, tags = 
             </div>
           ) : null}
         </div>
+        {showAnalyticsButton ? (
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(analyticsHref || `/video/${id}/analytics`);
+            }}
+            className="absolute right-2 top-2 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold text-black shadow-sm transition hover:bg-white"
+          >
+            {t("videoDetails.viewAnalytics")}
+          </button>
+        ) : null}
       </div>
       <div className="flex items-start gap-3 mt-2.5 px-0.5">
         <img src={avatarUrl || FALLBACK_AVATAR} alt={author}

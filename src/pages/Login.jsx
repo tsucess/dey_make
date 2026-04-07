@@ -13,7 +13,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { t } = useLanguage();
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -28,10 +28,8 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
 
   const validate = () => {
     const newErrors = {};
-    if (!form.email.trim()) {
-      newErrors.email = t("auth.validation.emailRequired");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = t("auth.validation.validEmail");
+    if (!form.identifier.trim()) {
+      newErrors.identifier = t("auth.validation.identifierRequired");
     }
     if (!form.password) {
       newErrors.password = t("auth.validation.passwordRequired");
@@ -42,6 +40,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
   };
 
   const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/signup"));
+  const navigateToForgotPassword = () => navigate("/forgot-password");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -55,13 +54,17 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     setSubmitError("");
 
     try {
-      await login(form);
+      await login({
+        ...form,
+        identifier: form.identifier.trim(),
+      });
+
       onSuccess?.();
       navigate("/home", { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors({
-          email: error.errors?.email?.[0] || "",
+          identifier: error.errors?.identifier?.[0] || "",
           password: error.errors?.password?.[0] || "",
         });
         setSubmitError(firstError(error.errors, error.message));
@@ -90,25 +93,27 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
           </p>
         )}
 
-        {/* Email */}
+        {/* Identifier */}
         <div className="mb-3">
           <input
-            type="email"
-            name="email"
-            placeholder={t("auth.email")}
-            value={form.email}
+            type="text"
+            name="identifier"
+            placeholder={t("auth.identifier")}
+            value={form.identifier}
             onChange={handleChange}
+            autoCapitalize="none"
+            autoCorrect="off"
             className={`w-full px-4 py-3 rounded-md text-sm
                         outline-none transition-colors
                         placeholder-slate500 dark:placeholder-slate500 font-inter
-                        ${errors.email
+                        ${errors.identifier
                           ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                          : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                          : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                         }`}
           />
-          {errors.email && (
+          {errors.identifier && (
             <p className="text-red-500 text-[0.75rem] mt-1 ml-1">
-              {errors.email}
+              {errors.identifier}
             </p>
           )}
         </div>
@@ -127,7 +132,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                           placeholder-gray-400 dark:placeholder-slate500 font-inter
                           ${errors.password
                             ? "border border-red-400 bg-red-50 dark:bg-red-900/20 text-slate500 dark:text-slate500"
-                            : "bg-white300 dark:bg-black100 text-slate500 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
+                            : "bg-white300 dark:bg-black100 text-black200 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
                           }`}
             />
             <button
@@ -150,11 +155,14 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
 
         {/* Forgot password */}
         <div className="flex justify-end mb-4 mt-3">
-          <a href="#forgot"
+          <button
+            type="button"
+            onClick={navigateToForgotPassword}
             className="text-[0.78rem] font-inter text-slate400 dark:text-slate400
-                       underline">
+                       underline bg-transparent border-none cursor-pointer"
+          >
             {t("auth.forgotPassword")}
-          </a>
+          </button>
         </div>
 
         {/* Submit */}

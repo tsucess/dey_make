@@ -29,6 +29,7 @@ vi.mock('../services/api', async () => {
     ...actual,
     api: {
       getCategories: vi.fn(),
+      searchCreators: vi.fn(),
       presignUpload: vi.fn(),
       uploadFileDirect: vi.fn(),
       uploadFile: vi.fn(),
@@ -40,7 +41,7 @@ vi.mock('../services/api', async () => {
   };
 });
 
-import { api } from '../services/api';
+import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD } from '../services/api';
 import CreateUpload from './CreateUpload';
 
 function buildMediaStream() {
@@ -85,6 +86,8 @@ describe('CreateUpload', () => {
     renderPage();
 
     await screen.findByText(/Signed in as Test Creator/i);
+    expect(screen.getAllByText(/@username or #username/i)).toHaveLength(1);
+    expect(screen.queryByPlaceholderText(/Tag people/i)).not.toBeInTheDocument();
 
     await waitFor(() => expect(screen.getByRole('combobox')).toBeDisabled());
 
@@ -139,19 +142,22 @@ describe('CreateUpload', () => {
 
     await waitFor(() => expect(api.createVideo).toHaveBeenCalledTimes(1));
 
+    const payload = api.createVideo.mock.calls[0][0];
+
     expect(api.presignUpload).toHaveBeenCalledWith({
       type: 'image',
       originalName: 'cover.png',
     });
     expect(api.uploadFileDirect).toHaveBeenCalledTimes(1);
     expect(api.uploadFile).toHaveBeenCalledTimes(1);
-    expect(api.createVideo).toHaveBeenCalledWith(expect.objectContaining({
+    expect(payload).toEqual(expect.objectContaining({
       type: 'image',
       categoryId: 2,
       uploadId: 99,
       isDraft: true,
       isLive: false,
     }));
+    expect(payload).not.toHaveProperty('taggedUsers');
   });
 
   it('shows upload progress and video processing status during direct upload', async () => {
@@ -216,6 +222,64 @@ describe('CreateUpload', () => {
       isDraft: false,
       isLive: false,
     })));
+  });
+
+  it('shows mention suggestions while typing and inserts the selected username', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({
+      data: {
+        categories: [{ id: 2, label: 'Music' }],
+      },
+    });
+    api.searchCreators.mockResolvedValue({
+      data: {
+        creators: [
+          { id: 7, fullName: 'Creator Uno', username: 'creator.uno', avatarUrl: '' },
+          { id: 8, fullName: 'Creative Two', username: 'creative.two', avatarUrl: '' },
+        ],
+      },
+    });
+
+    renderPage();
+
+    const captionInput = await screen.findByPlaceholderText('Add a caption');
+
+    await user.type(captionInput, 'Collab with @cre');
+
+    await waitFor(() => expect(api.searchCreators).toHaveBeenCalledWith('cre'));
+
+    const creatorOption = await screen.findByRole('option', { name: /Creator Uno\s+@creator\.uno/i });
+    await user.click(creatorOption);
+
+    expect(captionInput).toHaveValue('Collab with @creator.uno ');
+    expect(screen.queryByRole('listbox', { name: 'Mention suggestions' })).not.toBeInTheDocument();
+  });
+
+  it('blocks backend fallback for large videos when direct upload is unavailable', async () => {
+    const user = userEvent.setup();
+
+    api.getCategories.mockResolvedValue({ data: { categories: [] } });
+    api.presignUpload.mockResolvedValue({ data: { strategy: 'server-upload' } });
+
+    const { container } = renderPage();
+
+    const fileInput = await waitFor(() => container.querySelector('input[type="file"]'));
+    const file = new File(['video'], 'huge.mp4', { type: 'video/mp4' });
+    Object.defineProperty(file, 'size', {
+      configurable: true,
+      value: DIRECT_UPLOAD_LARGE_FILE_THRESHOLD + 1,
+    });
+
+    await user.click(screen.getByRole('button', { name: /Videos\s*MP4,\s*MOV,\s*AVI/i }));
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await user.click(screen.getByRole('button', { name: /^Upload$/i }));
+
+    expect(await screen.findByText('Large files and videos must upload directly. Please try again.')).toBeInTheDocument();
+    expect(api.uploadFileDirect).not.toHaveBeenCalled();
+    expect(api.uploadFile).not.toHaveBeenCalled();
+    expect(api.createVideo).not.toHaveBeenCalled();
   });
 
   it('prepares the live flow from the live intent route and submits a live payload', async () => {
