@@ -91,7 +91,7 @@ export default function CreateLive() {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 md:px-6 md:py-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-black dark:text-white">{t("upload.liveTitle")}</h1>
+        <h1 className="text-2xl font-semibold text-black dark:text-white">Create Live Stream</h1>
         <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveDescription")}</p>
         <p className="text-sm font-medium text-slate500 dark:text-slate200">{t("upload.signedInAs", { name: user?.fullName || user?.name || t("upload.creatorFallback") })}</p>
       </div>
@@ -99,11 +99,7 @@ export default function CreateLive() {
       {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),320px]">
-        <section className="space-y-5 rounded-[2rem] bg-white300 p-6 dark:bg-black100">
-          <div className="space-y-2">
-            <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.setupTitle")}</h2>
-            <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveFlow.setupHint")}</p>
-          </div>
+        <section className="space-y-5">
 
           <div className="space-y-4">
             <input
@@ -111,20 +107,20 @@ export default function CreateLive() {
               value={form.title}
               placeholder={t("upload.fields.title")}
               onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))}
-              className="w-full rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1B1B1B] dark:text-white"
+              className="w-full rounded-md bg-white300 px-5 py-4 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
             />
             <textarea
               value={form.description}
               placeholder={t("upload.fields.description")}
               onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
               rows={8}
-              className="w-full resize-none rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1B1B1B] dark:text-white"
+              className="w-full resize-none rounded-md bg-white300 px-5 py-4 text-sm text-slate100 outline-none dark:bg-black100 dark:text-white"
             />
             <select
               value={form.categoryId}
               disabled={isLoadingCategories || categories.length === 0}
               onChange={(event) => setForm((current) => ({ ...current, categoryId: event.target.value }))}
-              className="w-full rounded-3xl bg-white px-5 py-4 text-sm text-slate100 outline-none disabled:cursor-not-allowed disabled:opacity-70 dark:bg-[#1B1B1B] dark:text-white"
+              className="w-full rounded-md bg-white300 px-5 py-4 text-sm text-slate100 outline-none disabled:cursor-not-allowed disabled:opacity-70 dark:bg-black100 dark:text-white"
             >
               <option value="">{categories.length ? t("upload.category.choose") : t("upload.category.unavailable")}</option>
               {categories.map((category) => (
@@ -161,7 +157,7 @@ export default function CreateLive() {
               <div className="mt-4 grid gap-4 md:grid-cols-[220px,minmax(0,1fr)] md:items-center">
                 <div className="aspect-video overflow-hidden rounded-3xl bg-white300 dark:bg-black100">
                   {thumbnailPreviewUrl ? (
-                    <img src={thumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-cover" />
+                    <img src={thumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-auto" />
                   ) : (
                     <div className="flex h-full items-center justify-center px-5 text-center text-sm text-slate500 dark:text-slate200">
                       {t("upload.thumbnailAuto")}
@@ -176,7 +172,7 @@ export default function CreateLive() {
           </div>
         </section>
 
-        <aside className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm dark:bg-[#171717]">
+        <aside className="space-y-4 rounded-4xl bg-white p-6 shadow-sm dark:bg-[#171717]">
           <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.previewChecklist")}</h2>
           <ul className="space-y-3 text-sm text-slate600 dark:text-slate200">
             <li>• {t("upload.liveFlow.checkTitle")}</li>

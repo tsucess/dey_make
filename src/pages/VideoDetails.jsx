@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
+import { LuArrowRightFromLine } from "react-icons/lu";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -220,32 +221,32 @@ function CommentCard({
       <div className="flex gap-3">
         {comment.user?.id ? (
           <Link to={`/users/${comment.user.id}`} className="shrink-0 rounded-full transition-opacity hover:opacity-80">
-            <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
+            <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 md:h-13 md:w-13 rounded-full object-cover" />
           </Link>
         ) : (
-          <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 rounded-full object-cover" />
+          <img src={getProfileAvatar(comment.user)} alt={getProfileName(comment.user)} className="h-11 w-11 md:h-13 md:w-13 rounded-full object-cover" />
         )}
         <div className="min-w-0 flex-1 space-y-2">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 font-inter">
             {comment.user?.id ? (
-              <Link to={`/users/${comment.user.id}`} className="text-sm font-medium text-black transition-opacity hover:opacity-80 dark:text-white">
+              <Link to={`/users/${comment.user.id}`} className="text-sm font-medium text-black200  transition-opacity hover:opacity-80 dark:text-white">
                 {getProfileName(comment.user)}
               </Link>
             ) : (
-              <p className="text-sm font-medium text-black dark:text-white">{getProfileName(comment.user)}</p>
+              <p className="text-sm font-medium text-black200 dark:text-white">{getProfileName(comment.user)}</p>
             )}
-            <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
+            <span className="text-sm text-black200 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
-          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-slate700 dark:text-slate200`}>{comment.body || comment.text}</p>
+          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-black200 dark:text-slate200`}>{comment.body || comment.text}</p>
 
           <div className={`flex flex-wrap items-center ${compact ? "gap-4" : "gap-3"} text-xs text-slate500 dark:text-slate200`}>
-            <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={comment.currentUserState?.liked ? "text-orange100" : ""}>
-              {t("videoDetails.like")} {comment.likes ? `(${formatCompactNumber(comment.likes)})` : ""}
+            <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={`${comment.currentUserState?.liked ? "text-orange100" : ""} flex items-center gap-1`}>
+              <FaRegThumbsUp  className={`w-4 h-4  ${comment.currentUserState?.liked ? "text-orange100" : " text-black200"}`}/> {comment.likes ? `(${formatCompactNumber(comment.likes)})` : ""}
             </button>
-            <button type="button" onClick={() => onToggleReaction(comment.id, "dislike")} className={comment.currentUserState?.disliked ? "text-orange100" : ""}>
-              {t("videoDetails.dislike")} {comment.dislikes ? `(${formatCompactNumber(comment.dislikes)})` : ""}
+            <button type="button" onClick={() => onToggleReaction(comment.id, "dislike")} className={`${comment.currentUserState?.disliked ? "text-orange100" : ""} flex items-center gap-1`}>
+              <FaRegThumbsDown  className={`w-4 h-4  ${comment.currentUserState?.disliked ? "text-orange100" : " text-black200"}`}/> {comment.dislikes ? `(${formatCompactNumber(comment.dislikes)})` : ""}
             </button>
-            <button type="button" onClick={() => onToggleReplies(comment.id)}>
+            <button type="button" onClick={() => onToggleReplies(comment.id)} className="text-black200">
               {repliesExpanded
                 ? t("videoDetails.hideReplies")
                 : comment.repliesCount
@@ -263,9 +264,9 @@ function CommentCard({
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
                       <p className="text-xs font-medium text-black dark:text-white">{getProfileName(reply.user)}</p>
-                      <span className="text-[11px] text-slate500 dark:text-slate200">{formatRelativeTime(reply.createdAt)}</span>
+                      <span className="text-[11px] text-black200 dark:text-slate200">{formatRelativeTime(reply.createdAt)}</span>
                     </div>
-                    <p className="mt-1 text-xs leading-relaxed text-slate700 dark:text-slate200">{reply.body || reply.text}</p>
+                    <p className="mt-1 text-xs leading-relaxed text-black200 dark:text-slate200">{reply.body || reply.text}</p>
                   </div>
                 </div>
               ))}
@@ -1379,9 +1380,12 @@ export default function VideoDetails({ mode = "video" }) {
     </section>
   ) : (
     <section className="flex min-h-144 flex-col pt-2 lg:max-h-[calc(100vh-3rem)]">
-      <div className="flex items-center justify-between gap-3 border-y border-black/10 py-4 dark:border-white/10">
-        <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
-        <span className="text-sm text-slate500 dark:text-slate200">{video.commentsCount || comments.length}</span>
+      <div className="flex items-center  gap-10 border-y border-black200 py-4 dark:border-white/10">
+        <LuArrowRightFromLine className="w-6 h-6 text-black200"/><div className="flex items-center gap-3">
+          <span className=" text-black200 font-semibold font-inter text-lg dark:text-slate200">{video.commentsCount || comments.length}</span>
+          <h2 className="text-xl font-inter text-black200 dark:text-white">{t("videoDetails.comments")}</h2>
+        
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto py-5 pr-1">
@@ -1455,7 +1459,7 @@ export default function VideoDetails({ mode = "video" }) {
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
         <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col md:flex-row"}`}>
-          <div className="space-y-6">
+          <div className="space-y-6 md:flex-1">
             <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
               <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-4xl"}`}>
                 {video.type === "video" ? (
@@ -1488,10 +1492,10 @@ export default function VideoDetails({ mode = "video" }) {
                   ) : (video.streamUrl || video.mediaUrl) ? (
                     <video ref={recordedPlaybackRef} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls playsInline className="h-full w-full object-cover" />
                   ) : (
-                    <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
+                    <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-fit" />
                   )
                 ) : (
-                  <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
+                  <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-fill" />
                 )}
               </div>
 
@@ -1547,7 +1551,7 @@ export default function VideoDetails({ mode = "video" }) {
             ) : null}
           </div>
 
-          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 lg:border-l lg:border-black/10 lg:pl-8 dark:lg:border-white/10 "}>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 "}>
             {isLiveWatchLayout ? (
               <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
