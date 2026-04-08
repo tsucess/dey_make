@@ -344,6 +344,51 @@ describe('Settings', () => {
     expect(await screen.findByText('Allow browser notifications to enable this setting.')).toBeInTheDocument();
   });
 
+  it('shows an error and does not persist when browser notifications are unsupported', async () => {
+    const user = userEvent.setup();
+    const originalNotification = window.Notification;
+
+    try {
+      window.Notification = undefined;
+
+      api.getPreferences.mockResolvedValue({
+        data: {
+          preferences: {
+            notificationSettings: {
+              messages: true,
+              comments: true,
+              likes: true,
+              subscriptions: true,
+              inAppRealtime: true,
+              browserRealtime: false,
+            },
+            language: 'en',
+            displayPreferences: { theme: 'system', autoplay: true },
+            accessibilityPreferences: { captions: false, reducedMotion: false },
+          },
+        },
+      });
+
+      render(
+        <MemoryRouter>
+          <Settings />
+        </MemoryRouter>,
+      );
+
+      await screen.findByRole('combobox');
+
+      const browserLabel = screen.getByText('Browser notifications');
+      const browserRow = browserLabel.closest('div.flex');
+
+      await user.click(within(browserRow).getByRole('switch'));
+
+      expect(api.updatePreferences).not.toHaveBeenCalled();
+      expect(await screen.findByText('Browser notifications are not supported on this device or browser.')).toBeInTheDocument();
+    } finally {
+      window.Notification = originalNotification;
+    }
+  });
+
   it('persists display theme changes and accessibility toggles', async () => {
     const user = userEvent.setup();
 
