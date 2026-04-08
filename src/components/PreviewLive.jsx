@@ -164,7 +164,7 @@ export default function PreviewLive() {
       {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr),360px]">
-        <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
+        <section className="overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
           <div className="flex aspect-video items-center justify-center bg-black">
             {stream ? (
               <video
@@ -188,7 +188,7 @@ export default function PreviewLive() {
           </div>
         </section>
 
-        <aside className="space-y-4 rounded-[2rem] bg-white p-6 shadow-sm dark:bg-[#171717]">
+        <aside className="space-y-4 rounded-4xl bg-white p-6 shadow-sm dark:bg-[#171717]">
           <div>
             <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.deviceStatus")}</h2>
             <p className="mt-2 text-sm text-slate600 dark:text-slate200">
@@ -210,7 +210,7 @@ export default function PreviewLive() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{t("upload.thumbnailTitle")}</p>
             <div className="aspect-video overflow-hidden rounded-3xl bg-black/5 dark:bg-white/5">
               {selectedThumbnailPreviewUrl ? (
-                <img src={selectedThumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-cover" />
+                <img src={selectedThumbnailPreviewUrl} alt={t("upload.thumbnailAlt")} className="h-full w-full object-contain object-top" />
               ) : (
                 <div className="flex h-full items-center justify-center px-5 text-center text-sm text-slate500 dark:text-slate200">
                   {t("upload.thumbnailAuto")}

@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { LuArrowRightFromLine } from "react-icons/lu";
+import { FaArrowLeftLong } from "react-icons/fa6";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -22,6 +23,7 @@ import {
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+import { button } from "motion/react-client";
 
 function stopMediaStream(stream) {
   stream?.getTracks?.().forEach((track) => track.stop());
@@ -1439,7 +1441,9 @@ export default function VideoDetails({ mode = "video" }) {
   );
 
   return (
+    
     <div className={`min-h-screen px-4 py-5 md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212]" : "bg-white dark:bg-[#121212]"}`}>
+      {!isLiveWatchLayout && <button onClick={()=> navigate(-1)} className="text-slate100 cursor-pointer dark:text-white mb-5 flex items-center gap-2"><FaArrowLeftLong /> Back</button>}
       <div className="mx-auto max-w-350 space-y-4">
         {isLiveWatchLayout || hasTopStatusPills ? (
           <div className={`flex items-center gap-4 ${isLiveWatchLayout ? "justify-between" : "justify-end"}`}>
@@ -1495,7 +1499,7 @@ export default function VideoDetails({ mode = "video" }) {
                     <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-fit" />
                   )
                 ) : (
-                  <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-fill" />
+                  <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-contain" />
                 )}
               </div>
 

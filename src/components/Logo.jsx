@@ -3,7 +3,7 @@ export default function Logo({ className = "" }) {
       <img
         src="/logo2.png"
         alt="DeyMake"
-        className={`w-30 h-12 md:w-55 md:h-14 object-contain ${className}`}
+        className={`w-30 h-12 md:w-55 md:h-16 object-contain ${className}`}
       />
     
   );
