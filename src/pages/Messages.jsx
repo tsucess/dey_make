@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
+import { joinPresenceChannel, subscribeToPrivateChannel } from "../services/realtime";
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
 import Spinner from "../components/Layout/Spinner";
 
 const INBOX_POLL_INTERVAL_MS = 15000;
 const ACTIVE_CONVERSATION_POLL_INTERVAL_MS = 5000;
+const TYPING_IDLE_MS = 1400;
 
 function isDocumentHidden() {
   return typeof document !== "undefined" && document.visibilityState === "hidden";
@@ -34,6 +36,12 @@ function sortConversations(conversations) {
   return [...conversations].sort(
     (left, right) => getConversationActivityTimestamp(right) - getConversationActivityTimestamp(left),
   );
+}
+
+function buildConversationStatus(conversation, t) {
+  if (conversation?.participant?.isOnline) return t("messages.activeNow");
+  if (conversation?.lastMessage?.createdAt) return `${t("messages.sentPrefix")} ${formatRelativeTime(conversation.lastMessage.createdAt)}`;
+  return conversation?.status || t("messages.noMessagesYetStatus");
 }
 
 function hasNewerLocalSummary(currentConversation, incomingConversation) {
@@ -70,10 +78,10 @@ function mergeConversationSummaries(currentConversations, incomingConversations,
   );
 }
 
-function ConversationRow({ conversation, active, onClick }) {
+function ConversationRow({ conversation, active, typingParticipant, onClick }) {
   const { t } = useLanguage();
   const participant = conversation.participant;
-  const preview = conversation.lastMessage?.body || conversation.status;
+  const preview = typingParticipant ? t("messages.typingPreview") : (conversation.lastMessage?.body || buildConversationStatus(conversation, t));
   const timestamp = conversation.lastMessage?.createdAt || conversation.updatedAt;
 
   return (
@@ -151,11 +159,15 @@ export default function Messages() {
   const activeConversationIdRef = useRef(null);
   const conversationsRef = useRef([]);
   const messagesRef = useRef([]);
+  const presenceChannelsRef = useRef({});
+  const localTypingConversationIdRef = useRef(null);
+  const localTypingTimeoutRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
   const [messages, setMessages] = useState([]);
   const [draftMessage, setDraftMessage] = useState("");
+  const [typingParticipantsByConversation, setTypingParticipantsByConversation] = useState({});
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -169,6 +181,8 @@ export default function Messages() {
     [activeConversationId, conversations],
   );
 
+  const activeTypingParticipant = activeConversationId ? typingParticipantsByConversation[activeConversationId] || null : null;
+
   const suggestedCreators = useMemo(() => {
     const interactedCreatorIds = new Set(
       conversations
@@ -178,6 +192,11 @@ export default function Messages() {
 
     return suggestedUsers.filter((participant) => !interactedCreatorIds.has(participant.id));
   }, [conversations, suggestedUsers]);
+
+  const conversationSubscriptionKey = useMemo(
+    () => [...new Set(conversations.map((conversation) => `${conversation.id || ""}`.trim()).filter(Boolean))].sort().join(":"),
+    [conversations],
+  );
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
@@ -199,9 +218,95 @@ export default function Messages() {
     isMountedRef.current = true;
 
     return () => {
+      if (localTypingTimeoutRef.current) window.clearTimeout(localTypingTimeoutRef.current);
       isMountedRef.current = false;
     };
   }, []);
+
+  const updateParticipantPresence = useCallback((conversationId, participantId, isOnline) => {
+    if (!participantId) return;
+
+    setConversations((current) => current.map((conversation) => {
+      if (Number(conversation.id || 0) !== Number(conversationId || 0)) return conversation;
+      if (Number(conversation.participant?.id || 0) !== Number(participantId || 0)) return conversation;
+      if (Boolean(conversation.participant?.isOnline) === Boolean(isOnline)) return conversation;
+
+      return {
+        ...conversation,
+        participant: {
+          ...conversation.participant,
+          isOnline: Boolean(isOnline),
+        },
+      };
+    }));
+
+    setSuggestedUsers((current) => current.map((participant) => (
+      Number(participant.id || 0) === Number(participantId || 0)
+        ? { ...participant, isOnline: Boolean(isOnline) }
+        : participant
+    )));
+  }, []);
+
+  const syncPresenceMembers = useCallback((conversationId, members = []) => {
+    const onlineIds = new Set((members || []).map((member) => Number(member?.id || 0)).filter(Boolean));
+
+    setConversations((current) => current.map((conversation) => {
+      if (Number(conversation.id || 0) !== Number(conversationId || 0) || !conversation.participant?.id) return conversation;
+
+      const nextOnline = onlineIds.has(Number(conversation.participant.id || 0));
+      if (Boolean(conversation.participant?.isOnline) === nextOnline) return conversation;
+
+      return {
+        ...conversation,
+        participant: {
+          ...conversation.participant,
+          isOnline: nextOnline,
+        },
+      };
+    }));
+  }, []);
+
+  const clearConversationTyping = useCallback((conversationId, participantId = null) => {
+    setTypingParticipantsByConversation((current) => {
+      const existingParticipant = current[conversationId];
+      if (!existingParticipant) return current;
+      if (participantId && Number(existingParticipant.id || 0) !== Number(participantId || 0)) return current;
+
+      const next = { ...current };
+      delete next[conversationId];
+      return next;
+    });
+  }, []);
+
+  const sendLocalTypingWhisper = useCallback((conversationId, typing) => {
+    const channelHandle = presenceChannelsRef.current[conversationId];
+    if (!channelHandle || !conversationId || !user?.id) return;
+
+    channelHandle.whisper("typing", {
+      conversationId,
+      userId: user.id,
+      typing,
+      participant: {
+        id: user.id,
+        fullName: user.fullName,
+        username: user.username || null,
+        avatarUrl: user.avatarUrl || "",
+      },
+    });
+
+    localTypingConversationIdRef.current = typing ? conversationId : null;
+  }, [user?.avatarUrl, user?.fullName, user?.id, user?.username]);
+
+  const stopLocalTyping = useCallback((conversationId = localTypingConversationIdRef.current) => {
+    if (localTypingTimeoutRef.current) {
+      window.clearTimeout(localTypingTimeoutRef.current);
+      localTypingTimeoutRef.current = null;
+    }
+
+    if (!conversationId) return;
+
+    sendLocalTypingWhisper(conversationId, false);
+  }, [sendLocalTypingWhisper]);
 
   const loadInbox = useCallback(async ({ silent = false, includeSuggested = true } = {}) => {
     if (!silent) {
@@ -308,9 +413,137 @@ export default function Messages() {
     }
   }, [t]);
 
+  const handleRealtimeMessage = useCallback((conversationId, message) => {
+    if (!conversationId || !message?.id) return;
+
+    const normalizedMessage = {
+      ...message,
+      isMine: Number(message?.sender?.id || 0) === Number(user?.id || 0),
+    };
+    const isActiveConversation = Number(activeConversationIdRef.current || 0) === Number(conversationId || 0);
+
+    if (isActiveConversation) {
+      setMessages((current) => mergeMessages(current, [normalizedMessage]));
+    }
+
+    setConversations((current) =>
+      sortConversations(
+        current.map((conversation) => {
+          if (Number(conversation.id || 0) !== Number(conversationId || 0)) return conversation;
+
+          const isDuplicateLastMessage = Number(conversation.lastMessage?.id || 0) === Number(normalizedMessage.id || 0);
+
+          return {
+            ...conversation,
+            lastMessage: normalizedMessage,
+            unreadCount: isActiveConversation || normalizedMessage.isMine
+              ? 0
+              : (isDuplicateLastMessage ? conversation.unreadCount : Number(conversation.unreadCount || 0) + 1),
+            status: conversation.participant?.isOnline ? t("messages.activeNow") : t("messages.sentJustNow"),
+            updatedAt: normalizedMessage.createdAt || conversation.updatedAt,
+          };
+        }),
+      ),
+    );
+
+    if (isActiveConversation && !normalizedMessage.isMine) {
+      api.markConversationRead(conversationId).catch(() => {});
+    }
+    if (!normalizedMessage.isMine) clearConversationTyping(conversationId, message?.sender?.id);
+  }, [clearConversationTyping, t, user?.id]);
+
   useEffect(() => {
     loadInbox();
   }, [loadInbox]);
+
+  useEffect(() => {
+    if (!user?.id || !conversationSubscriptionKey) return undefined;
+
+    const subscriptionHandles = conversationSubscriptionKey
+      .split(":")
+      .filter(Boolean)
+      .map((conversationId) => {
+        const messageUnsubscribe = subscribeToPrivateChannel(`conversations.${conversationId}`, {
+          ".conversation.message.created": (event) => {
+            if (`${event?.conversationId || ""}` !== conversationId || !event?.message) return;
+            handleRealtimeMessage(event.conversationId, event.message);
+          },
+        });
+
+        const presenceChannel = joinPresenceChannel(`conversation-presence.${conversationId}`, {
+          here: (members) => syncPresenceMembers(conversationId, members),
+          joining: (member) => updateParticipantPresence(conversationId, member?.id, true),
+          leaving: (member) => {
+            updateParticipantPresence(conversationId, member?.id, false);
+            clearConversationTyping(conversationId, member?.id);
+          },
+          whispers: {
+            typing: (payload) => {
+              if (
+                Number(payload?.conversationId || 0) !== Number(conversationId || 0)
+                || Number(payload?.userId || 0) === Number(user?.id || 0)
+              ) {
+                return;
+              }
+
+              if (!payload?.typing) {
+                clearConversationTyping(conversationId, payload?.userId);
+                return;
+              }
+
+              setTypingParticipantsByConversation((current) => ({
+                ...current,
+                [conversationId]: payload?.participant || conversationsRef.current.find((conversation) => Number(conversation.id || 0) === Number(conversationId || 0))?.participant,
+              }));
+            },
+          },
+        });
+
+        presenceChannelsRef.current[conversationId] = presenceChannel;
+
+        return () => {
+          if (localTypingConversationIdRef.current === conversationId) {
+            stopLocalTyping(conversationId);
+          }
+
+          delete presenceChannelsRef.current[conversationId];
+          messageUnsubscribe?.();
+          presenceChannel.unsubscribe?.();
+        };
+      });
+
+    return () => {
+      subscriptionHandles.forEach((unsubscribe) => unsubscribe?.());
+    };
+  }, [clearConversationTyping, conversationSubscriptionKey, handleRealtimeMessage, stopLocalTyping, syncPresenceMembers, updateParticipantPresence, user?.id]);
+
+  useEffect(() => () => stopLocalTyping(), [stopLocalTyping]);
+
+  useEffect(() => {
+    if (!activeConversationId || !user?.id) {
+      stopLocalTyping();
+      return undefined;
+    }
+
+    const nextDraft = draftMessage.trim();
+
+    if (!nextDraft) {
+      if (localTypingConversationIdRef.current === activeConversationId) stopLocalTyping(activeConversationId);
+      return undefined;
+    }
+
+    if (localTypingConversationIdRef.current !== activeConversationId) {
+      if (localTypingConversationIdRef.current) stopLocalTyping(localTypingConversationIdRef.current);
+      sendLocalTypingWhisper(activeConversationId, true);
+    }
+
+    if (localTypingTimeoutRef.current) window.clearTimeout(localTypingTimeoutRef.current);
+    localTypingTimeoutRef.current = window.setTimeout(() => {
+      stopLocalTyping(activeConversationId);
+    }, TYPING_IDLE_MS);
+
+    return undefined;
+  }, [activeConversationId, draftMessage, sendLocalTypingWhisper, stopLocalTyping, user?.id]);
 
   useEffect(() => {
     loadConversationMessages(activeConversationId);
@@ -409,6 +642,7 @@ export default function Messages() {
 
     setSending(true);
     setError("");
+    stopLocalTyping(activeConversationId);
 
     try {
       const response = await api.sendConversationMessage(activeConversationId, body);
@@ -459,6 +693,7 @@ export default function Messages() {
                     <ConversationRow
                       key={conversation.id}
                       conversation={conversation}
+                      typingParticipant={typingParticipantsByConversation[conversation.id] || null}
                       active={conversation.id === activeConversationId}
                       onClick={() => setActiveConversationId(conversation.id)}
                     />
@@ -515,7 +750,11 @@ export default function Messages() {
                     <p className="truncate text-lg font-medium font-inter text-black dark:text-white">
                       {getProfileName(activeConversation.participant)}
                     </p>
-                    <p className="text-sm text-slate600 dark:text-slate200">{activeConversation.status}</p>
+                    <p className="text-sm text-slate600 dark:text-slate200">
+                      {activeTypingParticipant
+                        ? t("messages.typingStatus", { name: getProfileName(activeTypingParticipant, getProfileName(activeConversation.participant)) })
+                        : buildConversationStatus(activeConversation, t)}
+                    </p>
                   </div>
                 </div>
 

@@ -27,6 +27,14 @@ const DIRECT_UPLOAD_MIN_CHUNK_SIZE = 5 * 1024 * 1024;
 const DIRECT_UPLOAD_DEFAULT_CHUNK_SIZE = 20 * 1024 * 1024;
 export const DEFAULT_REQUEST_TIMEOUT_MS = 15000;
 
+export function getApiBaseUrl() {
+  return API_BASE_URL;
+}
+
+export function getBackendBaseUrl() {
+  return API_BASE_URL.replace(/\/api\/v1\/?$/, "");
+}
+
 function buildQueryString(params = {}) {
   const searchParams = new URLSearchParams();
 

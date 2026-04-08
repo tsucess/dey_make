@@ -3,6 +3,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+const subscribeToPrivateChannelMock = vi.fn();
+const joinPresenceChannelMock = vi.fn();
+
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
   const t = actual.createTranslator('es');
@@ -18,7 +21,7 @@ vi.mock('../context/LanguageContext', async () => {
 
 vi.mock('../context/AuthContext', () => ({
   useAuth: () => ({
-    user: { fullName: 'Test Creator' },
+    user: { id: 1, fullName: 'Test Creator' },
   }),
 }));
 
@@ -38,6 +41,11 @@ vi.mock('../services/api', async () => {
   };
 });
 
+vi.mock('../services/realtime', () => ({
+  subscribeToPrivateChannel: (...args) => subscribeToPrivateChannelMock(...args),
+  joinPresenceChannel: (...args) => joinPresenceChannelMock(...args),
+}));
+
 import { api } from '../services/api';
 import Messages from './Messages';
 
@@ -45,6 +53,8 @@ describe('Messages', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
+    subscribeToPrivateChannelMock.mockImplementation(() => vi.fn());
+    joinPresenceChannelMock.mockImplementation(() => ({ whisper: vi.fn(), unsubscribe: vi.fn() }));
   });
 
   it('loads the active conversation and sends a message', async () => {
@@ -365,5 +375,130 @@ describe('Messages', () => {
 
     setIntervalSpy.mockRestore();
     clearIntervalSpy.mockRestore();
+  });
+
+  it('merges realtime conversation messages without waiting for the next poll', async () => {
+    let realtimeListeners;
+
+    subscribeToPrivateChannelMock.mockImplementation((_channelName, listeners) => {
+      realtimeListeners = listeners;
+      return vi.fn();
+    });
+
+    api.getConversations.mockResolvedValue({
+      data: {
+        conversations: [{
+          id: 10,
+          participant: { id: 2, fullName: 'Bob Builder', avatarUrl: '', isOnline: true },
+          unreadCount: 0,
+          status: 'Active now',
+          updatedAt: '2025-01-01T00:00:00.000Z',
+          lastMessage: { id: 1, body: 'Hello there', createdAt: '2025-01-01T00:00:00.000Z' },
+        }],
+      },
+    });
+    api.getSuggestedUsers.mockResolvedValue({ data: { users: [] } });
+    api.getConversationMessages.mockResolvedValue({
+      data: {
+        messages: [{
+          id: 1,
+          body: 'Hello there',
+          createdAt: '2025-01-01T00:00:00.000Z',
+          isMine: false,
+          sender: { id: 2, fullName: 'Bob Builder' },
+        }],
+      },
+    });
+    api.markConversationRead.mockResolvedValue({});
+
+    render(<Messages />);
+
+    await screen.findByPlaceholderText(/Mensaje para Bob Builder/i);
+    expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
+      'conversations.10',
+      expect.objectContaining({ '.conversation.message.created': expect.any(Function) }),
+    );
+
+    realtimeListeners['.conversation.message.created']({
+      conversationId: 10,
+      message: {
+        id: 2,
+        body: 'Live reply',
+        createdAt: '2025-01-01T00:01:00.000Z',
+        sender: { id: 2, fullName: 'Bob Builder' },
+      },
+    });
+
+    await waitFor(() => expect(screen.getAllByText('Live reply')).toHaveLength(2));
+    expect(api.getConversationMessages).toHaveBeenCalledTimes(1);
+    expect(api.markConversationRead).toHaveBeenCalledWith(10);
+  });
+
+  it('updates online presence and typing indicators in realtime', async () => {
+    let presenceHandlers;
+    const whisperSpy = vi.fn();
+    const user = userEvent.setup();
+
+    joinPresenceChannelMock.mockImplementation((_channelName, handlers) => {
+      presenceHandlers = handlers;
+      return { whisper: whisperSpy, unsubscribe: vi.fn() };
+    });
+
+    api.getConversations.mockResolvedValue({
+      data: {
+        conversations: [{
+          id: 10,
+          participant: { id: 2, fullName: 'Bob Builder', avatarUrl: '', isOnline: false },
+          unreadCount: 0,
+          status: 'Sin mensajes todavía',
+          updatedAt: '2025-01-01T00:00:00.000Z',
+          lastMessage: null,
+        }],
+      },
+    });
+    api.getSuggestedUsers.mockResolvedValue({ data: { users: [] } });
+    api.getConversationMessages.mockResolvedValue({ data: { messages: [] } });
+    api.markConversationRead.mockResolvedValue({});
+    api.sendConversationMessage.mockResolvedValue({
+      data: {
+        message: {
+          id: 2,
+          body: 'Hi Bob',
+          createdAt: '2025-01-01T00:01:00.000Z',
+          isMine: true,
+          sender: { id: 1, fullName: 'Test Creator' },
+        },
+      },
+    });
+
+    render(<Messages />);
+
+    const textbox = await screen.findByPlaceholderText(/Mensaje para Bob Builder/i);
+    expect(joinPresenceChannelMock).toHaveBeenCalledWith(
+      'conversation-presence.10',
+      expect.objectContaining({
+        here: expect.any(Function),
+        joining: expect.any(Function),
+        leaving: expect.any(Function),
+        whispers: expect.objectContaining({ typing: expect.any(Function) }),
+      }),
+    );
+
+    presenceHandlers.joining({ id: 2, fullName: 'Bob Builder' });
+    await waitFor(() => expect(screen.getAllByText('Activo ahora').length).toBeGreaterThanOrEqual(1));
+
+    presenceHandlers.whispers.typing({
+      conversationId: 10,
+      userId: 2,
+      typing: true,
+      participant: { id: 2, fullName: 'Bob Builder', avatarUrl: '' },
+    });
+    await screen.findByText('Bob Builder está escribiendo...');
+
+    await user.type(textbox, 'Hi Bob');
+    expect(whisperSpy).toHaveBeenCalledWith('typing', expect.objectContaining({ conversationId: 10, userId: 1, typing: true }));
+
+    await user.click(screen.getByRole('button', { name: 'Enviar' }));
+    await waitFor(() => expect(whisperSpy).toHaveBeenCalledWith('typing', expect.objectContaining({ conversationId: 10, userId: 1, typing: false })));
   });
 });

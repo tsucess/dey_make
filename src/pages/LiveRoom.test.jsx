@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authState = { isAuthenticated: true, user: { id: 99, fullName: "Viewer Example", avatarUrl: "" } };
 const agoraMockState = vi.hoisted(() => ({ lastClient: null, lastLocalTracks: [] }));
+const subscribeToPrivateChannelMock = vi.fn();
 
 function createMockAgoraTrack(kind) {
   const mediaStreamTrack = { kind, stop: vi.fn() };
@@ -49,6 +50,9 @@ vi.mock("../context/LanguageContext", async () => {
 
 vi.mock("../context/AuthContext", () => ({ useAuth: () => authState }));
 vi.mock("../live/liveSessionStore", () => ({ clearLiveCreationSession: vi.fn() }));
+vi.mock("../services/realtime", () => ({
+  subscribeToPrivateChannel: (...args) => subscribeToPrivateChannelMock(...args),
+}));
 
 vi.mock("../services/api", () => ({
   DIRECT_UPLOAD_LARGE_FILE_THRESHOLD: 5 * 1024 * 1024,
@@ -137,6 +141,7 @@ async function emitRemoteParticipant(uid = "remote-1") {
 describe("LiveRoom", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    subscribeToPrivateChannelMock.mockImplementation(() => vi.fn());
     authState.isAuthenticated = true;
     authState.user = { id: 99, fullName: "Viewer Example", avatarUrl: "" };
     globalThis.MediaStream = MockMediaStream;
@@ -224,6 +229,82 @@ describe("LiveRoom", () => {
     await screen.findByRole("button", { name: "Leave live" });
   });
 
+  it("shows live invitations immediately from realtime signal events", async () => {
+    let realtimeListeners;
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, listeners) => {
+      if (channelName === "live.videos.10.users.99") {
+        realtimeListeners = listeners;
+      }
+
+      return vi.fn();
+    });
+
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+    expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
+      "live.videos.10.users.99",
+      expect.objectContaining({ ".live.signal.created": expect.any(Function) }),
+    );
+
+    realtimeListeners[".live.signal.created"]({
+      videoId: 10,
+      signal: {
+        id: 44,
+        type: "join_invite",
+        senderId: 5,
+        recipientId: 99,
+        sender: { id: 5, fullName: "Creator Example", avatarUrl: "" },
+        recipient: { id: 99, fullName: "Viewer Example", avatarUrl: "" },
+      },
+    });
+
+    expect(await screen.findByRole("dialog", { name: "Live invitation" })).toBeInTheDocument();
+    expect(api.getLiveSignals).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows live engagement updates immediately from realtime room events", async () => {
+    const channelListeners = {};
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, listeners) => {
+      channelListeners[channelName] = listeners;
+      return vi.fn();
+    });
+
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveEngagements.mockResolvedValue({ data: { engagements: [] } });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+
+    channelListeners["live.videos.10"][".live.engagement.created"]({
+      videoId: 10,
+      engagement: {
+        id: "comment-44",
+        type: "comment",
+        body: "Realtime comment",
+        createdAt: "2026-04-04T12:05:00Z",
+        actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" },
+      },
+      comment: {
+        id: 44,
+        body: "Realtime comment",
+        text: "Realtime comment",
+        createdAt: "2026-04-04T12:05:00Z",
+        user: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" },
+      },
+      analytics: { liveLikes: 0, liveComments: 1 },
+    });
+
+    await waitFor(() => expect(screen.getAllByText("Realtime comment")).toHaveLength(2));
+    expect(screen.getAllByText("Fan One")).toHaveLength(2);
+  });
+
   it("lets the host invite audience members from live engagement cards", async () => {
     const user = userEvent.setup();
     authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
@@ -237,6 +318,29 @@ describe("LiveRoom", () => {
     await user.click(await screen.findByRole("button", { name: "Invite to join" }));
 
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "join_invite" }));
+  });
+
+  it("shows a current co-hosts panel and lets the creator remove a co-host from it", async () => {
+    const user = userEvent.setup();
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveSignals.mockResolvedValue({
+      data: {
+        latestSignalId: 31,
+        signals: [{ id: 31, type: "join_request_accepted", senderId: 5, recipientId: 12, sender: { id: 5, fullName: "Creator Example", avatarUrl: "" }, recipient: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" } }],
+      },
+    });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+    expect(await screen.findByText("Current co-hosts")).toBeInTheDocument();
+    expect(screen.getByText("Manage guests who are already live with you right now.")).toBeInTheDocument();
+    expect(screen.getByText("Fan One")).toBeInTheDocument();
+    await user.click(await screen.findByRole("button", { name: "Remove co-host" }));
+
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "cohost_left" }));
   });
 
   it("shows the creator an active audience panel and invites viewers from it", async () => {
@@ -258,6 +362,76 @@ describe("LiveRoom", () => {
     await user.click(screen.getByRole("button", { name: "Invite to join" }));
 
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "join_invite" }));
+  });
+
+  it("updates creator audience and viewer metrics from realtime presence events", async () => {
+    const channelListeners = {};
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, listeners) => {
+      channelListeners[channelName] = listeners;
+      return vi.fn();
+    });
+
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveAudience.mockResolvedValue({ data: { audience: [] } });
+
+    renderRoom();
+
+    await screen.findByText("Active audience");
+
+    channelListeners["live.videos.10"][".live.presence.updated"]({
+      videoId: 10,
+      analytics: { currentViewers: 9, peakViewers: 12 },
+    });
+
+    channelListeners["live.videos.10.creator"][".live.audience.updated"]({
+      videoId: 10,
+      audience: [{ sessionId: 91, role: "audience", joinedAt: "2026-04-04T12:00:00Z", lastSeenAt: "2026-04-04T12:02:00Z", actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" } }],
+    });
+
+    expect(await screen.findByText("Fan One")).toBeInTheDocument();
+    expect(screen.getByText("9")).toBeInTheDocument();
+    expect(screen.getByText("12")).toBeInTheDocument();
+  });
+
+  it("refreshes creator insight panels immediately after realtime live events", async () => {
+    const channelListeners = {};
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, listeners) => {
+      channelListeners[channelName] = listeners;
+      return vi.fn();
+    });
+
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveAudience.mockResolvedValue({ data: { audience: [] } });
+    api.getLiveEngagements
+      .mockResolvedValueOnce({ data: { engagements: [], summary: { totals: { likes: 0, comments: 0, engagements: 0, uniqueFans: 0 }, topFans: [], timeline: [], peakMoments: [], retention: { averageViewers: 0, retentionRate: 0, peakViewers: 0 } } } })
+      .mockResolvedValueOnce({ data: { engagements: [], summary: { totals: { likes: 4, comments: 2, engagements: 6, uniqueFans: 1 }, topFans: [{ actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" }, likesCount: 4, commentsCount: 2, engagementCount: 6 }], timeline: [{ label: "0s", midpointAt: "2026-04-04T12:01:00Z", engagementCount: 6, viewersCount: 9 }], peakMoments: [{ label: "0s", startedAt: "2026-04-04T12:00:00Z", likesCount: 4, commentsCount: 2, engagementCount: 6 }], retention: { averageViewers: 9, retentionRate: 100, peakViewers: 9 } } } });
+
+    renderRoom();
+
+    await screen.findByText("Top supporters");
+
+    channelListeners["live.videos.10"][".live.engagement.created"]({
+      videoId: 10,
+      engagement: {
+        id: "comment-44",
+        type: "comment",
+        body: "Realtime comment",
+        createdAt: "2026-04-04T12:05:00Z",
+        actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" },
+      },
+      analytics: { liveLikes: 4, liveComments: 2 },
+    });
+
+    await waitFor(() => expect(api.getLiveEngagements).toHaveBeenCalledTimes(2));
+    expect((await screen.findAllByText("Fan One")).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("img", { name: "Engagement timeline" })).toBeInTheDocument();
+    expect(screen.getByText("Peak moments")).toBeInTheDocument();
   });
 
   it("lets viewers send repeated live likes", async () => {

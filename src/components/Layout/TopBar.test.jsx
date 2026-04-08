@@ -3,10 +3,47 @@ import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { LanguageProvider } from '../../context/LanguageContext';
 
+let notificationPermission = 'default';
+let documentVisibilityState = 'visible';
+let documentHasFocus = true;
+let browserNotifications = [];
+
+class NotificationMock {
+  static requestPermission = vi.fn(() => Promise.resolve(notificationPermission));
+
+  constructor(title, options = {}) {
+    this.title = title;
+    this.options = options;
+    this.onclick = null;
+    this.onclose = null;
+    this.close = vi.fn(() => {
+      this.onclose?.();
+    });
+    browserNotifications.push(this);
+  }
+
+  static get permission() {
+    return notificationPermission;
+  }
+}
+
+Object.defineProperty(window, 'Notification', {
+  configurable: true,
+  writable: true,
+  value: NotificationMock,
+});
+
+Object.defineProperty(document, 'visibilityState', {
+  configurable: true,
+  get: () => documentVisibilityState,
+});
+
 const authState = {
   isAuthenticated: true,
-  user: { fullName: 'Test Creator', avatarUrl: '' },
+  user: { id: 1, fullName: 'Test Creator', avatarUrl: '' },
 };
+
+const subscribeToPrivateChannelMock = vi.fn();
 
 vi.mock('../../context/AuthContext', () => ({
   useAuth: () => authState,
@@ -25,6 +62,10 @@ vi.mock('../../services/api', async () => {
     },
   };
 });
+
+vi.mock('../../services/realtime', () => ({
+  subscribeToPrivateChannel: (...args) => subscribeToPrivateChannelMock(...args),
+}));
 
 import { api } from '../../services/api';
 import TopBar from './TopBar';
@@ -48,13 +89,21 @@ function renderTopBar(initialEntry = '/home') {
 
 describe('TopBar', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
+    browserNotifications = [];
+    notificationPermission = 'default';
+    documentVisibilityState = 'visible';
+    documentHasFocus = true;
+    vi.spyOn(document, 'hasFocus').mockImplementation(() => documentHasFocus);
+    vi.spyOn(window, 'focus').mockImplementation(() => {});
     authState.isAuthenticated = true;
-    authState.user = { fullName: 'Test Creator', avatarUrl: '' };
+    authState.user = { id: 1, fullName: 'Test Creator', avatarUrl: '' };
     api.searchSuggestions.mockResolvedValue({ data: { videos: [], creators: [], categories: [] } });
     api.getNotifications.mockResolvedValue({ data: { notifications: [] } });
     api.markNotificationRead.mockResolvedValue({ data: { notification: { id: 1, readAt: '2025-01-01T12:05:00.000Z' } } });
     api.markAllNotificationsRead.mockResolvedValue({});
+    subscribeToPrivateChannelMock.mockImplementation(() => vi.fn());
   });
 
   it('loads lookup suggestions and navigates to search results', async () => {
@@ -254,5 +303,244 @@ describe('TopBar', () => {
 
     await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(2));
     expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('1');
+  });
+
+  it('updates the notification badge and drawer from realtime events', async () => {
+    let listeners = null;
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, nextListeners) => {
+      expect(channelName).toBe('notifications.1');
+      listeners = nextListeners;
+      return vi.fn();
+    });
+
+    api.getNotifications.mockResolvedValue({ data: { notifications: [] } });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+    expect(listeners).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+    await screen.findByRole('dialog', { name: /notifications/i });
+
+    listeners['.notification.created']({
+      notification: {
+        id: 5,
+        type: 'message',
+        title: 'New message',
+        body: 'Realtime hello',
+        data: { conversationId: 9 },
+        readAt: null,
+        createdAt: '2025-01-01T12:10:00.000Z',
+      },
+    });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('1'));
+    expect(await screen.findByText('Realtime hello')).toBeInTheDocument();
+
+    listeners['.notification.updated']({
+      notification: {
+        id: 5,
+        type: 'message',
+        title: 'New message',
+        body: 'Realtime hello',
+        data: { conversationId: 9 },
+        readAt: '2025-01-01T12:11:00.000Z',
+        createdAt: '2025-01-01T12:10:00.000Z',
+      },
+    });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /notifications/i })).not.toHaveTextContent('1'));
+
+    listeners['.notification.deleted']({ notificationId: 5 });
+
+    await waitFor(() => expect(screen.queryByText('Realtime hello')).not.toBeInTheDocument());
+  });
+
+  it('shows a popup for new realtime notifications while the drawer is closed', async () => {
+    let listeners = null;
+
+    subscribeToPrivateChannelMock.mockImplementation((_channelName, nextListeners) => {
+      listeners = nextListeners;
+      return vi.fn();
+    });
+
+    api.markNotificationRead.mockResolvedValue({
+      data: {
+        notification: {
+          id: 8,
+          type: 'message',
+          title: 'New message',
+          body: 'Popup hello',
+          data: { conversationId: 13 },
+          readAt: '2025-01-01T12:12:00.000Z',
+          createdAt: '2025-01-01T12:10:00.000Z',
+        },
+      },
+    });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+
+    listeners['.notification.created']({
+      notification: {
+        id: 8,
+        type: 'message',
+        title: 'New message',
+        body: 'Popup hello',
+        data: { conversationId: 13 },
+        readAt: null,
+        createdAt: '2025-01-01T12:10:00.000Z',
+      },
+    });
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Popup hello');
+
+    fireEvent.click(screen.getByRole('button', { name: /new message popup hello/i }));
+
+    await waitFor(() => expect(api.markNotificationRead).toHaveBeenCalledWith(8));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/messages'));
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+  });
+
+  it('requests browser notification permission from the bell click when permission is undecided', async () => {
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+
+    expect(NotificationMock.requestPermission).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a browser notification when the tab is hidden and navigates on click', async () => {
+    let listeners = null;
+    notificationPermission = 'granted';
+    documentVisibilityState = 'hidden';
+    documentHasFocus = false;
+    api.markNotificationRead.mockResolvedValue({
+      data: {
+        notification: {
+          id: 12,
+          type: 'message',
+          title: 'New message',
+          body: 'Background hello',
+          data: { conversationId: 25 },
+          readAt: '2025-01-01T12:20:00.000Z',
+          createdAt: '2025-01-01T12:19:00.000Z',
+        },
+      },
+    });
+
+    subscribeToPrivateChannelMock.mockImplementation((_channelName, nextListeners) => {
+      listeners = nextListeners;
+      return vi.fn();
+    });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+
+    listeners['.notification.created']({
+      notification: {
+        id: 12,
+        type: 'message',
+        title: 'New message',
+        body: 'Background hello',
+        data: { conversationId: 25 },
+        readAt: null,
+        createdAt: '2025-01-01T12:19:00.000Z',
+      },
+    });
+
+    await waitFor(() => expect(browserNotifications).toHaveLength(1));
+    expect(browserNotifications[0].title).toBe('New message');
+    expect(browserNotifications[0].options).toEqual(expect.objectContaining({ body: 'Background hello', tag: 'notification-12' }));
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    await act(async () => {
+      browserNotifications[0].onclick?.();
+    });
+
+    await waitFor(() => expect(api.markNotificationRead).toHaveBeenCalledWith(12));
+    await waitFor(() => expect(screen.getByTestId('location')).toHaveTextContent('/messages'));
+    expect(browserNotifications[0].close).toHaveBeenCalled();
+  });
+
+  it('does not show realtime delivery alerts when the user disables them in settings', async () => {
+    let listeners = null;
+
+    notificationPermission = 'granted';
+    documentVisibilityState = 'hidden';
+    documentHasFocus = false;
+    authState.user = {
+      id: 1,
+      fullName: 'Test Creator',
+      avatarUrl: '',
+      preferences: {
+        notificationSettings: {
+          inAppRealtime: false,
+          browserRealtime: false,
+        },
+      },
+    };
+
+    subscribeToPrivateChannelMock.mockImplementation((_channelName, nextListeners) => {
+      listeners = nextListeners;
+      return vi.fn();
+    });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+
+    listeners['.notification.created']({
+      notification: {
+        id: 15,
+        type: 'message',
+        title: 'New message',
+        body: 'Respect my settings',
+        data: { conversationId: 33 },
+        readAt: null,
+        createdAt: '2025-01-01T12:30:00.000Z',
+      },
+    });
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /notifications/i })).toHaveTextContent('1'));
+    expect(browserNotifications).toHaveLength(0);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('does not show the popup when the notification drawer is already open', async () => {
+    let listeners = null;
+
+    subscribeToPrivateChannelMock.mockImplementation((_channelName, nextListeners) => {
+      listeners = nextListeners;
+      return vi.fn();
+    });
+
+    renderTopBar();
+
+    await waitFor(() => expect(api.getNotifications).toHaveBeenCalledTimes(1));
+
+    fireEvent.click(screen.getByRole('button', { name: /notifications/i }));
+    await screen.findByRole('dialog', { name: /notifications/i });
+
+    listeners['.notification.created']({
+      notification: {
+        id: 9,
+        type: 'message',
+        title: 'New message',
+        body: 'Drawer already open',
+        data: { conversationId: 14 },
+        readAt: null,
+        createdAt: '2025-01-01T12:15:00.000Z',
+      },
+    });
+
+    await waitFor(() => expect(screen.getByText('Drawer already open')).toBeInTheDocument());
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 });

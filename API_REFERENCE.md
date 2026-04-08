@@ -437,7 +437,9 @@ Each podium/standing/current-user-rank item contains:
     "messages": true,
     "comments": true,
     "likes": true,
-    "subscriptions": true
+    "subscriptions": true,
+    "inAppRealtime": true,
+    "browserRealtime": true
   },
   "language": "en",
   "displayPreferences": {

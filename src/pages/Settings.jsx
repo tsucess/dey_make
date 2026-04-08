@@ -9,10 +9,14 @@ import { useAuth } from "../context/AuthContext";
 import { api, firstError } from "../services/api";
 import Spinner from "../components/Layout/Spinner";
 
-const notificationOptions = ["messages", "comments", "likes", "subscriptions"];
+const notificationOptions = ["messages", "comments", "likes", "subscriptions", "inAppRealtime", "browserRealtime"];
 const displayOptions = ["autoplay"];
 const accessibilityOptions = ["captions", "reducedMotion"];
 const billingPeriods = ["weekly", "monthly", "yearly"];
+
+function supportsBrowserNotifications() {
+  return typeof window !== "undefined" && typeof window.Notification !== "undefined";
+}
 
 const defaultPreferences = {
   notificationSettings: {
@@ -20,6 +24,8 @@ const defaultPreferences = {
     comments: true,
     likes: true,
     subscriptions: true,
+    inAppRealtime: true,
+    browserRealtime: true,
   },
   language: "en",
   displayPreferences: {
@@ -493,12 +499,38 @@ export default function Settings() {
     }
   }
 
-  function toggleNotification(key) {
+  async function toggleNotification(key) {
+    const nextEnabled = !values.notificationSettings[key];
+
+    if (key === "browserRealtime" && nextEnabled) {
+      if (!supportsBrowserNotifications()) {
+        setFeedback("");
+        setError(t("settings.notifications.browserRealtime.unsupported"));
+        return;
+      }
+
+      let permission = window.Notification.permission;
+
+      if (permission === "default" && typeof window.Notification.requestPermission === "function") {
+        try {
+          permission = await window.Notification.requestPermission();
+        } catch {
+          permission = window.Notification.permission;
+        }
+      }
+
+      if (permission !== "granted") {
+        setFeedback("");
+        setError(t("settings.notifications.browserRealtime.permissionRequired"));
+        return;
+      }
+    }
+
     const nextValues = {
       ...values,
       notificationSettings: {
         ...values.notificationSettings,
-        [key]: !values.notificationSettings[key],
+        [key]: nextEnabled,
       },
     };
 

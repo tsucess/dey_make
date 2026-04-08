@@ -2,10 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FaHeart } from "react-icons/fa";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { HiArrowLeft } from "react-icons/hi";
+import AnalyticsLineChart from "../components/analytics/AnalyticsLineChart";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { clearLiveCreationSession } from "../live/liveSessionStore";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
+import { subscribeToPrivateChannel } from "../services/realtime";
 import { loadAgoraRtc } from "../utils/loadAgoraRtc";
 import {
   buildVideoAnalyticsLink,
@@ -27,6 +29,27 @@ const LIVE_SIGNAL_POLL_MS = 3000;
 const LIVE_AUDIENCE_POLL_MS = 5000;
 const LIVE_HEART_COLORS = ["#f472b6", "#fb7185", "#f97316", "#ec4899"];
 const LIVE_HEART_LANES = [91.8, 94.1, 96.1];
+const EMPTY_LIVE_SUMMARY = {
+  topFans: [],
+  topCommenters: [],
+  topLikers: [],
+  timeline: [],
+  viewerTrend: [],
+  peakMoments: [],
+  retention: {
+    startViewers: 0,
+    endViewers: 0,
+    averageViewers: 0,
+    peakViewers: 0,
+    retentionRate: 0,
+  },
+  totals: {
+    likes: 0,
+    comments: 0,
+    engagements: 0,
+    uniqueFans: 0,
+  },
+};
 
 function createLiveSessionKey() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -49,6 +72,19 @@ function mergeEngagementItems(currentItems = [], nextItems = [], limit = 12) {
   return merged
     .sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime())
     .slice(0, limit);
+}
+
+function mergeLiveComments(currentComments = [], nextComments = []) {
+  const merged = [...currentComments];
+  const seenIds = new Set(currentComments.map((comment) => comment.id));
+
+  nextComments.forEach((comment) => {
+    if (!comment?.id || seenIds.has(comment.id)) return;
+    seenIds.add(comment.id);
+    merged.push(comment);
+  });
+
+  return merged.sort((left, right) => new Date(right.createdAt || 0).getTime() - new Date(left.createdAt || 0).getTime());
 }
 
 function buildCommentEngagementItem(comment) {
@@ -208,9 +244,11 @@ export default function LiveRoom() {
   const lastLiveMomentAtRef = useRef({});
   const presenceSessionKeyRef = useRef(createLiveSessionKey());
   const liveSignalCursorRef = useRef(0);
+  const processedLiveSignalIdsRef = useRef(new Set());
   const recorderRef = useRef(null);
   const recorderChunksRef = useRef([]);
   const recorderStopPromiseRef = useRef(null);
+  const creatorInsightsRefreshTimeoutRef = useRef(null);
   const [video, setVideo] = useState(null);
   const [comments, setComments] = useState([]);
   const [commentBody, setCommentBody] = useState("");
@@ -224,11 +262,13 @@ export default function LiveRoom() {
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [liveMoments, setLiveMoments] = useState([]);
   const [engagementFeed, setEngagementFeed] = useState([]);
+  const [liveSummary, setLiveSummary] = useState(EMPTY_LIVE_SUMMARY);
   const [activeAudience, setActiveAudience] = useState([]);
   const [previewStatus, setPreviewStatus] = useState("idle");
   const [connectionStatus, setConnectionStatus] = useState("idle");
   const [stageRole, setStageRole] = useState("audience");
   const [stageAccessByUserId, setStageAccessByUserId] = useState({});
+  const [stageActorsByUserId, setStageActorsByUserId] = useState({});
   const [stageNotificationQueue, setStageNotificationQueue] = useState([]);
   const [stageNotification, setStageNotification] = useState(null);
 
@@ -249,17 +289,25 @@ export default function LiveRoom() {
     heartTimeoutsRef.current = [];
     liveMomentTimeoutsRef.current.forEach((timeoutId) => window.clearTimeout(timeoutId));
     liveMomentTimeoutsRef.current = [];
+    if (creatorInsightsRefreshTimeoutRef.current) window.clearTimeout(creatorInsightsRefreshTimeoutRef.current);
   }, []);
 
   useEffect(() => {
     setEngagementFeed([]);
+    setLiveSummary(EMPTY_LIVE_SUMMARY);
     setActiveAudience([]);
     setFloatingHearts([]);
     setLiveMoments([]);
     setStageAccessByUserId({});
+    setStageActorsByUserId({});
     setStageNotificationQueue([]);
     setStageNotification(null);
     liveSignalCursorRef.current = 0;
+    processedLiveSignalIdsRef.current = new Set();
+    if (creatorInsightsRefreshTimeoutRef.current) {
+      window.clearTimeout(creatorInsightsRefreshTimeoutRef.current);
+      creatorInsightsRefreshTimeoutRef.current = null;
+    }
     liveMomentumSnapshotRef.current = { peakViewers: null, currentViewers: null, totalEngagements: null };
     lastLiveMomentAtRef.current = {};
   }, [id]);
@@ -325,6 +373,18 @@ export default function LiveRoom() {
     });
   }, []);
 
+  const rememberStageActor = useCallback((actor) => {
+    if (!actor?.id) return;
+
+    setStageActorsByUserId((current) => ({
+      ...current,
+      [actor.id]: {
+        ...(current[actor.id] || {}),
+        ...actor,
+      },
+    }));
+  }, []);
+
   const clearStageNotificationsForUser = useCallback((participantId, kind = null) => {
     if (!participantId) return;
 
@@ -350,6 +410,8 @@ export default function LiveRoom() {
     const participantId = signal?.senderId === creatorId ? signal?.recipientId : signal?.senderId;
     const participantProfile = signal?.senderId === creatorId ? signal?.recipient : signal?.sender;
     const participantName = getProfileName(participantProfile, t("videoDetails.guestAudience"));
+
+    rememberStageActor(participantProfile);
 
     switch (signal?.type) {
       case "join_request": {
@@ -410,17 +472,40 @@ export default function LiveRoom() {
         break;
       }
       case "cohost_left": {
-        setViewerStageAccess(signal.senderId, null);
-        clearStageNotificationsForUser(signal.senderId);
+        setViewerStageAccess(participantId, null);
+        clearStageNotificationsForUser(participantId);
         if (isCreator) {
-          setFeedback(t("videoDetails.cohostLeftFeedback", { name: participantName }));
+          setFeedback(t(signal.senderId === creatorId ? "videoDetails.cohostRemovedFeedback" : "videoDetails.cohostLeftFeedback", { name: participantName }));
+        } else if (participantId === user?.id) {
+          setStageRole("audience");
+          setFeedback(t(signal.senderId === creatorId ? "videoDetails.cohostRemovedFeedbackSelf" : "videoDetails.leftLiveFeedback"));
         }
         break;
       }
       default:
         break;
     }
-  }, [clearStageNotificationsForUser, creatorId, isCreator, queueStageNotification, setViewerStageAccess, t, user?.id]);
+  }, [clearStageNotificationsForUser, creatorId, isCreator, queueStageNotification, rememberStageActor, setViewerStageAccess, t, user?.id]);
+
+  const consumeStageSignal = useCallback((signal) => {
+    const signalId = Number(signal?.id || 0);
+    if (!signalId) return;
+
+    if (processedLiveSignalIdsRef.current.has(signalId)) {
+      liveSignalCursorRef.current = Math.max(liveSignalCursorRef.current, signalId);
+      return;
+    }
+
+    processedLiveSignalIdsRef.current.add(signalId);
+
+    while (processedLiveSignalIdsRef.current.size > 200) {
+      const oldestSignalId = processedLiveSignalIdsRef.current.values().next().value;
+      processedLiveSignalIdsRef.current.delete(oldestSignalId);
+    }
+
+    liveSignalCursorRef.current = Math.max(liveSignalCursorRef.current, signalId);
+    applyStageSignal(signal);
+  }, [applyStageSignal]);
 
   useEffect(() => {
     if (stageNotification || !stageNotificationQueue.length) return;
@@ -447,7 +532,9 @@ export default function LiveRoom() {
     recorderRef.current = recorder;
     return () => {
       if (recorderRef.current === recorder && recorder.state !== "inactive") {
-        try { recorder.stop(); } catch {}
+        try { recorder.stop(); } catch {
+          // Ignore recorder stop cleanup failures.
+        }
       }
     };
   }, [localStream, shouldRecord]);
@@ -473,7 +560,9 @@ export default function LiveRoom() {
       }
       recorder.addEventListener("stop", finish, { once: true });
       recorder.addEventListener("error", finish, { once: true });
-      try { recorder.requestData?.(); } catch {}
+      try { recorder.requestData?.(); } catch {
+        // Ignore recorder flush failures and continue stopping.
+      }
       try { recorder.stop(); } catch { finish(); }
     });
     return recorderStopPromiseRef.current;
@@ -490,7 +579,9 @@ export default function LiveRoom() {
         try {
           client.removeAllListeners?.();
           await client.leave();
-        } catch {}
+        } catch {
+          // Ignore Agora leave cleanup failures.
+        }
       }
     }
     setRemoteParticipants([]);
@@ -575,7 +666,7 @@ export default function LiveRoom() {
     };
   }, [id, isLive, resolvedStageRole, shouldJoinAgora, t]);
 
-  function applyLiveAnalytics(partialAnalytics = {}) {
+  const applyLiveAnalytics = useCallback((partialAnalytics = {}) => {
     setVideo((current) => {
       if (!current) return current;
 
@@ -592,9 +683,9 @@ export default function LiveRoom() {
         liveAnalytics: nextAnalytics,
       };
     });
-  }
+  }, []);
 
-  function pushLiveMoment(kind, title, body, tone = "orange") {
+  const pushLiveMoment = useCallback((kind, title, body, tone = "orange") => {
     if (!isCreator || typeof window === "undefined") return;
 
     const now = Date.now();
@@ -618,9 +709,9 @@ export default function LiveRoom() {
     }, 4500);
 
     liveMomentTimeoutsRef.current.push(timeoutId);
-  }
+  }, [isCreator]);
 
-  function evaluatePresenceMoments(analytics = {}) {
+  const evaluatePresenceMoments = useCallback((analytics = {}) => {
     if (!isCreator) return;
 
     const snapshot = liveMomentumSnapshotRef.current;
@@ -643,9 +734,9 @@ export default function LiveRoom() {
       currentViewers: nextCurrent,
       peakViewers: Math.max(snapshot.peakViewers ?? 0, nextPeak),
     };
-  }
+  }, [isCreator, pushLiveMoment, t]);
 
-  function evaluateEngagementMoments(summary = {}) {
+  const evaluateEngagementMoments = useCallback((summary = {}) => {
     if (!isCreator) return;
 
     const totals = summary?.totals || {};
@@ -669,13 +760,39 @@ export default function LiveRoom() {
       liveComments: Number(totals.comments || 0),
       peakViewers: summary?.retention?.peakViewers,
     });
-  }
+  }, [applyLiveAnalytics, isCreator, pushLiveMoment, t]);
 
-  function appendEngagementItems(items) {
+  const appendEngagementItems = useCallback((items) => {
     setEngagementFeed((current) => mergeEngagementItems(current, items, 12));
-  }
+  }, []);
 
-  function spawnFloatingHearts() {
+  const refreshCreatorInsights = useCallback(async (videoId, { syncFeed = false } = {}) => {
+    if (!isCreator || !videoId) return;
+
+    const response = await api.getLiveEngagements(videoId, { limit: 12, includeSummary: true });
+    const nextSummary = response?.data?.summary || EMPTY_LIVE_SUMMARY;
+    setLiveSummary(nextSummary);
+    evaluateEngagementMoments(nextSummary);
+
+    if (syncFeed) appendEngagementItems(response?.data?.engagements || []);
+  }, [appendEngagementItems, evaluateEngagementMoments, isCreator]);
+
+  const scheduleCreatorInsightsRefresh = useCallback((videoId) => {
+    if (!isCreator || !videoId || typeof window === "undefined") return;
+    if (creatorInsightsRefreshTimeoutRef.current) return;
+
+    creatorInsightsRefreshTimeoutRef.current = window.setTimeout(async () => {
+      creatorInsightsRefreshTimeoutRef.current = null;
+
+      try {
+        await refreshCreatorInsights(videoId);
+      } catch {
+        // Ignore refresh failures and rely on polling fallback.
+      }
+    }, 700);
+  }, [isCreator, refreshCreatorInsights]);
+
+  const spawnFloatingHearts = useCallback(() => {
     if (typeof window === "undefined") return;
 
     const hearts = createFloatingHeartBurst();
@@ -689,7 +806,7 @@ export default function LiveRoom() {
 
       heartTimeoutsRef.current.push(timeoutId);
     });
-  }
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -705,7 +822,11 @@ export default function LiveRoom() {
         if (ignore) return;
 
         appendEngagementItems(response?.data?.engagements || []);
-        if (isCreator && response?.data?.summary) evaluateEngagementMoments(response.data.summary);
+        if (isCreator) {
+          const nextSummary = response?.data?.summary || EMPTY_LIVE_SUMMARY;
+          setLiveSummary(nextSummary);
+          evaluateEngagementMoments(nextSummary);
+        }
       } catch {
         // Ignore polling failures and retry.
       }
@@ -718,12 +839,67 @@ export default function LiveRoom() {
       ignore = true;
       window.clearInterval(intervalId);
     };
-  }, [isAuthenticated, isCreator, isLive, video?.id]);
+  }, [appendEngagementItems, evaluateEngagementMoments, isAuthenticated, isCreator, isLive, video?.id]);
 
   useEffect(() => {
     let ignore = false;
 
     if (!video?.id || !isAuthenticated || !isLive) {
+      return undefined;
+    }
+
+    const unsubscribe = subscribeToPrivateChannel(`live.videos.${video.id}`, {
+      ".live.engagement.created": (event) => {
+        if (ignore || Number(event?.videoId || 0) !== Number(video.id || 0) || !event?.engagement) return;
+
+        appendEngagementItems([event.engagement]);
+
+        if (event?.comment?.id) {
+          setComments((current) => mergeLiveComments(current, [event.comment]));
+        }
+
+        if (event?.engagement?.type === "like" && Number(event?.engagement?.actor?.id || 0) !== Number(user?.id || 0)) {
+          spawnFloatingHearts();
+        }
+
+        if (event?.analytics) {
+          applyLiveAnalytics(event.analytics);
+
+          if (isCreator) {
+            const nextLikes = Number(event.analytics.liveLikes || 0);
+            const nextComments = Number(event.analytics.liveComments || 0);
+
+            evaluateEngagementMoments({
+              totals: {
+                likes: nextLikes,
+                comments: nextComments,
+                engagements: nextLikes + nextComments,
+              },
+            });
+          }
+        }
+
+        if (isCreator) scheduleCreatorInsightsRefresh(video.id);
+      },
+      ".live.presence.updated": (event) => {
+        if (ignore || Number(event?.videoId || 0) !== Number(video.id || 0) || !event?.analytics) return;
+
+        applyLiveAnalytics(event.analytics);
+        if (isCreator) evaluatePresenceMoments(event.analytics);
+        if (isCreator) scheduleCreatorInsightsRefresh(video.id);
+      },
+    });
+
+    return () => {
+      ignore = true;
+      unsubscribe?.();
+    };
+  }, [applyLiveAnalytics, appendEngagementItems, evaluateEngagementMoments, evaluatePresenceMoments, isAuthenticated, isCreator, isLive, scheduleCreatorInsightsRefresh, spawnFloatingHearts, user?.id, video?.id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!video?.id || !isAuthenticated || !isLive || !user?.id) {
       liveSignalCursorRef.current = 0;
       return undefined;
     }
@@ -734,12 +910,19 @@ export default function LiveRoom() {
         if (ignore) return;
 
         const nextSignals = response?.data?.signals || [];
-        nextSignals.forEach((signal) => applyStageSignal(signal));
+        nextSignals.forEach((signal) => consumeStageSignal(signal));
         liveSignalCursorRef.current = response?.data?.latestSignalId ?? liveSignalCursorRef.current;
       } catch {
         // Ignore transient signal polling failures.
       }
     }
+
+    const unsubscribe = subscribeToPrivateChannel(`live.videos.${video.id}.users.${user.id}`, {
+      ".live.signal.created": (event) => {
+        if (ignore || Number(event?.videoId || 0) !== Number(video.id || 0) || !event?.signal) return;
+        consumeStageSignal(event.signal);
+      },
+    });
 
     pollLiveSignals();
     const intervalId = window.setInterval(pollLiveSignals, LIVE_SIGNAL_POLL_MS);
@@ -747,8 +930,9 @@ export default function LiveRoom() {
     return () => {
       ignore = true;
       window.clearInterval(intervalId);
+      unsubscribe?.();
     };
-  }, [applyStageSignal, isAuthenticated, isLive, video?.id]);
+  }, [consumeStageSignal, isAuthenticated, isLive, user?.id, video?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -781,6 +965,27 @@ export default function LiveRoom() {
   useEffect(() => {
     let ignore = false;
 
+    if (!video?.id || !isAuthenticated || !isLive || !isCreator) {
+      return undefined;
+    }
+
+    const unsubscribe = subscribeToPrivateChannel(`live.videos.${video.id}.creator`, {
+      ".live.audience.updated": (event) => {
+        if (ignore || Number(event?.videoId || 0) !== Number(video.id || 0) || !Array.isArray(event?.audience)) return;
+        setActiveAudience(event.audience);
+      },
+    });
+
+    return () => {
+      ignore = true;
+      unsubscribe?.();
+    };
+  }, [isAuthenticated, isCreator, isLive, video?.id]);
+
+  useEffect(() => {
+    let ignore = false;
+    const presenceSessionKey = presenceSessionKeyRef.current;
+
     if (!video?.id || !isAuthenticated || !isLive) {
       applyLiveAnalytics({ currentViewers: 0 });
       return undefined;
@@ -789,7 +994,7 @@ export default function LiveRoom() {
     async function recordPresence() {
       try {
         const response = await api.recordLivePresence(video.id, {
-          sessionKey: presenceSessionKeyRef.current,
+          sessionKey: presenceSessionKey,
           role: resolvedStageRole,
         });
 
@@ -808,9 +1013,9 @@ export default function LiveRoom() {
     return () => {
       ignore = true;
       window.clearInterval(intervalId);
-      api.leaveLivePresence(video.id, { sessionKey: presenceSessionKeyRef.current }).catch(() => {});
+      api.leaveLivePresence(video.id, { sessionKey: presenceSessionKey }).catch(() => {});
     };
-  }, [isAuthenticated, isLive, resolvedStageRole, video?.id]);
+  }, [applyLiveAnalytics, evaluatePresenceMoments, isAuthenticated, isLive, resolvedStageRole, video?.id]);
 
   async function handleToggleLive() {
     if (!video || !isCreator) return;
@@ -856,7 +1061,7 @@ export default function LiveRoom() {
       const response = await api.postComment(video.id, commentBody.trim());
       const nextComment = response?.data?.comment;
       if (nextComment) {
-        setComments((current) => [nextComment, ...current]);
+        setComments((current) => mergeLiveComments(current, [nextComment]));
         setVideo((current) => {
           if (!current) return current;
 
@@ -988,6 +1193,26 @@ export default function LiveRoom() {
     }
   }
 
+  async function handleRemoveCohost(actor) {
+    if (!video || !isCreator || !isLive || !actor?.id || stageAccessByUserId[actor.id] !== "approved") return;
+
+    const actionKey = `remove-cohost-${video.id}-${actor.id}`;
+    setBusyAction(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      await api.sendLiveSignal(video.id, { recipientId: actor.id, type: "cohost_left" });
+      setViewerStageAccess(actor.id, null);
+      clearStageNotificationsForUser(actor.id);
+      setFeedback(t("videoDetails.cohostRemovedFeedback", { name: getProfileName(actor, t("videoDetails.guestAudience")) }));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
   async function handleInviteAudience(actor) {
     if (!video || !isCreator || !isLive || !actor?.id || actor.id === creatorId) return;
 
@@ -1046,15 +1271,33 @@ export default function LiveRoom() {
     }
   }
 
-  function getInviteButtonLabel(actorId) {
-    if (stageAccessByUserId[actorId] === "approved") return t("videoDetails.cohost");
+  function isApprovedCohost(actorId) {
+    return stageAccessByUserId[actorId] === "approved";
+  }
+
+  function getAudienceActionBusyKey(actorId) {
+    return isApprovedCohost(actorId)
+      ? `remove-cohost-${video?.id}-${actorId}`
+      : `invite-stage-${video?.id}-${actorId}`;
+  }
+
+  function getAudienceActionLabel(actorId) {
+    if (isApprovedCohost(actorId)) return t("videoDetails.removeCohost");
     if (stageAccessByUserId[actorId] === "request_pending") return t("videoDetails.requestPending");
     if (stageAccessByUserId[actorId] === "invite_pending") return t("videoDetails.inviteSent");
     return t("videoDetails.inviteToJoin");
   }
 
-  function isInviteButtonDisabled(actorId) {
-    return busyAction === `invite-stage-${video?.id}-${actorId}` || ["request_pending", "invite_pending", "approved"].includes(stageAccessByUserId[actorId] || "");
+  function isAudienceActionDisabled(actorId) {
+    return busyAction === getAudienceActionBusyKey(actorId) || ["request_pending", "invite_pending"].includes(stageAccessByUserId[actorId] || "");
+  }
+
+  function handleAudienceAction(actor) {
+    if (isApprovedCohost(actor?.id)) {
+      return handleRemoveCohost(actor);
+    }
+
+    return handleInviteAudience(actor);
   }
 
   if (!loading && video && !isLive && !isCreator) {
@@ -1083,7 +1326,16 @@ export default function LiveRoom() {
   const peakViewers = video?.liveAnalytics?.peakViewers ?? 0;
   const liveLikes = video?.liveLikes ?? video?.liveAnalytics?.liveLikes ?? 0;
   const liveComments = video?.liveComments ?? video?.liveAnalytics?.liveComments ?? video?.commentsCount ?? comments.length ?? 0;
+  const liveSummaryTopFans = liveSummary?.topFans || [];
+  const liveSummaryPeakMoments = liveSummary?.peakMoments || [];
+  const liveSummaryTimeline = liveSummary?.timeline || [];
+  const liveSummaryRetention = liveSummary?.retention || EMPTY_LIVE_SUMMARY.retention;
+  const liveSummaryTotals = liveSummary?.totals || EMPTY_LIVE_SUMMARY.totals;
   const activeAudienceCount = activeAudience.length;
+  const currentCohosts = Object.entries(stageAccessByUserId)
+    .filter(([participantId, status]) => status === "approved" && `${participantId}` !== `${creatorId}`)
+    .map(([participantId]) => stageActorsByUserId[participantId] || { id: participantId });
+  const currentCohostCount = currentCohosts.length;
   const isCohost = !isCreator && resolvedStageRole === "host";
   const stageActionBusyKey = isCohost ? `cohost-leave-${video?.id}-${user?.id}` : `stage-request-${video?.id}-${user?.id}`;
   const stageActionLabel = isCohost
@@ -1309,6 +1561,135 @@ export default function LiveRoom() {
                 <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
+                      <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.currentCohosts")}</h2>
+                      <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.currentCohostsBody")}</p>
+                    </div>
+                    <span className="text-sm text-slate500 dark:text-slate200">{currentCohostCount}</span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {currentCohostCount ? currentCohosts.map((actor) => (
+                      <article key={actor.id} className="rounded-3xl bg-[#F7F7F7] px-4 py-3 dark:bg-[#1F1F1F]">
+                        <div className="flex gap-3">
+                          <img src={getProfileAvatar(actor)} alt={getProfileName(actor, t("videoDetails.guestAudience"))} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-medium text-black dark:text-white">{getProfileName(actor, t("videoDetails.guestAudience"))}</p>
+                              {actor?.username ? <span className="text-xs text-slate500 dark:text-slate200">@{actor.username}</span> : null}
+                            </div>
+                            <p className="mt-1 text-sm text-slate700 dark:text-slate200">{t("videoDetails.onStage")}</p>
+                          </div>
+                          {actor?.id ? (
+                            <button
+                              type="button"
+                              disabled={busyAction === getAudienceActionBusyKey(actor.id)}
+                              onClick={() => handleRemoveCohost(actor)}
+                              className="self-start rounded-full bg-white300 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 dark:bg-black100 dark:text-white"
+                            >
+                              {t("videoDetails.removeCohost")}
+                            </button>
+                          ) : null}
+                        </div>
+                      </article>
+                    )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noCurrentCohosts")}</div>}
+                  </div>
+                </section>
+              ) : null}
+
+              {isCreator && isLive ? (
+                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.sessionSummary")}</h2>
+                      <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.recentActivity")}</p>
+                    </div>
+                    <span className="text-sm text-slate500 dark:text-slate200">{formatCompactNumber(liveSummaryTotals.engagements || 0)}</span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    {[
+                      { key: "engagements", label: t("videoDetails.engagementActions"), value: formatCompactNumber(liveSummaryTotals.engagements || 0) },
+                      { key: "fans", label: t("videoDetails.uniqueFans"), value: formatCompactNumber(liveSummaryTotals.uniqueFans || 0) },
+                      { key: "average", label: t("videoDetails.averageViewers"), value: formatCompactNumber(liveSummaryRetention.averageViewers || 0) },
+                      { key: "retention", label: t("videoDetails.retentionRate"), value: `${Math.max(0, Math.round(liveSummaryRetention.retentionRate || 0))}%` },
+                    ].map((metric) => (
+                      <div key={metric.key} className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{metric.label}</p>
+                        <p className="mt-2 text-2xl font-semibold text-black dark:text-white">{metric.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.topSupporters")}</h3>
+                        <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.topFans")}</p>
+                      </div>
+                      <span className="text-sm text-slate500 dark:text-slate200">{liveSummaryTopFans.length}</span>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {liveSummaryTopFans.length ? liveSummaryTopFans.slice(0, 3).map((fan) => (
+                        <div key={`${fan?.actor?.id || fan?.actor?.fullName || "fan"}-${fan?.engagementCount || 0}`} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 dark:bg-[#171717]">
+                          <img src={getProfileAvatar(fan.actor)} alt={getProfileName(fan.actor, t("videoDetails.guestAudience"))} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(fan.actor, t("videoDetails.guestAudience"))}</p>
+                            <p className="mt-1 text-xs text-slate500 dark:text-slate200">{formatCompactNumber(fan.engagementCount || 0)} {t("videoDetails.engagementActions")}</p>
+                          </div>
+                          <span className="rounded-full bg-orange100 px-3 py-1 text-xs font-semibold text-black dark:bg-[#2A2117] dark:text-white">{formatCompactNumber(fan.likesCount || 0)} ❤</span>
+                        </div>
+                      )) : <div className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noTopFans")}</div>}
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                    <div className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                      <div>
+                        <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.engagementTimeline")}</h3>
+                        <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.engagementTimelineBody")}</p>
+                      </div>
+
+                      {liveSummaryTimeline.length ? (
+                        <div className="mt-4">
+                          <AnalyticsLineChart
+                            ariaLabel={t("videoDetails.engagementTimeline")}
+                            data={liveSummaryTimeline}
+                            series={[
+                              { key: "engagementCount", label: t("videoDetails.engagementActions"), color: "#ec4899" },
+                              { key: "viewersCount", label: t("videoDetails.currentViewers"), color: "#f97316" },
+                            ]}
+                          />
+                        </div>
+                      ) : <div className="mt-4 rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noTimelineData")}</div>}
+                    </div>
+
+                    <div className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                      <div>
+                        <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.peakMoments")}</h3>
+                        <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.peakMomentsBody")}</p>
+                      </div>
+
+                      <div className="mt-4 space-y-3">
+                        {liveSummaryPeakMoments.length ? liveSummaryPeakMoments.map((moment) => (
+                          <div key={`${moment?.label || "moment"}-${moment?.startedAt || ""}`} className="rounded-2xl bg-white px-4 py-3 dark:bg-[#171717]">
+                            <div className="flex items-center justify-between gap-3">
+                              <p className="text-sm font-medium text-black dark:text-white">{moment.label}</p>
+                              <span className="rounded-full bg-orange100 px-3 py-1 text-xs font-semibold text-black dark:bg-[#2A2117] dark:text-white">{formatCompactNumber(moment.engagementCount || 0)} {t("videoDetails.engagementActions")}</span>
+                            </div>
+                            <p className="mt-2 text-sm text-slate600 dark:text-slate200">{formatCompactNumber(moment.likesCount || 0)} {t("videoDetails.sentLikes")} · {formatCompactNumber(moment.commentsCount || 0)} {t("videoDetails.comments")}</p>
+                          </div>
+                        )) : <div className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noPeakMoments")}</div>}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
+
+              {isCreator && isLive ? (
+                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
                       <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.activeAudience")}</h2>
                       <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.activeAudienceBody")}</p>
                     </div>
@@ -1330,11 +1711,11 @@ export default function LiveRoom() {
                           {member.actor?.id ? (
                             <button
                               type="button"
-                              disabled={isInviteButtonDisabled(member.actor.id)}
-                              onClick={() => handleInviteAudience(member.actor)}
-                              className="self-start rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={isAudienceActionDisabled(member.actor.id)}
+                              onClick={() => handleAudienceAction(member.actor)}
+                              className={`self-start rounded-full px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${isApprovedCohost(member.actor.id) ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}
                             >
-                              {getInviteButtonLabel(member.actor.id)}
+                              {getAudienceActionLabel(member.actor.id)}
                             </button>
                           ) : null}
                         </div>
@@ -1370,11 +1751,11 @@ export default function LiveRoom() {
                           {isCreator && isLive && item.actor?.id && item.actor.id !== creatorId ? (
                             <button
                               type="button"
-                              disabled={isInviteButtonDisabled(item.actor.id)}
-                              onClick={() => handleInviteAudience(item.actor)}
-                              className="mt-3 rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={isAudienceActionDisabled(item.actor.id)}
+                              onClick={() => handleAudienceAction(item.actor)}
+                              className={`mt-3 rounded-full px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${isApprovedCohost(item.actor.id) ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}
                             >
-                              {getInviteButtonLabel(item.actor.id)}
+                              {getAudienceActionLabel(item.actor.id)}
                             </button>
                           ) : null}
                         </div>
@@ -1414,11 +1795,11 @@ export default function LiveRoom() {
                           {isCreator && isLive && comment.user?.id && comment.user.id !== creatorId ? (
                             <button
                               type="button"
-                              disabled={isInviteButtonDisabled(comment.user.id)}
-                              onClick={() => handleInviteAudience(comment.user)}
-                              className="mt-3 rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                              disabled={isAudienceActionDisabled(comment.user.id)}
+                              onClick={() => handleAudienceAction(comment.user)}
+                              className={`mt-3 rounded-full px-4 py-2 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${isApprovedCohost(comment.user.id) ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}
                             >
-                              {getInviteButtonLabel(comment.user.id)}
+                              {getAudienceActionLabel(comment.user.id)}
                             </button>
                           ) : null}
                         </div>

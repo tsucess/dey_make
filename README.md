@@ -21,6 +21,19 @@ Do not place `GOOGLE_CLIENT_SECRET` or `FACEBOOK_CLIENT_SECRET` in any `VITE_*` 
 - `VITE_API_BASE_URL=https://api.deymake.com/api/v1` (optional override)
 - `VITE_BACKEND_PROXY_TARGET=http://127.0.0.1:8000` for local development
 
+## Realtime setup (Echo + Reverb)
+
+To enable realtime inbox and live-room updates locally, set:
+
+- `VITE_REVERB_APP_KEY=your-reverb-app-key`
+- `VITE_REVERB_HOST=127.0.0.1`
+- `VITE_REVERB_PORT=8080`
+- `VITE_REVERB_SCHEME=http`
+
+The frontend authenticates private and presence channels against `${VITE_API_BASE_URL}`.
+
+For local development, start the frontend dev server after the backend Reverb server is running.
+
 ### Production OAuth callback path
 
 After backend OAuth succeeds, users are redirected to:
