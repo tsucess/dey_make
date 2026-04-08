@@ -4,12 +4,14 @@ import VideoCard from "../components/VideoCard";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
+import Spinner from '../components/Layout/Spinner'
 
-function StateCard({ title, body, actionLabel, onAction }) {
+
+function StateCard({ title, body, actionLabel, onAction, loading }) {
   return (
     <div className="rounded-4xl bg-white300 px-6 py-10 text-center dark:bg-black200">
-      <h2 className="text-xl font-semibold text-black dark:text-white">{title}</h2>
-      <p className="mt-2 text-sm text-slate600 dark:text-slate200">{body}</p>
+      { loading ? <Spinner/> :<div><h2 className="text-xl font-semibold text-black dark:text-white">{title}</h2>
+      <p className="mt-2 text-sm text-slate600 dark:text-slate200">{body}</p></div>}
       {onAction ? (
         <button type="button" onClick={onAction} className="mt-5 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black">
           {actionLabel}
@@ -71,7 +73,7 @@ export default function LivePage() {
 
       <section className="mt-6">
         {loading ? (
-          <StateCard title={t("common.live")} body={t("livePage.loading")} />
+          <StateCard title={t("common.live")} body={t("livePage.loading")} loading />
         ) : liveVideos.length ? (
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {liveVideos.map((video) => (
