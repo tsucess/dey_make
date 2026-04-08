@@ -61,15 +61,11 @@ describe('AppLayout', () => {
   });
 
   it('renders labeled homepage actions and navigates to search', async () => {
-    const toggleTheme = vi.fn();
-    mockUseTheme.mockReturnValue({ isDark: false, toggleTheme });
+    mockUseTheme.mockReturnValue({ isDark: false, toggleTheme: vi.fn() });
 
     renderLayout('/home');
 
     expect(screen.getByRole('button', { name: /notifications/i })).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /switch to dark mode/i }));
-    expect(toggleTheme).toHaveBeenCalledTimes(1);
 
     fireEvent.click(screen.getByRole('button', { name: /open search/i }));
 

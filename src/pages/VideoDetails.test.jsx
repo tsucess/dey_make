@@ -34,6 +34,26 @@ vi.mock('../utils/loadHls', () => ({
     }
   }),
 }));
+vi.mock('hls.js', () => ({
+  default: class MockHls {
+    static Events = { ERROR: hlsMockState.errorEvent };
+
+    static isSupported() {
+      return hlsMockState.isSupported;
+    }
+
+    constructor() {
+      this.handlers = {};
+      this.loadSource = vi.fn();
+      this.attachMedia = vi.fn();
+      this.on = vi.fn((event, handler) => {
+        this.handlers[event] = handler;
+      });
+      this.destroy = vi.fn();
+      hlsMockState.lastInstance = this;
+    }
+  },
+}));
 
 vi.mock('../utils/loadAgoraRtc', () => ({
   loadAgoraRtc: vi.fn(async () => ({
@@ -118,7 +138,6 @@ vi.mock('../services/api', async () => {
 });
 
 import { api } from '../services/api';
-import LiveRoom from './LiveRoom';
 import VideoDetails from './VideoDetails';
 
 let lastPeerConnection = null;
@@ -249,7 +268,7 @@ function renderPage(initialEntry = '/video/10') {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path="/video/:id" element={<VideoDetails />} />
-        <Route path="/live/:id" element={<LiveRoom />} />
+        <Route path="/live/:id" element={<VideoDetails mode="live" />} />
         <Route path="/video/:id/analytics" element={<div>Analytics page</div>} />
         <Route path="/create" element={<div>Draft editor</div>} />
       </Routes>
@@ -342,7 +361,7 @@ describe('VideoDetails', () => {
     renderPage();
 
     await screen.findByRole('heading', { name: 'Alpha Session' });
-    await user.click(screen.getByRole('button', { name: 'Ver analíticas' }));
+    await user.click(screen.getByRole('link', { name: 'Ver analíticas' }));
 
     expect(await screen.findByText('Analytics page')).toBeInTheDocument();
   });

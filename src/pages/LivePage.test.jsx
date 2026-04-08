@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({ user: { id: 1, fullName: 'Test Creator' } }),
+}));
+
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
   const t = actual.createTranslator('en');
@@ -46,6 +50,7 @@ function renderPage() {
       <Routes>
         <Route path="/live" element={<LivePage />} />
         <Route path="/live/:id" element={<div>Live room</div>} />
+        <Route path="/create-live" element={<div>Create live page</div>} />
         <Route path="/home" element={<div>Home page</div>} />
       </Routes>
     </MemoryRouter>,
@@ -95,5 +100,19 @@ describe('LivePage', () => {
     await user.click(screen.getByRole('button', { name: 'Back to home' }));
 
     expect(await screen.findByText('Home page')).toBeInTheDocument();
+  });
+
+  it('shows a create live action and opens the live creation form', async () => {
+    const user = userEvent.setup();
+
+    api.getLiveVideos.mockResolvedValue({ data: { videos: [buildVideo({ id: 12, title: 'Coding live' })] } });
+
+    renderPage();
+
+    expect(await screen.findByRole('button', { name: 'Create live' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Create live' }));
+
+    expect(await screen.findByText('Create live page')).toBeInTheDocument();
   });
 });

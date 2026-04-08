@@ -91,7 +91,7 @@ export default function CreateLive() {
   return (
     <section className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-4 py-6 md:px-6 md:py-8">
       <div className="space-y-2">
-        <h1 className="text-2xl font-semibold text-black dark:text-white">Create Live Stream</h1>
+        <h1 className="text-2xl font-semibold text-black dark:text-white">{t("upload.liveTitle")}</h1>
         <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveDescription")}</p>
         <p className="text-sm font-medium text-slate500 dark:text-slate200">{t("upload.signedInAs", { name: user?.fullName || user?.name || t("upload.creatorFallback") })}</p>
       </div>
@@ -100,6 +100,10 @@ export default function CreateLive() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr),320px]">
         <section className="space-y-5">
+          <div className="space-y-2">
+            <h2 className="text-lg font-semibold text-black dark:text-white">{t("upload.liveFlow.setupTitle")}</h2>
+            <p className="text-sm text-slate500 dark:text-slate200">{t("upload.liveFlow.setupHint")}</p>
+          </div>
 
           <div className="space-y-4">
             <input

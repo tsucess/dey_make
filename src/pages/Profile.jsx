@@ -496,7 +496,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
-      <img src="./header_profile.png" alt="" className="h-56 w-full md:h-64" />
+      <img src="/header_profile.png" alt="" className="h-56 w-full md:h-64" />
 
       <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pl-20 md:pb-12">
         <div className="-mt-12 md:-mt-16">
