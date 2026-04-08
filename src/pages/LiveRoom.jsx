@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaHeart } from "react-icons/fa";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { HiArrowLeft } from "react-icons/hi";
@@ -23,6 +23,8 @@ import {
 
 const LIVE_ENGAGEMENT_POLL_MS = 4000;
 const LIVE_PRESENCE_POLL_MS = 15000;
+const LIVE_SIGNAL_POLL_MS = 3000;
+const LIVE_AUDIENCE_POLL_MS = 5000;
 const LIVE_HEART_COLORS = ["#f472b6", "#fb7185", "#f97316", "#ec4899"];
 const LIVE_HEART_LANES = [91.8, 94.1, 96.1];
 
@@ -173,6 +175,26 @@ function StageTile({ stream, label, muted = false }) {
   return <video ref={playbackRef} aria-label={label} className="h-full w-full object-cover" autoPlay muted={muted} playsInline controls={!muted} />;
 }
 
+function LiveStageActionModal({ title, body, acceptLabel, rejectLabel, onAccept, onReject, busy = false }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
+      <section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl dark:bg-[#171717]">
+        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange100">Live</p>
+        <h2 className="mt-3 text-2xl font-semibold text-black dark:text-white">{title}</h2>
+        <p className="mt-3 text-sm leading-relaxed text-slate700 dark:text-slate200">{body}</p>
+        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button type="button" onClick={onReject} disabled={busy} className="rounded-full border border-black/10 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:text-white">
+            {rejectLabel}
+          </button>
+          <button type="button" onClick={onAccept} disabled={busy} className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">
+            {acceptLabel}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function LiveRoom() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -185,6 +207,7 @@ export default function LiveRoom() {
   const liveMomentumSnapshotRef = useRef({ peakViewers: null, currentViewers: null, totalEngagements: null });
   const lastLiveMomentAtRef = useRef({});
   const presenceSessionKeyRef = useRef(createLiveSessionKey());
+  const liveSignalCursorRef = useRef(0);
   const recorderRef = useRef(null);
   const recorderChunksRef = useRef([]);
   const recorderStopPromiseRef = useRef(null);
@@ -201,15 +224,20 @@ export default function LiveRoom() {
   const [floatingHearts, setFloatingHearts] = useState([]);
   const [liveMoments, setLiveMoments] = useState([]);
   const [engagementFeed, setEngagementFeed] = useState([]);
+  const [activeAudience, setActiveAudience] = useState([]);
   const [previewStatus, setPreviewStatus] = useState("idle");
   const [connectionStatus, setConnectionStatus] = useState("idle");
   const [stageRole, setStageRole] = useState("audience");
+  const [stageAccessByUserId, setStageAccessByUserId] = useState({});
+  const [stageNotificationQueue, setStageNotificationQueue] = useState([]);
+  const [stageNotification, setStageNotification] = useState(null);
 
   const creatorId = video?.author?.id || video?.creator?.id;
   const creatorProfile = video?.author || video?.creator;
   const isCreator = Boolean(creatorId) && user?.id === creatorId;
   const isLive = isActiveLiveVideo(video);
   const resolvedStageRole = isCreator ? "host" : stageRole;
+  const viewerStageStatus = !isCreator && user?.id ? (stageAccessByUserId[user.id] || "idle") : "idle";
   const shouldJoinAgora = Boolean(video?.id && video?.type === "video" && isAuthenticated && (isLive || isCreator));
   const shouldRecord = Boolean(isCreator && isLive && localStream);
 
@@ -225,8 +253,13 @@ export default function LiveRoom() {
 
   useEffect(() => {
     setEngagementFeed([]);
+    setActiveAudience([]);
     setFloatingHearts([]);
     setLiveMoments([]);
+    setStageAccessByUserId({});
+    setStageNotificationQueue([]);
+    setStageNotification(null);
+    liveSignalCursorRef.current = 0;
     liveMomentumSnapshotRef.current = { peakViewers: null, currentViewers: null, totalEngagements: null };
     lastLiveMomentAtRef.current = {};
   }, [id]);
@@ -267,6 +300,135 @@ export default function LiveRoom() {
     if (isCreator) setStageRole("host");
     else if (!isLive) setStageRole("audience");
   }, [id, isCreator, isLive]);
+
+  useEffect(() => {
+    if (isCreator || !user?.id) return;
+
+    if (viewerStageStatus === "approved") {
+      setStageRole("host");
+      return;
+    }
+
+    if (stageRole === "host") {
+      setStageRole("audience");
+    }
+  }, [isCreator, stageRole, user?.id, viewerStageStatus]);
+
+  const setViewerStageAccess = useCallback((participantId, nextStatus) => {
+    if (!participantId) return;
+
+    setStageAccessByUserId((current) => {
+      const next = { ...current };
+      if (nextStatus) next[participantId] = nextStatus;
+      else delete next[participantId];
+      return next;
+    });
+  }, []);
+
+  const clearStageNotificationsForUser = useCallback((participantId, kind = null) => {
+    if (!participantId) return;
+
+    setStageNotification((current) => {
+      if (!current || current.participantId !== participantId) return current;
+      if (kind && current.kind !== kind) return current;
+      return null;
+    });
+    setStageNotificationQueue((current) => current.filter((item) => item.participantId !== participantId || (kind && item.kind !== kind)));
+  }, []);
+
+  const queueStageNotification = useCallback((nextNotification) => {
+    if (!nextNotification?.signalId) return;
+
+    setStageNotificationQueue((current) => (
+      current.some((item) => item.signalId === nextNotification.signalId)
+        ? current
+        : [...current, nextNotification]
+    ));
+  }, []);
+
+  const applyStageSignal = useCallback((signal) => {
+    const participantId = signal?.senderId === creatorId ? signal?.recipientId : signal?.senderId;
+    const participantProfile = signal?.senderId === creatorId ? signal?.recipient : signal?.sender;
+    const participantName = getProfileName(participantProfile, t("videoDetails.guestAudience"));
+
+    switch (signal?.type) {
+      case "join_request": {
+        setViewerStageAccess(signal.senderId, "request_pending");
+        if (isCreator) {
+          queueStageNotification({
+            signalId: signal.id,
+            participantId: signal.senderId,
+            kind: "request",
+            actor: signal.sender,
+          });
+        }
+        break;
+      }
+      case "join_invite": {
+        setViewerStageAccess(signal.recipientId, "invite_pending");
+        if (!isCreator && signal.recipientId === user?.id) {
+          queueStageNotification({
+            signalId: signal.id,
+            participantId: signal.recipientId,
+            kind: "invite",
+            actor: signal.sender,
+          });
+        }
+        break;
+      }
+      case "join_request_accepted": {
+        setViewerStageAccess(signal.recipientId, "approved");
+        clearStageNotificationsForUser(signal.recipientId, "request");
+        if (!isCreator && signal.recipientId === user?.id) {
+          setFeedback(t("videoDetails.requestAcceptedFeedback"));
+          setStageRole("host");
+        }
+        break;
+      }
+      case "join_invite_accepted": {
+        setViewerStageAccess(signal.senderId, "approved");
+        clearStageNotificationsForUser(signal.senderId, "invite");
+        if (isCreator) {
+          setFeedback(t("videoDetails.inviteAcceptedFeedback", { name: participantName }));
+        }
+        break;
+      }
+      case "join_request_rejected": {
+        setViewerStageAccess(signal.recipientId, null);
+        clearStageNotificationsForUser(signal.recipientId, "request");
+        if (!isCreator && signal.recipientId === user?.id) {
+          setFeedback(t("videoDetails.requestRejectedFeedback"));
+        }
+        break;
+      }
+      case "join_invite_rejected": {
+        setViewerStageAccess(signal.senderId, null);
+        clearStageNotificationsForUser(signal.senderId, "invite");
+        if (isCreator) {
+          setFeedback(t("videoDetails.inviteRejectedFeedback", { name: participantName }));
+        }
+        break;
+      }
+      case "cohost_left": {
+        setViewerStageAccess(signal.senderId, null);
+        clearStageNotificationsForUser(signal.senderId);
+        if (isCreator) {
+          setFeedback(t("videoDetails.cohostLeftFeedback", { name: participantName }));
+        }
+        break;
+      }
+      default:
+        break;
+    }
+  }, [clearStageNotificationsForUser, creatorId, isCreator, queueStageNotification, setViewerStageAccess, t, user?.id]);
+
+  useEffect(() => {
+    if (stageNotification || !stageNotificationQueue.length) return;
+
+    const [nextNotification, ...rest] = stageNotificationQueue;
+    setStageNotification(nextNotification);
+    setStageNotificationQueue(rest);
+  }, [stageNotification, stageNotificationQueue]);
 
   useEffect(() => {
     if (!shouldRecord || recorderRef.current) return undefined;
@@ -562,6 +724,64 @@ export default function LiveRoom() {
     let ignore = false;
 
     if (!video?.id || !isAuthenticated || !isLive) {
+      liveSignalCursorRef.current = 0;
+      return undefined;
+    }
+
+    async function pollLiveSignals() {
+      try {
+        const response = await api.getLiveSignals(video.id, { after: liveSignalCursorRef.current });
+        if (ignore) return;
+
+        const nextSignals = response?.data?.signals || [];
+        nextSignals.forEach((signal) => applyStageSignal(signal));
+        liveSignalCursorRef.current = response?.data?.latestSignalId ?? liveSignalCursorRef.current;
+      } catch {
+        // Ignore transient signal polling failures.
+      }
+    }
+
+    pollLiveSignals();
+    const intervalId = window.setInterval(pollLiveSignals, LIVE_SIGNAL_POLL_MS);
+
+    return () => {
+      ignore = true;
+      window.clearInterval(intervalId);
+    };
+  }, [applyStageSignal, isAuthenticated, isLive, video?.id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!video?.id || !isAuthenticated || !isLive || !isCreator) {
+      setActiveAudience([]);
+      return undefined;
+    }
+
+    async function pollActiveAudience() {
+      try {
+        const response = await api.getLiveAudience(video.id);
+        if (ignore) return;
+
+        setActiveAudience(response?.data?.audience || []);
+      } catch {
+        // Ignore transient audience polling failures.
+      }
+    }
+
+    pollActiveAudience();
+    const intervalId = window.setInterval(pollActiveAudience, LIVE_AUDIENCE_POLL_MS);
+
+    return () => {
+      ignore = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isAuthenticated, isCreator, isLive, video?.id]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!video?.id || !isAuthenticated || !isLive) {
       applyLiveAnalytics({ currentViewers: 0 });
       return undefined;
     }
@@ -729,6 +949,114 @@ export default function LiveRoom() {
     }
   }
 
+  async function handleRequestToJoin() {
+    if (!video || !isLive || !user?.id || isCreator || viewerStageStatus !== "idle") return;
+
+    const actionKey = `stage-request-${video.id}-${user.id}`;
+    setBusyAction(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      await api.sendLiveSignal(video.id, { type: "join_request" });
+      setViewerStageAccess(user.id, "request_pending");
+      setFeedback(t("videoDetails.requestSentFeedback"));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handleLeaveAsCohost() {
+    if (!video || !user?.id || isCreator || resolvedStageRole !== "host") return;
+
+    const actionKey = `cohost-leave-${video.id}-${user.id}`;
+    setBusyAction(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      await api.sendLiveSignal(video.id, { type: "cohost_left" });
+      setViewerStageAccess(user.id, null);
+      setStageRole("audience");
+      setFeedback(t("videoDetails.leftLiveFeedback"));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handleInviteAudience(actor) {
+    if (!video || !isCreator || !isLive || !actor?.id || actor.id === creatorId) return;
+
+    const actionKey = `invite-stage-${video.id}-${actor.id}`;
+    setBusyAction(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      await api.sendLiveSignal(video.id, { recipientId: actor.id, type: "join_invite" });
+      setViewerStageAccess(actor.id, "invite_pending");
+      setFeedback(t("videoDetails.inviteSentFeedback", { name: getProfileName(actor, t("videoDetails.guestAudience")) }));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function handleStageNotificationAction(action) {
+    if (!video || !stageNotification) return;
+
+    const participantId = stageNotification.participantId;
+    const actorName = getProfileName(stageNotification.actor, t("videoDetails.guestAudience"));
+    const actionKey = `stage-notification-${stageNotification.signalId}-${action}`;
+    const isRequest = stageNotification.kind === "request";
+
+    setBusyAction(actionKey);
+    setError("");
+
+    try {
+      if (isRequest) {
+        await api.sendLiveSignal(video.id, {
+          recipientId: participantId,
+          type: action === "accept" ? "join_request_accepted" : "join_request_rejected",
+        });
+
+        setViewerStageAccess(participantId, action === "accept" ? "approved" : null);
+        setFeedback(t(action === "accept" ? "videoDetails.requestAcceptedByHostFeedback" : "videoDetails.requestRejectedByHostFeedback", { name: actorName }));
+      } else {
+        await api.sendLiveSignal(video.id, {
+          type: action === "accept" ? "join_invite_accepted" : "join_invite_rejected",
+        });
+
+        setViewerStageAccess(user?.id, action === "accept" ? "approved" : null);
+        setFeedback(t(action === "accept" ? "videoDetails.inviteAcceptedFeedbackSelf" : "videoDetails.inviteRejectedFeedbackSelf", { name: actorName }));
+        if (action === "accept") setStageRole("host");
+      }
+
+      setStageNotification(null);
+      clearStageNotificationsForUser(participantId, stageNotification.kind);
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  function getInviteButtonLabel(actorId) {
+    if (stageAccessByUserId[actorId] === "approved") return t("videoDetails.cohost");
+    if (stageAccessByUserId[actorId] === "request_pending") return t("videoDetails.requestPending");
+    if (stageAccessByUserId[actorId] === "invite_pending") return t("videoDetails.inviteSent");
+    return t("videoDetails.inviteToJoin");
+  }
+
+  function isInviteButtonDisabled(actorId) {
+    return busyAction === `invite-stage-${video?.id}-${actorId}` || ["request_pending", "invite_pending", "approved"].includes(stageAccessByUserId[actorId] || "");
+  }
+
   if (!loading && video && !isLive && !isCreator) {
     return <Navigate to={buildVideoLink(video, { isLive: false })} replace />;
   }
@@ -755,6 +1083,16 @@ export default function LiveRoom() {
   const peakViewers = video?.liveAnalytics?.peakViewers ?? 0;
   const liveLikes = video?.liveLikes ?? video?.liveAnalytics?.liveLikes ?? 0;
   const liveComments = video?.liveComments ?? video?.liveAnalytics?.liveComments ?? video?.commentsCount ?? comments.length ?? 0;
+  const activeAudienceCount = activeAudience.length;
+  const isCohost = !isCreator && resolvedStageRole === "host";
+  const stageActionBusyKey = isCohost ? `cohost-leave-${video?.id}-${user?.id}` : `stage-request-${video?.id}-${user?.id}`;
+  const stageActionLabel = isCohost
+    ? t("videoDetails.leaveLive")
+    : viewerStageStatus === "request_pending"
+      ? t("videoDetails.requestSent")
+      : viewerStageStatus === "invite_pending"
+        ? t("videoDetails.respondToInvite")
+        : t("videoDetails.requestToJoin");
   const engagementStats = [
     formatCountLabel(video?.views || 0, t("content.views")),
     `${formatCompactNumber(currentViewers)} ${t("videoDetails.currentViewers")}`,
@@ -765,6 +1103,19 @@ export default function LiveRoom() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
+      {stageNotification ? (
+        <LiveStageActionModal
+          title={stageNotification.kind === "request" ? t("videoDetails.stageRequestTitle") : t("videoDetails.stageInviteTitle")}
+          body={stageNotification.kind === "request"
+            ? t("videoDetails.stageRequestBody", { name: getProfileName(stageNotification.actor, t("videoDetails.guestAudience")) })
+            : t("videoDetails.stageInviteBody", { name: getProfileName(stageNotification.actor, t("videoDetails.guestAudience")) })}
+          acceptLabel={stageNotification.kind === "request" ? t("videoDetails.acceptRequest") : t("videoDetails.acceptInvite")}
+          rejectLabel={stageNotification.kind === "request" ? t("videoDetails.rejectRequest") : t("videoDetails.rejectInvite")}
+          onAccept={() => handleStageNotificationAction("accept")}
+          onReject={() => handleStageNotificationAction("reject")}
+          busy={busyAction.startsWith(`stage-notification-${stageNotification.signalId}-`)}
+        />
+      ) : null}
       <div className="mx-auto max-w-350 space-y-4">
         <div className="flex items-center justify-between gap-4">
           <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
@@ -914,9 +1265,14 @@ export default function LiveRoom() {
                           {busyAction === `${isLive ? "stop" : "start"}-live-${video.id}` ? t(isLive ? "videoDetails.stoppingLive" : "videoDetails.startingLive") : t(isLive ? "videoDetails.stopLive" : "videoDetails.startLive")}
                         </button>
                       ) : null}
-                      {isLive ? (
-                        <button type="button" onClick={() => setStageRole((current) => (current === "host" ? "audience" : "host"))} className={`rounded-full px-6 py-3 text-sm font-semibold transition-colors ${resolvedStageRole === "host" ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}>
-                          {resolvedStageRole === "host" ? t("videoDetails.leaveStage") : t("videoDetails.joinStage")}
+                      {!isCreator && isLive ? (
+                        <button
+                          type="button"
+                          disabled={busyAction === stageActionBusyKey || viewerStageStatus === "request_pending" || viewerStageStatus === "invite_pending"}
+                          onClick={isCohost ? handleLeaveAsCohost : handleRequestToJoin}
+                          className={`rounded-full px-6 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${isCohost ? "bg-white300 text-black dark:bg-black100 dark:text-white" : "bg-orange100 text-black"}`}
+                        >
+                          {stageActionLabel}
                         </button>
                       ) : null}
                     </div>
@@ -949,6 +1305,45 @@ export default function LiveRoom() {
                 </div>
               </section>
 
+              {isCreator && isLive ? (
+                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.activeAudience")}</h2>
+                      <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.activeAudienceBody")}</p>
+                    </div>
+                    <span className="text-sm text-slate500 dark:text-slate200">{activeAudienceCount}</span>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    {activeAudienceCount ? activeAudience.map((member) => (
+                      <article key={member.actor?.id || member.sessionId} className="rounded-3xl bg-[#F7F7F7] px-4 py-3 dark:bg-[#1F1F1F]">
+                        <div className="flex gap-3">
+                          <img src={getProfileAvatar(member.actor)} alt={getProfileName(member.actor, t("videoDetails.guestAudience"))} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <p className="text-sm font-medium text-black dark:text-white">{getProfileName(member.actor, t("videoDetails.guestAudience"))}</p>
+                              {member.actor?.username ? <span className="text-xs text-slate500 dark:text-slate200">@{member.actor.username}</span> : null}
+                            </div>
+                            <p className="mt-1 text-sm text-slate700 dark:text-slate200">{t("videoDetails.activeAudienceSeen", { time: formatRelativeTime(member.lastSeenAt || member.joinedAt) })}</p>
+                          </div>
+                          {member.actor?.id ? (
+                            <button
+                              type="button"
+                              disabled={isInviteButtonDisabled(member.actor.id)}
+                              onClick={() => handleInviteAudience(member.actor)}
+                              className="self-start rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {getInviteButtonLabel(member.actor.id)}
+                            </button>
+                          ) : null}
+                        </div>
+                      </article>
+                    )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noActiveAudience")}</div>}
+                  </div>
+                </section>
+              ) : null}
+
               <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -972,6 +1367,16 @@ export default function LiveRoom() {
                             {item.type === "like" ? t("videoDetails.sentLikes") : t("videoDetails.commented")}
                           </p>
                           {item.body ? <p className="mt-2 text-sm leading-relaxed text-slate700 dark:text-slate200">{item.body}</p> : null}
+                          {isCreator && isLive && item.actor?.id && item.actor.id !== creatorId ? (
+                            <button
+                              type="button"
+                              disabled={isInviteButtonDisabled(item.actor.id)}
+                              onClick={() => handleInviteAudience(item.actor)}
+                              className="mt-3 rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {getInviteButtonLabel(item.actor.id)}
+                            </button>
+                          ) : null}
                         </div>
                       </div>
                     </article>
@@ -1006,6 +1411,16 @@ export default function LiveRoom() {
                             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
                           </div>
                           <p className="mt-2 text-sm leading-relaxed text-slate700 dark:text-slate200">{comment.body || comment.text}</p>
+                          {isCreator && isLive && comment.user?.id && comment.user.id !== creatorId ? (
+                            <button
+                              type="button"
+                              disabled={isInviteButtonDisabled(comment.user.id)}
+                              onClick={() => handleInviteAudience(comment.user)}
+                              className="mt-3 rounded-full bg-orange100 px-4 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {getInviteButtonLabel(comment.user.id)}
+                            </button>
+                          ) : null}
                         </div>
                       </div>
                     </article>

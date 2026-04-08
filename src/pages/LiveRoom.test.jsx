@@ -58,9 +58,12 @@ vi.mock("../services/api", () => ({
     getVideoComments: vi.fn(),
     getLiveAgoraSession: vi.fn(),
     getLiveEngagements: vi.fn(),
+    getLiveSignals: vi.fn(),
+    getLiveAudience: vi.fn(),
     recordLivePresence: vi.fn(),
     leaveLivePresence: vi.fn(),
     likeLiveVideo: vi.fn(),
+    sendLiveSignal: vi.fn(),
     startVideoLive: vi.fn(),
     stopVideoLive: vi.fn(),
     presignUpload: vi.fn(),
@@ -141,8 +144,11 @@ describe("LiveRoom", () => {
     api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
     api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-99", role: "audience" } } });
     api.getLiveEngagements.mockResolvedValue({ data: { engagements: [] } });
+    api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
+    api.getLiveAudience.mockResolvedValue({ data: { audience: [] } });
     api.recordLivePresence.mockResolvedValue({ data: { analytics: { currentViewers: 3, peakViewers: 7 } } });
     api.leaveLivePresence.mockResolvedValue({ data: { analytics: { currentViewers: 2, peakViewers: 7 } } });
+    api.sendLiveSignal.mockResolvedValue({ data: { signal: { id: 1 } } });
     api.likeLiveVideo.mockImplementation(async () => ({ data: { video: buildVideo({ likes: 1, liveLikes: 1, liveAnalytics: { currentViewers: 3, peakViewers: 7, liveLikes: 1, liveComments: 0 } }), engagement: { id: "like-1", type: "like", createdAt: "2026-04-04T12:01:00Z", actor: { id: 99, fullName: "Viewer Example", avatarUrl: "", username: null } } } }));
   });
 
@@ -158,7 +164,8 @@ describe("LiveRoom", () => {
     expect(api.getLiveAgoraSession).toHaveBeenCalledWith("10", { role: "host" });
   });
 
-  it("plays remote stage media for viewers and lets them join the stage", async () => {
+  it("plays remote stage media for viewers and lets them request to join instead of joining directly", async () => {
+    const user = userEvent.setup();
     api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
 
     renderRoom();
@@ -167,10 +174,90 @@ describe("LiveRoom", () => {
     await emitRemoteParticipant();
     await screen.findByLabelText("Live stream playback");
 
-    await userEvent.click(screen.getByRole("button", { name: "Join stage" }));
+    await user.click(screen.getByRole("button", { name: "Request to join" }));
 
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { type: "join_request" }));
+    expect(api.getLiveAgoraSession).not.toHaveBeenCalledWith("10", { role: "host" });
+    await screen.findByRole("button", { name: "Request sent" });
+  });
+
+  it("shows the creator a modal notification to accept or reject audience requests", async () => {
+    const user = userEvent.setup();
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveSignals.mockResolvedValue({
+      data: {
+        latestSignalId: 10,
+        signals: [{ id: 10, type: "join_request", senderId: 99, recipientId: 5, sender: { id: 99, fullName: "Viewer Example", avatarUrl: "" }, recipient: { id: 5, fullName: "Creator Example", avatarUrl: "" } }],
+      },
+    });
+
+    renderRoom();
+
+    expect(await screen.findByRole("dialog", { name: "Join request" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Accept request" }));
+
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 99, type: "join_request_accepted" }));
+  });
+
+  it("lets invited audience accept the invite from a modal notification and join as co-host", async () => {
+    const user = userEvent.setup();
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveSignals.mockResolvedValue({
+      data: {
+        latestSignalId: 22,
+        signals: [{ id: 22, type: "join_invite", senderId: 5, recipientId: 99, sender: { id: 5, fullName: "Creator Example", avatarUrl: "" }, recipient: { id: 99, fullName: "Viewer Example", avatarUrl: "" } }],
+      },
+    });
+    api.getLiveAgoraSession
+      .mockResolvedValueOnce({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-99", role: "audience" } } })
+      .mockResolvedValueOnce({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token-host", uid: "user-99", role: "host" } } });
+
+    renderRoom();
+
+    expect(await screen.findByRole("dialog", { name: "Live invitation" })).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Accept invite" }));
+
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { type: "join_invite_accepted" }));
     await waitFor(() => expect(api.getLiveAgoraSession).toHaveBeenLastCalledWith("10", { role: "host" }));
-    await screen.findByRole("button", { name: "Leave stage" });
+    await screen.findByRole("button", { name: "Leave live" });
+  });
+
+  it("lets the host invite audience members from live engagement cards", async () => {
+    const user = userEvent.setup();
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveEngagements.mockResolvedValue({ data: { engagements: [{ id: "comment-9", type: "comment", body: "Bring me up", createdAt: "2026-04-04T12:02:00Z", actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" } }] } });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+    await user.click(await screen.findByRole("button", { name: "Invite to join" }));
+
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "join_invite" }));
+  });
+
+  it("shows the creator an active audience panel and invites viewers from it", async () => {
+    const user = userEvent.setup();
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+    api.getLiveAudience.mockResolvedValue({
+      data: {
+        audience: [{ sessionId: 91, role: "audience", joinedAt: "2026-04-04T12:00:00Z", lastSeenAt: "2026-04-04T12:02:00Z", actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" } }],
+      },
+    });
+
+    renderRoom();
+
+    expect(await screen.findByText("Active audience")).toBeInTheDocument();
+    expect(screen.getByText("Invite viewers who are currently watching to join you live.")).toBeInTheDocument();
+    expect(await screen.findByText("Fan One")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Invite to join" }));
+
+    await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "join_invite" }));
   });
 
   it("lets viewers send repeated live likes", async () => {
