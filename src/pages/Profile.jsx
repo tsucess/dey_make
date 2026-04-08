@@ -535,13 +535,15 @@ export default function Profile() {
                     />
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-0.75">
                     <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
                     {profile?.username ? <p className="text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
-                    <p className="text-base font-inter text-slate700 dark:text-slate200">
+                    
+                    <div className="flex items-center gap-3"><p className="text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
                     {isOwnProfile && profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
+                    </div>
                   </div>
                 </div>
 
@@ -616,28 +618,28 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.editProfile")}
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate("/analytics/live")}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.liveDashboard")}
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate("/profile/subscribers")}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("content.subscribers")}
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.shareProfile")}
                       </button>
