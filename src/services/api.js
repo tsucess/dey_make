@@ -307,6 +307,7 @@ export const api = {
   stopVideoLive: (id) => request(`/videos/${id}/live/stop`, { method: "POST" }),
   sendLiveSignal: (id, payload) => request(`/videos/${id}/live/signals`, { method: "POST", body: payload }),
   getLiveSignals: (id, options = {}) => request(`/videos/${id}/live/signals${buildQueryString({ after: options.after })}`),
+  getLiveAudience: (id) => request(`/videos/${id}/live/audience`),
   getProfile: () => request("/me/profile"),
   updateProfile: (payload) => request("/me/profile", { method: "PATCH", body: payload }),
   getProfileFeed: (feed) => request(`/me/${feed}`),
