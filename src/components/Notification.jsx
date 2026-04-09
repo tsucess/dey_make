@@ -46,7 +46,7 @@ export default function Notification({
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col md:flex-row md:items-center gap-2">
             {notifications.length ? (
               <button
                 type="button"
@@ -60,7 +60,7 @@ export default function Notification({
             <button
               type="button"
               onClick={closeNotification}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-white300 dark:bg-black100"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white300 dark:bg-black100"
             >
               <IoMdClose className="h-5 w-5 text-slate900 dark:text-white" />
             </button>
