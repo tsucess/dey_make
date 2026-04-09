@@ -24,6 +24,7 @@ import {
 } from "../utils/content";
 
 const LIVE_ENGAGEMENT_POLL_MS = 4000;
+const LIVE_STATUS_POLL_MS = 5000;
 const LIVE_PRESENCE_POLL_MS = 15000;
 const LIVE_SIGNAL_POLL_MS = 3000;
 const LIVE_AUDIENCE_POLL_MS = 5000;
@@ -97,6 +98,12 @@ function buildCommentEngagementItem(comment) {
     createdAt: comment.createdAt || new Date().toISOString(),
     actor: comment.user || null,
   };
+}
+
+function isRecentLiveActivity(activity, thresholdMs = LIVE_ENGAGEMENT_POLL_MS * 2) {
+  const activityAt = new Date(activity?.createdAt || 0).getTime();
+  if (!Number.isFinite(activityAt) || activityAt <= 0) return false;
+  return Date.now() - activityAt <= thresholdMs;
 }
 
 function createFloatingHeartBurst() {
@@ -245,6 +252,8 @@ export default function LiveRoom() {
   const presenceSessionKeyRef = useRef(createLiveSessionKey());
   const liveSignalCursorRef = useRef(0);
   const processedLiveSignalIdsRef = useRef(new Set());
+  const engagementFeedRef = useRef([]);
+  const engagementFeedPrimedRef = useRef(false);
   const recorderRef = useRef(null);
   const recorderChunksRef = useRef([]);
   const recorderStopPromiseRef = useRef(null);
@@ -278,7 +287,7 @@ export default function LiveRoom() {
   const isLive = isActiveLiveVideo(video);
   const resolvedStageRole = isCreator ? "host" : stageRole;
   const viewerStageStatus = !isCreator && user?.id ? (stageAccessByUserId[user.id] || "idle") : "idle";
-  const shouldJoinAgora = Boolean(video?.id && video?.type === "video" && isAuthenticated && (isLive || isCreator));
+  const shouldJoinAgora = Boolean(video?.id && video?.type === "video" && isAuthenticated && isLive);
   const shouldRecord = Boolean(isCreator && isLive && localStream);
 
   useEffect(() => () => stopMediaStream(localStream), [localStream]);
@@ -304,6 +313,8 @@ export default function LiveRoom() {
     setStageNotification(null);
     liveSignalCursorRef.current = 0;
     processedLiveSignalIdsRef.current = new Set();
+    engagementFeedRef.current = [];
+    engagementFeedPrimedRef.current = false;
     if (creatorInsightsRefreshTimeoutRef.current) {
       window.clearTimeout(creatorInsightsRefreshTimeoutRef.current);
       creatorInsightsRefreshTimeoutRef.current = null;
@@ -311,6 +322,10 @@ export default function LiveRoom() {
     liveMomentumSnapshotRef.current = { peakViewers: null, currentViewers: null, totalEngagements: null };
     lastLiveMomentAtRef.current = {};
   }, [id]);
+
+  useEffect(() => {
+    engagementFeedRef.current = engagementFeed;
+  }, [engagementFeed]);
 
   useEffect(() => {
     if (!video?.id) return;
@@ -348,6 +363,33 @@ export default function LiveRoom() {
     if (isCreator) setStageRole("host");
     else if (!isLive) setStageRole("audience");
   }, [id, isCreator, isLive]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    if (!video?.id || !isAuthenticated || !isLive) {
+      return undefined;
+    }
+
+    async function refreshVideoStatus() {
+      try {
+        const response = await api.getVideo(video.id);
+        if (ignore) return;
+
+        const nextVideo = response?.data?.video || null;
+        if (nextVideo) setVideo(nextVideo);
+      } catch {
+        // Ignore transient status refresh failures and rely on other live updates.
+      }
+    }
+
+    const intervalId = window.setInterval(refreshVideoStatus, LIVE_STATUS_POLL_MS);
+
+    return () => {
+      ignore = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isAuthenticated, isLive, video?.id]);
 
   useEffect(() => {
     if (isCreator || !user?.id) return;
@@ -762,9 +804,45 @@ export default function LiveRoom() {
     });
   }, [applyLiveAnalytics, isCreator, pushLiveMoment, t]);
 
-  const appendEngagementItems = useCallback((items) => {
-    setEngagementFeed((current) => mergeEngagementItems(current, items, 12));
+  const spawnFloatingHearts = useCallback(() => {
+    if (typeof window === "undefined") return;
+
+    const hearts = createFloatingHeartBurst();
+    setFloatingHearts((current) => [...current, ...hearts].slice(-36));
+
+    hearts.forEach((heart) => {
+      const timeoutId = window.setTimeout(() => {
+        setFloatingHearts((current) => current.filter((item) => item.id !== heart.id));
+        heartTimeoutsRef.current = heartTimeoutsRef.current.filter((activeId) => activeId !== timeoutId);
+      }, heart.duration + heart.delay + 50);
+
+      heartTimeoutsRef.current.push(timeoutId);
+    });
   }, []);
+
+  const appendEngagementItems = useCallback((items, options = {}) => {
+    const { animateLikes = false, suppressInitialLikeAnimation = false } = options;
+    const nextItems = Array.isArray(items) ? items.filter(Boolean) : [];
+    const currentItems = engagementFeedRef.current;
+    const seenIds = new Set(currentItems.map((item) => item.id));
+    const uniqueItems = nextItems.filter((item) => item?.id && !seenIds.has(item.id));
+    const isInitialSync = !engagementFeedPrimedRef.current && currentItems.length === 0;
+    const shouldAnimateLikes = animateLikes && uniqueItems.some((item) => {
+      if (item?.type !== "like") return false;
+      if (Number(item?.actor?.id || 0) === Number(user?.id || 0)) return false;
+      if (!isInitialSync || !suppressInitialLikeAnimation) return true;
+      return isRecentLiveActivity(item);
+    });
+    const mergedItems = mergeEngagementItems(currentItems, nextItems, 12);
+
+    engagementFeedPrimedRef.current = true;
+    engagementFeedRef.current = mergedItems;
+    setEngagementFeed(mergedItems);
+
+    if (shouldAnimateLikes) {
+      spawnFloatingHearts();
+    }
+  }, [spawnFloatingHearts, user?.id]);
 
   const refreshCreatorInsights = useCallback(async (videoId, { syncFeed = false } = {}) => {
     if (!isCreator || !videoId) return;
@@ -792,22 +870,6 @@ export default function LiveRoom() {
     }, 700);
   }, [isCreator, refreshCreatorInsights]);
 
-  const spawnFloatingHearts = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const hearts = createFloatingHeartBurst();
-    setFloatingHearts((current) => [...current, ...hearts].slice(-36));
-
-    hearts.forEach((heart) => {
-      const timeoutId = window.setTimeout(() => {
-        setFloatingHearts((current) => current.filter((item) => item.id !== heart.id));
-        heartTimeoutsRef.current = heartTimeoutsRef.current.filter((activeId) => activeId !== timeoutId);
-      }, heart.duration + heart.delay + 50);
-
-      heartTimeoutsRef.current.push(timeoutId);
-    });
-  }, []);
-
   useEffect(() => {
     let ignore = false;
 
@@ -821,7 +883,10 @@ export default function LiveRoom() {
         const response = await api.getLiveEngagements(video.id, { limit: 12, includeSummary: isCreator });
         if (ignore) return;
 
-        appendEngagementItems(response?.data?.engagements || []);
+        appendEngagementItems(response?.data?.engagements || [], {
+          animateLikes: true,
+          suppressInitialLikeAnimation: true,
+        });
         if (isCreator) {
           const nextSummary = response?.data?.summary || EMPTY_LIVE_SUMMARY;
           setLiveSummary(nextSummary);
@@ -852,14 +917,10 @@ export default function LiveRoom() {
       ".live.engagement.created": (event) => {
         if (ignore || Number(event?.videoId || 0) !== Number(video.id || 0) || !event?.engagement) return;
 
-        appendEngagementItems([event.engagement]);
+        appendEngagementItems([event.engagement], { animateLikes: true });
 
         if (event?.comment?.id) {
           setComments((current) => mergeLiveComments(current, [event.comment]));
-        }
-
-        if (event?.engagement?.type === "like" && Number(event?.engagement?.actor?.id || 0) !== Number(user?.id || 0)) {
-          spawnFloatingHearts();
         }
 
         if (event?.analytics) {
@@ -894,7 +955,7 @@ export default function LiveRoom() {
       ignore = true;
       unsubscribe?.();
     };
-  }, [applyLiveAnalytics, appendEngagementItems, evaluateEngagementMoments, evaluatePresenceMoments, isAuthenticated, isCreator, isLive, scheduleCreatorInsightsRefresh, spawnFloatingHearts, user?.id, video?.id]);
+  }, [applyLiveAnalytics, appendEngagementItems, evaluateEngagementMoments, evaluatePresenceMoments, isAuthenticated, isCreator, isLive, scheduleCreatorInsightsRefresh, video?.id]);
 
   useEffect(() => {
     let ignore = false;
@@ -1025,22 +1086,30 @@ export default function LiveRoom() {
     setFeedback("");
     try {
       if (isLive) {
-        const recordingBlob = await finalizeRecording();
+        const recordingBlobPromise = finalizeRecording();
         const stopResponse = await api.stopVideoLive(video.id);
-        let updatedVideo = stopResponse?.data?.video || null;
-        if (recordingBlob) {
+        const endedVideo = stopResponse?.data?.video || {
+          ...video,
+          isLive: false,
+          isDraft: true,
+          liveEndedAt: new Date().toISOString(),
+        };
+
+        setVideo(endedVideo);
+        clearLiveCreationSession(video.id);
+        setFeedback(stopResponse?.message || t("videoDetails.liveStopped"));
+
+        void (async () => {
+          const recordingBlob = await recordingBlobPromise;
+          if (!recordingBlob) return;
+
           const recordingFile = createRecordingUploadFile(recordingBlob, video.id);
           const upload = await uploadSelectedFile(recordingFile, "video", { directUploadRequiredMessage: t("upload.errors.directUploadRequired") });
           if (!upload?.id) throw new Error(t("upload.errors.unableToComplete"));
-          const updateResponse = await api.updateVideo(video.id, { uploadId: upload.id, isDraft: true, isLive: false });
-          updatedVideo = updateResponse?.data?.video || updatedVideo;
-        }
-        if (updatedVideo) {
-          setVideo(updatedVideo);
-          clearLiveCreationSession(video.id);
-          navigate(buildVideoAnalyticsLink(updatedVideo), { replace: true });
-        }
-        setFeedback(stopResponse?.message || t("videoDetails.liveStopped"));
+          await api.updateVideo(video.id, { uploadId: upload.id, isDraft: true, isLive: false });
+        })().catch(() => {
+          // Ignore delayed recording upload failures after the live has already ended.
+        });
       } else {
         const response = await api.startVideoLive(video.id);
         if (response?.data?.video) setVideo(response.data.video);
@@ -1300,8 +1369,8 @@ export default function LiveRoom() {
     return handleInviteAudience(actor);
   }
 
-  if (!loading && video && !isLive && !isCreator) {
-    return <Navigate to={buildVideoLink(video, { isLive: false })} replace />;
+  if (!loading && video && !isLive) {
+    return <Navigate to={isCreator ? buildVideoAnalyticsLink(video) : buildVideoLink(video, { isLive: false })} replace />;
   }
 
   const stageTiles = [

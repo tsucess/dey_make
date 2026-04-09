@@ -4,14 +4,14 @@ import BottomNav from "./BottomNav";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
 import { IoMdSettings } from "react-icons/io";
-import { IoMoonOutline, IoNotificationsOutline } from "react-icons/io5";
-import { MdSunny } from "react-icons/md";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { useAuth } from "../../context/AuthContext";
 import { buildSearchPath } from "../../utils/search";
-import { useState } from "react";
 import Notification from "../Notification";
+import NotificationButton from "./NotificationButton";
+import RealtimeNotificationPopup from "./RealtimeNotificationPopup";
+import { useNotifications } from "./useNotifications";
 
 function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/home")) return t("app.name");
@@ -53,23 +53,37 @@ export default function AppLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
-  const { isDark, toggleTheme } = useTheme();
+  useTheme();
   const { t } = useLanguage();
   const isHomepage = location.pathname === "/home";
   const isProfile = location.pathname === "/profile";
   const mobileTitle = getMobileTitle(location.pathname, t);
-  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-
-  function openNotification(){
-    setIsNotificationOpen(true)
-  }
-
-  function closeNotification(){
-    setIsNotificationOpen(false)
-  }
+  const notificationState = useNotifications();
+  const {
+    isNotificationOpen,
+    openNotification,
+    closeNotification,
+    notifications,
+    loadingNotifications,
+    notificationError,
+    unreadNotificationCount,
+    markingAllNotificationsRead,
+    busyNotificationId,
+    onRetry,
+    handleSelectNotification,
+    handleMarkNotificationRead,
+    handleMarkAllNotificationsRead,
+    realtimePopupNotification,
+    dismissRealtimePopup,
+  } = notificationState;
 
   function openSearch() {
     navigate(buildSearchPath());
+  }
+
+  async function handleSelectRealtimePopup(notification) {
+    dismissRealtimePopup();
+    await handleSelectNotification(notification);
   }
 
   return (
@@ -84,11 +98,29 @@ export default function AppLayout() {
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* TopBar — desktop only */}
         <div className="hidden md:block">
-          <TopBar openNotification={openNotification} closeNotification={closeNotification} isNotificationOpen={isNotificationOpen}/>
+          <TopBar notificationState={notificationState} />
         </div>
 
         {/* Mobile TopBar */}
-        <Notification isVisible={isNotificationOpen} closeNotification={closeNotification}/>
+        <RealtimeNotificationPopup
+          notification={realtimePopupNotification}
+          onSelectNotification={handleSelectRealtimePopup}
+          onDismiss={dismissRealtimePopup}
+        />
+        <Notification
+          isVisible={isNotificationOpen}
+          closeNotification={closeNotification}
+          notifications={notifications}
+          loading={loadingNotifications}
+          error={notificationError}
+          unreadCount={unreadNotificationCount}
+          markingAllRead={markingAllNotificationsRead}
+          busyNotificationId={busyNotificationId}
+          onRetry={onRetry}
+          onSelectNotification={handleSelectNotification}
+          onMarkNotificationRead={handleMarkNotificationRead}
+          onMarkAllRead={handleMarkAllNotificationsRead}
+        />
         <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
           {isHomepage ? (
             <img src="/logo-footer.png" alt={t("app.name")} className="h-10 w-auto" />
@@ -106,9 +138,13 @@ export default function AppLayout() {
                   <HiOutlineSearch className="h-5 w-5" />
                 </MobileActionButton>
                 {isAuthenticated ? (
-                  <MobileActionButton onClick={openNotification} ariaLabel={t("common.notifications")}>
-                    <IoNotificationsOutline className="h-5 w-5" />
-                  </MobileActionButton>
+                  <NotificationButton
+                    onClick={openNotification}
+                    ariaLabel={t("common.notifications")}
+                    unreadCount={unreadNotificationCount}
+                    className={mobileActionClassName}
+                    iconClassName="h-5 w-5"
+                  />
                 ) : null}
               </>
             ) : (

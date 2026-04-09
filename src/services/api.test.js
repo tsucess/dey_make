@@ -42,4 +42,30 @@ describe('api request handling', () => {
       message: 'Unable to reach the server.',
     });
   });
+
+  it('sends the last user activity timestamp with authenticated requests', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify({ data: { conversations: [] } }),
+    });
+
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { api, setStoredToken, touchStoredActivity } = await import('./api');
+
+    setStoredToken('auth-token');
+    touchStoredActivity('2026-04-09T12:00:00.000Z');
+
+    await api.getConversations();
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/conversations'),
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          Authorization: 'Bearer auth-token',
+          'X-User-Activity-At': '2026-04-09T12:00:00.000Z',
+        }),
+      }),
+    );
+  });
 });

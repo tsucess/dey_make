@@ -1,8 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { api, getStoredToken, setStoredToken } from "../services/api";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { api, getStoredActivityAt, getStoredToken, setStoredToken, touchStoredActivity } from "../services/api";
 
 const AuthContext = createContext(null);
 const PENDING_VERIFICATION_STORAGE_KEY = "deymake.auth.pendingVerification";
+const DEFAULT_AUTH_IDLE_TIMEOUT_MS = 30 * 60 * 1000;
+const configuredIdleTimeoutMs = Number.parseInt(`${import.meta.env.VITE_AUTH_IDLE_TIMEOUT_MS ?? ""}`, 10);
+const AUTH_IDLE_TIMEOUT_MS = Number.isFinite(configuredIdleTimeoutMs) && configuredIdleTimeoutMs > 0
+  ? configuredIdleTimeoutMs
+  : DEFAULT_AUTH_IDLE_TIMEOUT_MS;
 
 function getStoredPendingVerification() {
   if (typeof window === "undefined") return null;
@@ -29,15 +34,32 @@ function setStoredPendingVerification(value) {
   }
 }
 
+function hasStoredSessionExpired() {
+  const activityAt = getStoredActivityAt();
+
+  if (!activityAt) return false;
+
+  return Date.now() - Date.parse(activityAt) >= AUTH_IDLE_TIMEOUT_MS;
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingVerification, setPendingVerification] = useState(() => getStoredPendingVerification());
+  const logoutTimerRef = useRef(null);
 
-  const syncPendingVerification = (value) => {
+  const syncPendingVerification = useCallback((value) => {
     setPendingVerification(value);
     setStoredPendingVerification(value);
-  };
+  }, []);
+
+  const clearAuthState = useCallback(() => {
+    setStoredToken(null);
+    syncPendingVerification(null);
+    setUser(null);
+  }, [syncPendingVerification]);
+
+  const touchAuthActivity = useCallback(() => touchStoredActivity(), []);
 
   useEffect(() => {
     const token = getStoredToken();
@@ -47,17 +69,77 @@ export function AuthProvider({ children }) {
       return;
     }
 
+    if (hasStoredSessionExpired()) {
+      clearAuthState();
+      setIsLoading(false);
+      return;
+    }
+
     api.me()
       .then((response) => {
         setUser(response.data.user);
         syncPendingVerification(null);
+        touchAuthActivity();
       })
       .catch(() => {
-        setStoredToken(null);
-        setUser(null);
+        clearAuthState();
       })
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [clearAuthState, syncPendingVerification, touchAuthActivity]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+
+    if (!user) {
+      if (logoutTimerRef.current) {
+        window.clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+
+      return undefined;
+    }
+
+    const resetIdleTimer = () => {
+      touchAuthActivity();
+
+      if (logoutTimerRef.current) {
+        window.clearTimeout(logoutTimerRef.current);
+      }
+
+      logoutTimerRef.current = window.setTimeout(() => {
+        void api.logout().catch(() => {}).finally(() => {
+          clearAuthState();
+        });
+      }, AUTH_IDLE_TIMEOUT_MS);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        resetIdleTimer();
+      }
+    };
+
+    const activityEvents = ["pointerdown", "keydown", "touchstart", "focus"];
+
+    activityEvents.forEach((eventName) => {
+      window.addEventListener(eventName, resetIdleTimer, true);
+    });
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    resetIdleTimer();
+
+    return () => {
+      activityEvents.forEach((eventName) => {
+        window.removeEventListener(eventName, resetIdleTimer, true);
+      });
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+
+      if (logoutTimerRef.current) {
+        window.clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+    };
+  }, [clearAuthState, touchAuthActivity, user]);
 
   const value = useMemo(() => ({
     user,
@@ -70,6 +152,7 @@ export function AuthProvider({ children }) {
       setStoredToken(response.data.token);
       syncPendingVerification(null);
       setUser(response.data.user);
+      touchAuthActivity();
       return response.data.user;
     },
     async register(payload) {
@@ -85,6 +168,7 @@ export function AuthProvider({ children }) {
       setStoredToken(response.data.token);
       syncPendingVerification(null);
       setUser(response.data.user);
+      touchAuthActivity();
       return response.data.user;
     },
     async verifyEmailCode(payload) {
@@ -94,6 +178,7 @@ export function AuthProvider({ children }) {
       setStoredToken(response.data.token);
       syncPendingVerification(null);
       setUser(response.data.user);
+      touchAuthActivity();
 
       return response.data.user;
     },
@@ -116,10 +201,10 @@ export function AuthProvider({ children }) {
         const response = await api.me();
         syncPendingVerification(null);
         setUser(response.data.user);
+        touchAuthActivity();
         return response.data.user;
       } catch (error) {
-        setStoredToken(null);
-        setUser(null);
+        clearAuthState();
         throw error;
       }
     },
@@ -127,9 +212,7 @@ export function AuthProvider({ children }) {
       try {
         await api.logout();
       } finally {
-        setStoredToken(null);
-        syncPendingVerification(null);
-        setUser(null);
+        clearAuthState();
       }
     },
     syncUser(nextUser) {
@@ -138,7 +221,7 @@ export function AuthProvider({ children }) {
     clearPendingVerification() {
       syncPendingVerification(null);
     },
-  }), [user, isLoading, pendingVerification]);
+  }), [clearAuthState, isLoading, pendingVerification, syncPendingVerification, touchAuthActivity, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

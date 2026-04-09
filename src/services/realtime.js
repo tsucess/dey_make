@@ -1,6 +1,6 @@
 import Echo from "laravel-echo";
 import Pusher from "pusher-js";
-import { getBackendBaseUrl, getStoredToken } from "./api";
+import { getBackendBaseUrl, getStoredActivityAt, getStoredToken } from "./api";
 
 let realtimeClient = null;
 let realtimeClientToken = null;
@@ -44,6 +44,7 @@ function resolveRealtimeConfig() {
 
 export function getRealtimeClient() {
   const token = getStoredToken();
+  const activityAt = getStoredActivityAt();
   const config = resolveRealtimeConfig();
 
   if (!config || !token || typeof window === "undefined") {
@@ -71,6 +72,7 @@ export function getRealtimeClient() {
       headers: {
         Accept: "application/json",
         Authorization: `Bearer ${token}`,
+        ...(activityAt ? { "X-User-Activity-At": activityAt } : {}),
       },
     },
   });
