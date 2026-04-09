@@ -13,6 +13,58 @@ function scrollToAbout() {
   if (el) el.scrollIntoView({ behavior: "smooth" });
 }
 
+
+
+const container = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.06,
+    },
+  },
+};
+
+const letter = {
+  hidden: {
+    y: -120,
+    opacity: 0,
+    rotate: -8,
+    filter: "blur(6px)",
+  },
+  show: {
+    y: [-120, 12, 0],
+    opacity: 1,
+    rotate: 0,
+    filter: "blur(0px)",
+    transition: {
+      duration: 0.6,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
+
+ function FallingText({ text, className = "" }) {
+  return (
+    <motion.h1
+      variants={container}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true }}
+      className={`flex flex-wrap leading-tight ${className}`}
+    >
+      {text.split("").map((char, index) => (
+        <motion.span
+          key={index}
+          variants={letter}
+          className="inline-block"
+        >
+          {char === " " ? "\u00A0" : char}
+        </motion.span>
+      ))}
+    </motion.h1>
+  );
+}
+
 export default function HeroSection({ onSignUp }) {
   const { isDark } = useTheme();
   const { t } = useLanguage();
@@ -36,21 +88,19 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
       
 
       {/* Headline */}
+      <FallingText
+  text={t("landing.hero.headline")}
+  className="font-medium italic text-slate100 dark:text-white leading-tight font-inter mb-1"
+  style={{ fontSize: "clamp(22px, 5vw, 44px)" }}
+/>
       <MotionParagraph variants={fadeUp}
       onMouseMove={(e) => {
         const moveX = (e.clientX / window.innerWidth - 0.5) * 20;
         x.set(moveX);
       }}
-      style={{ x: smoothX, fontSize: "clamp(24px, 5vw, 44px)" }}
-        className="font-medium italic text-slate100 dark:text-white
-                   leading-tight font-inter mb-1"
-      >
-        {t("landing.hero.headline")}
-      </MotionParagraph>
-      <MotionParagraph variants={fadeUp}
         className="font-extrabold text-slate100 dark:text-white
                    leading-none font-inter mb-5"
-        style={{ fontSize: "clamp(48px, 10vw, 80px)" }}
+        style={{x: smoothX,  fontSize: "clamp(48px, 10vw, 80px)" }}
       >
         DeyMake.
       </MotionParagraph>
@@ -68,7 +118,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
       <MotionDiv variants={fadeUp} className="flex justify-start md:justify-center gap-3 mb-12">
         <button
           onClick={onSignUp}
-          className="bg-orange100 font-inter hover:bg-[#e09510] text-slate100
+          className="bg-orange100 font-inter hover:bg-orange300 text-slate100
                      font-semibold text-sm md:text-base px-4 md:px-9 py-3.5 rounded-xl
                      border-none cursor-pointer transition-colors
                      md:min-w-45"

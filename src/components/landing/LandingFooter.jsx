@@ -48,7 +48,7 @@ export default function LandingFooter({ onSignUp }) {
         </div>
         </div>
         {/* Logo */}
-         <img src="./footer_img.svg" alt="DeyMake" className="w-full h-auto -mb-30"/>
+         <img src="./footer_img.svg" alt="DeyMake" className="w-full h-auto -mb-15"/>
     </footer>
   );
 }

@@ -15,20 +15,17 @@ export default function CreativesBanner({ onSignUp }) {
     >
       <div className="md:max-w-5xl mx-auto">
         <div
-          className="flex flex-col md:flex-row md:items-center justify-center
-                     md:justify-between gap-10 md:rounded-3xl
-                     px-4 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-100 md:h-150 overflow-hidden"
+          className="@container flex items-center  md:rounded-3xl
+                     px-4 md:px-14 py-12 bg-linear-to-b from-orange200 to-orange100 relative min-h-100 md:h-120 lg:h-140 overflow-hidden"
           
         >
           {/* Left */}
-          <div className="max-w-50 flex flex-col gap-4 md:max-w-sm md:flex-1">
+          <div className="w-2/3 md:w-3/5 flex flex-col gap-4">
             <h2
               className="font-semibold font-bricolage text-slate100 leading-tight"
               style={{ fontSize: "clamp(28px, 4vw, 40px)" }}
             >
               {t("landing.banner.titleLineOne")}
-              <br />
-              {t("landing.banner.titleLineTwo")}
             </h2>
             <MotionParagraph variants={fadeUp}
               className="text-base font-inter text-slate100 leading-relaxed max-w-sm"
@@ -59,7 +56,7 @@ export default function CreativesBanner({ onSignUp }) {
       ease: "easeInOut"
     }
   }}
-   src="/creative.png" alt="" className="w-50 h-80 md:w-110 md:h-150 object-fill absolute -right-10 md:-right-10 -bottom-3 md:-bottom-20" />
+   src="/creative.png" alt="" className="w-40 sm:w-70 md:w-80 lg:w-[440px] object-contain absolute -bottom-8 -right-9 md:-bottom-16 lg:-bottom-28 md:-right-16" />
         </div>
       </div>
     </section>
