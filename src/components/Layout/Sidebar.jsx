@@ -29,7 +29,7 @@ export default function Sidebar() {
                       bg-orange100 shrink-0">
       <div className="px-5 pt-6 pb-4">
         {/* Logo always dark text on yellow sidebar */}
-        <Link to='/home'><img src="/logo-app.png" alt={t("app.name")} className="w-47 h-16.5"/></Link>
+        <Link to='/home'><img src="/DEYMAKE LOGO with Tagline Black.svg" alt={t("app.name")} className="w-47 h-16.5"/></Link>
         
       </div>
 

@@ -91,7 +91,7 @@ export default function AppLayout() {
         <Notification isVisible={isNotificationOpen} closeNotification={closeNotification}/>
         <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
           {isHomepage ? (
-            <img src="/logo-footer.png" alt={t("app.name")} className="h-10 w-auto" />
+            <img src="/DEYMAKE LOGO Yellow.svg" alt={t("app.name")} className="h-10 w-auto" />
           ) : (
             <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
               {mobileTitle}

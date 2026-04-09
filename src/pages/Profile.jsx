@@ -496,7 +496,7 @@ export default function Profile() {
 
   return (
     <div className="min-h-full bg-white dark:bg-slate100">
-      <img src="/header_profile.png" alt="" className="h-56 w-full md:h-64" />
+      <img src="/header_profile.png" alt="" className="h-40 w-full md:h-64" />
 
       <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pl-20 md:pb-12">
         <div className="-mt-12 md:-mt-16">
@@ -520,9 +520,9 @@ export default function Profile() {
                       <img
                         src={avatarPreviewUrl}
                         alt={getProfileName(displayProfile)}
-                        className="h-24 w-24 rounded-full border-[6px] border-white object-cover shadow-lg transition-opacity group-hover:opacity-90 dark:border-slate100 md:h-28 md:w-28"
+                        className="h-20 w-20 rounded-full border-[6px] border-white object-cover shadow-lg transition-opacity group-hover:opacity-90 dark:border-slate100 md:h-28 md:w-28"
                       />
-                      <span className="absolute inset-x-0 bottom-1 mx-1 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white">
+                      <span className="absolute inset-x-0 bottom-1 mx-1 rounded-full bg-black/65 px-2 py-1 text-[8px] md:text-[10px] font-semibold uppercase tracking-wide text-white">
                         {uploadingAvatar ? t("profile.uploading") : editing ? t("profile.changePhoto") : t("profile.viewPhoto")}
                       </span>
                     </button>
@@ -536,13 +536,13 @@ export default function Profile() {
                   </div>
 
                   <div className="space-y-0.75">
-                    <h1 className="text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
-                    {profile?.username ? <p className="text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
+                    <h1 className="text-lg md:text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
+                    {profile?.username ? <p className="text-xs md:text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
                     
-                    <div className="flex items-center gap-3"><p className="text-base font-inter text-slate700 dark:text-slate200">
+                    <div className="flex items-center gap-3"><p className="text-xs md:text-base font-inter text-slate700 dark:text-slate200">
                       {formatSubscriberLabel(profile?.subscriberCount || 0)}
                     </p>
-                    {isOwnProfile && profile?.email ? <p className="text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
+                    {isOwnProfile && profile?.email ? <p className="text-xs md:text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
                     </div>
                   </div>
                 </div>
@@ -554,7 +554,7 @@ export default function Profile() {
                       value={form.fullName}
                       onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
                       placeholder={t("profile.fullNamePlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white"
                     />
                     <input
                       type="text"
@@ -563,25 +563,25 @@ export default function Profile() {
                       placeholder={t("profile.usernamePlaceholder")}
                       autoCapitalize="none"
                       autoCorrect="off"
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white"
                     />
                     <input
                       type="url"
                       value={form.avatarUrl}
                       onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
                       placeholder={t("profile.avatarUrlPlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white md:col-span-2"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white md:col-span-2"
                     />
                     <textarea
                       value={form.bio}
                       onChange={(event) => setForm((current) => ({ ...current, bio: event.target.value }))}
                       placeholder={t("profile.bioPlaceholder")}
                       rows={4}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-[#1D1D1D] dark:text-white md:col-span-2"
+                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white md:col-span-2"
                     />
                   </div>
                 ) : (
-                  <p className="text-lg font-medium font-inter text-black dark:text-white md:text-xl">
+                  <p className="text-sm font-medium font-inter text-black dark:text-white md:text-xl">
                     {profile?.bio || t("profile.emptyBio")}
                   </p>
                 )}
@@ -608,38 +608,38 @@ export default function Profile() {
                             avatarUrl: profile?.avatarUrl || "",
                           });
                         }}
-                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-[#1D1D1D] dark:text-white"
+                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-black300 dark:text-white"
                       >
                         {t("profile.cancel")}
                       </button>
                     </>
                   ) : isOwnProfile ? (
-                    <div className="flex gap-4 justify-center">
+                    <div className="flex gap-4 lg:justify-center overflow-x-scroll">
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full w-full min-w-30 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.editProfile")}
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate("/analytics/live")}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full w-full min-w-40 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.liveDashboard")}
                       </button>
                       <button
                         type="button"
                         onClick={() => navigate("/profile/subscribers")}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full w-full bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("content.subscribers")}
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-4 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="md:min-w-44 rounded-full w-full min-w-30 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
                       >
                         {t("profile.shareProfile")}
                       </button>
@@ -764,7 +764,7 @@ export default function Profile() {
                     key={tab.feed}
                     type="button"
                     onClick={() => setActiveTab(tab.feed)}
-                    className={`md:rounded-full px-5 py-2 text-base font-medium font-inter transition-colors md:text-lg ${
+                    className={`md:rounded-full px-5 py-2 text-base flex justify-center font-medium font-inter transition-colors md:text-lg ${
                       isActive
                         ? "text-orange100 border-b-2 border-b-orange100 md:bg-orange100 md:text-black"
                         : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100 dark:hover:md:bg-orange100 dark:md:hover:border-0"

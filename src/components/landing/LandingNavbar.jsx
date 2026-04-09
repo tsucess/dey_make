@@ -49,7 +49,7 @@ export default function LandingNavbar({ onSignUp }) {
           
           <button
             onClick={onSignUp}
-            className="bg-orange100 hover:bg-[#e09510] text-slate100
+            className="bg-orange100 hover:bg-orange200 text-slate100
                        font-semibold text-sm px-6 py-4 md:px-8 md:py-3 md:text-base
                        rounded-lg border-none cursor-pointer
                        transition-colors hidden md:block"
@@ -93,7 +93,7 @@ export default function LandingNavbar({ onSignUp }) {
               onClick={() => setMenuOpen(false)}
               
               className="text-sm font-medium font-inter text-slate100 
-                         dark:text-white hover:text-[#f5a623]
+                         dark:text-white hover:text-orange100
                          transition-colors"
               style={{ textDecoration: "none" }}
             >
@@ -102,7 +102,7 @@ export default function LandingNavbar({ onSignUp }) {
           ))}</div>
           <button
             onClick={onSignUp}
-            className="bg-orange100 hover:bg-[#e09510] text-slate100
+            className="bg-orange100 hover:bg-orange100 text-slate100
                        font-semibold text-base px-10 py-3 md:text-base
                        rounded-lg border-none cursor-pointer
                        transition-colors self-start"

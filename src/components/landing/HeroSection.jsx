@@ -80,7 +80,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
 
       {/* Badge */}
       
-  <span className="text-xs font-medium font-inter text-slate100 dark:text-white 
+  <span className="text-xs font-medium mb-1.5 font-inter text-slate100 dark:text-white 
                    bg-slate100/5 dark:bg-black100
                    rounded-full px-4 py-2.5 relative flex justify-center items-center after:content-[''] after:w-[106%] after:h-[110%] after:bg-linear-to-r after:-z-10 after:from-[#FDB30059] after:to-[#00000080] after:absolute after:rounded-full">
     {t("landing.hero.badge")}

@@ -24,7 +24,7 @@ export default function LandingFooter({ onSignUp }) {
           <button
             onClick={onSignUp}
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
-                       hover:text-[#f5a623] transition-colors
+                       hover:text-orange100 transition-colors
                        bg-transparent border-none cursor-pointer"
           >
             {t("landing.footer.joinWaitlist")}
@@ -32,7 +32,7 @@ export default function LandingFooter({ onSignUp }) {
           <a
             href="#"
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
-                       hover:text-[#f5a623] transition-colors"
+                       hover:text-orange100 transition-colors"
             style={{ textDecoration: "none" }}
           >
             {t("landing.footer.terms")}
@@ -40,7 +40,7 @@ export default function LandingFooter({ onSignUp }) {
           <a
             href="#"
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
-                       hover:text-[#f5a623] transition-colors"
+                       hover:text-orange100 transition-colors"
             style={{ textDecoration: "none" }}
           >
             {t("landing.footer.privacy")}
@@ -48,7 +48,7 @@ export default function LandingFooter({ onSignUp }) {
         </div>
         </div>
         {/* Logo */}
-         <img src="./footer_img.svg" alt="DeyMake" className="w-full h-auto -mb-15"/>
+         <img src="./DEYMAKE LOGO Yellow.svg" alt="DeyMake" className="w-full h-auto -mb-10"/>
     </footer>
   );
 }
