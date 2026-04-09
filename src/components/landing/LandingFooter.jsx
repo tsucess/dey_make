@@ -25,7 +25,7 @@ export default function LandingFooter({ onSignUp }) {
             onClick={onSignUp}
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
                        hover:text-orange100 transition-colors
-                       bg-transparent border-none cursor-pointer"
+                       bg-transparent border-none cursor-pointer text-right md:text-left"
           >
             {t("landing.footer.joinWaitlist")}
           </button>
