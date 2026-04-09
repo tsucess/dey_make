@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { HiSearch } from "react-icons/hi";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import SectionState from "../components/Layout/SectionState";
 import VideoCard from "../components/VideoCard";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
@@ -23,14 +24,6 @@ function createEmptyResults() {
       categories: { total: 0 },
     },
   };
-}
-
-function SectionState({ message }) {
-  return (
-    <div className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 text-center text-sm text-slate500 dark:bg-[#1A1A1A] dark:text-slate200">
-      {message}
-    </div>
-  );
 }
 
 function ResultSectionHeader({ title, totalLabel, actionLabel, onAction }) {
@@ -289,11 +282,24 @@ export default function SearchResults() {
         {error ? <div className="mb-6 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
 
         {!query ? (
-          <SectionState message={t("search.startTyping")} />
+          <SectionState
+            message={t("search.startTyping")}
+            className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+            messageClassName="text-sm text-slate500 dark:text-slate200"
+          />
         ) : loading ? (
-          <SectionState message={t("search.loadingResults")} />
+          <SectionState
+            message={t("search.loadingResults")}
+            loading
+            className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+            messageClassName="mt-4 text-sm text-slate500 dark:text-slate200"
+          />
         ) : !hasAnyResults ? (
-          <SectionState message={t("search.noResultsFor", { label: activeResultLabel, query })} />
+          <SectionState
+            message={t("search.noResultsFor", { label: activeResultLabel, query })}
+            className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+            messageClassName="text-sm text-slate500 dark:text-slate200"
+          />
         ) : activeTab === "all" ? (
           <div className="space-y-10">
             <section>
@@ -303,7 +309,11 @@ export default function SearchResults() {
                   {videos.map((video) => <VideoCard key={video.id} {...mapVideoToCardProps(video)} />)}
                 </div>
               ) : (
-                <SectionState message={t("search.noMatchingVideos")} />
+                <SectionState
+                  message={t("search.noMatchingVideos")}
+                  className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+                  messageClassName="text-sm text-slate500 dark:text-slate200"
+                />
               )}
             </section>
 
@@ -325,7 +335,11 @@ export default function SearchResults() {
                   ))}
                 </div>
               ) : (
-                <SectionState message={t("search.noMatchingCreators")} />
+                <SectionState
+                  message={t("search.noMatchingCreators")}
+                  className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+                  messageClassName="text-sm text-slate500 dark:text-slate200"
+                />
               )}
             </section>
 
@@ -338,7 +352,11 @@ export default function SearchResults() {
                   ))}
                 </div>
               ) : (
-                <SectionState message={t("search.noMatchingCategories")} />
+                <SectionState
+                  message={t("search.noMatchingCategories")}
+                  className="rounded-[2rem] bg-[#F5F5F5] px-5 py-10 dark:bg-[#1A1A1A]"
+                  messageClassName="text-sm text-slate500 dark:text-slate200"
+                />
               )}
             </section>
           </div>

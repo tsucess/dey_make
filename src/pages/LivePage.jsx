@@ -1,25 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import VideoCard from "../components/VideoCard";
+import SectionState from "../components/Layout/SectionState";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
-import Spinner from '../components/Layout/Spinner'
-
-
-function StateCard({ title, body, actionLabel, onAction, loading }) {
-  return (
-    <div className="rounded-4xl bg-white300 px-6 py-10 text-center dark:bg-black200">
-      { loading ? <Spinner/> :<div><h2 className="text-xl font-semibold text-black dark:text-white">{title}</h2>
-      <p className="mt-2 text-sm text-slate600 dark:text-slate200">{body}</p></div>}
-      {onAction ? (
-        <button type="button" onClick={onAction} className="mt-5 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black">
-          {actionLabel}
-        </button>
-      ) : null}
-    </div>
-  );
-}
 
 export default function LivePage() {
   const { t } = useLanguage();
@@ -73,7 +58,12 @@ export default function LivePage() {
 
       <section className="mt-6">
         {loading ? (
-          <StateCard title={t("common.live")} body={t("livePage.loading")} loading />
+          <SectionState
+            title={t("common.live")}
+            message={t("livePage.loading")}
+            loading
+            className="rounded-4xl px-6 py-10"
+          />
         ) : liveVideos.length ? (
           <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
             {liveVideos.map((video) => (
@@ -81,11 +71,13 @@ export default function LivePage() {
             ))}
           </div>
         ) : (
-          <StateCard
+          <SectionState
             title={t("livePage.noLiveTitle")}
-            body={t("livePage.noLiveBody")}
+            message={t("livePage.noLiveBody")}
             actionLabel={t("livePage.goHome")}
             onAction={() => navigate("/home")}
+            className="rounded-4xl px-6 py-10"
+            actionClassName="mt-5 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black"
           />
         )}
       </section>

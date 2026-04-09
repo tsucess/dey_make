@@ -18,26 +18,9 @@ import {
   getVideoTitle,
   mapVideoToCardProps,
 } from "../utils/content";
-import Spinner from "../components/Layout/Spinner";
+import SectionState from "../components/Layout/SectionState";
 
 const ALL_CATEGORY_ID = "all";
-
-function SectionState({ message, actionLabel, onAction }) {
-  return (
-    <div className="rounded-3xl bg-white300 px-5 py-8 text-center dark:bg-black200">
-      <Spinner/>
-      {onAction ? (
-        <button
-          type="button"
-          onClick={onAction}
-          className="mt-4 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black"
-        >
-          {actionLabel}
-        </button>
-      ) : null}
-    </div>
-  );
-}
 
 function ViewMoreBtn({ label }) {
   return <button type="button" className="flex items-center font-medium text-sm text-black200 dark:text-white font-inter gap-1.5">
@@ -257,7 +240,7 @@ export default function Homepage() {
 </div>
         
         {loading ? (
-          <SectionState message={t("homepage.loadingTrendingVideos")} />
+          <SectionState message={t("homepage.loadingTrendingVideos")} loading />
         ) : trendingVideos.length ? (
           <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
             {trendingVideos.slice(0, 6).map((video, index) => (
@@ -294,7 +277,7 @@ export default function Homepage() {
 
         <div className="mt-5 space-y-7">
           {loadingFeed ? (
-            <SectionState message={t("homepage.loadingCategoryVideos")} />
+            <SectionState message={t("homepage.loadingCategoryVideos")} loading />
           ) : featuredVideos.length ? (
             featuredVideos.slice(0, 3).map((video) => <MobileFeaturedCard key={video.id} video={video} />)
           ) : (
@@ -315,7 +298,7 @@ export default function Homepage() {
           </div>
 
           {loading ? (
-            <SectionState message={t("homepage.loadingLiveStreams")} />
+            <SectionState message={t("homepage.loadingLiveStreams")} loading />
           ) : liveVideos.length ? (
             <div className="-mx-4 flex gap-4 overflow-x-auto px-4 pb-2 scrollbar-hide">
               {liveVideos.slice(0, 6).map((video) => (
@@ -334,7 +317,7 @@ export default function Homepage() {
         <section className="mb-8 space-y-4">
           <h2 className="text-lg md:text-2xl font-medium font-bricolage text-black dark:text-white">{t("homepage.trending")}</h2>
           {loading ? (
-            <SectionState message={t("homepage.loadingTrendingVideos")} />
+            <SectionState message={t("homepage.loadingTrendingVideos")} loading />
           ) : trendingVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {trendingVideos.slice(0, 12).map((video) => (
@@ -376,7 +359,7 @@ export default function Homepage() {
             </div>
           </div>
           {loadingFeed ? (
-            <SectionState message={t("homepage.loadingCategoryVideos")} />
+            <SectionState message={t("homepage.loadingCategoryVideos")} loading />
           ) : featuredVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {featuredVideos.slice(0, 8).map((video) => (
@@ -401,7 +384,7 @@ export default function Homepage() {
             </button>
           </div>
           {loading ? (
-            <SectionState message={t("homepage.loadingLiveStreams")} />
+            <SectionState message={t("homepage.loadingLiveStreams")} loading />
           ) : liveVideos.length ? (
             <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
               {liveVideos.slice(0, 8).map((video) => (

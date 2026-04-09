@@ -63,6 +63,17 @@ describe('Homepage', () => {
     vi.clearAllMocks();
   });
 
+  it('shows the no live streams message when the homepage live feed is empty', async () => {
+    api.getHome.mockResolvedValue({ data: { categories: [], trending: [], liveStreams: [] } });
+    api.getTrendingVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getLiveVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideos.mockResolvedValue({ data: { videos: [] } });
+
+    renderPage();
+
+    expect((await screen.findAllByText('No live streams are active right now.')).length).toBeGreaterThan(0);
+  });
+
   it('filters out ended live streams from the homepage live sections', async () => {
     api.getHome.mockResolvedValue({ data: { categories: [], trending: [], liveStreams: [] } });
     api.getTrendingVideos.mockResolvedValue({ data: { videos: [] } });
