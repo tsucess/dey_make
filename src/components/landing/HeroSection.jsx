@@ -119,7 +119,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
         <button
           onClick={onSignUp}
           className="bg-orange100 font-inter hover:bg-orange300 text-slate100
-                     font-semibold text-sm md:text-base px-4 md:px-9 py-3.5 rounded-xl
+                     font-semibold text-sm md:text-base px-2 md:px-9 py-3.5 rounded-xl
                      border-none cursor-pointer transition-colors
                      md:min-w-45"
         >
@@ -129,7 +129,7 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
           onClick={scrollToAbout}
           className="bg-white dark:bg-transparent
                      text-slate100 font-inter dark:text-white
-                     font-semibold text-sm md:text-base px-6 md:px-9 py-3.5 rounded-xl
+                     font-semibold text-sm md:text-base px-4 md:px-9 py-3.5 rounded-xl
                      cursor-pointer transition-colors md:min-w-45
                      border-2 border-slate100 dark:border-white
                      hover:bg-slate100 hover:text-white
