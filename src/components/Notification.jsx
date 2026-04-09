@@ -101,7 +101,7 @@ export default function Notification({
               return (
                 <article
                   key={notification.id}
-                  className={`flex items-start justify-between gap-3 rounded-[1.5rem] border px-4 py-4 transition-colors ${
+                  className={`flex items-start justify-between gap-3 rounded-3xl border px-4 py-4 transition-colors ${
                     isRead
                       ? "border-black/5 bg-[#F6F6F6] dark:border-white/10 dark:bg-black100"
                       : "border-orange100/30 bg-orange100/10 dark:border-orange100/20 dark:bg-orange100/10"
