@@ -1486,7 +1486,7 @@ export default function VideoDetails({ mode = "video" }) {
   return (
     
     <div className={`min-h-screen px-4 py-5 md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212]" : "bg-white dark:bg-[#121212]"}`}>
-      {!isLiveWatchLayout && <button onClick={()=> navigate(-1)} className="text-slate100 cursor-pointer dark:text-white mb-5 flex items-center gap-2"><FaArrowLeftLong /> Back</button>}
+      {!isLiveWatchLayout && <button onClick={()=> navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm mb-4 dark:bg-black100 dark:text-white"><FaArrowLeftLong /> Back</button>}
       <div className="mx-auto max-w-350 space-y-4">
         {isLiveWatchLayout || hasTopStatusPills ? (
           <div className={`flex items-center gap-4 ${isLiveWatchLayout ? "justify-between" : "justify-end"}`}>

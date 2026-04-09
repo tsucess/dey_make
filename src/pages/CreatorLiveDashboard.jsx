@@ -120,9 +120,9 @@ export default function CreatorLiveDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
-      <div className="mx-auto max-w-[1400px] space-y-5">
+      <div className="mx-auto max-w-350 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
+          <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-black100 dark:text-white">
             <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
           </button>
           <div className="flex flex-wrap gap-3">
@@ -131,11 +131,11 @@ export default function CreatorLiveDashboard() {
         </div>
 
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
-        {loading ? <div className="rounded-[2rem] bg-white p-8 text-sm text-slate600 shadow-sm dark:bg-[#171717] dark:text-slate200">{t("videoDetails.loading")}</div> : null}
+        {loading ? <div className="rounded-4xl bg-white p-8 text-sm text-slate600 shadow-sm dark:bg-[#171717] dark:text-slate200">{t("videoDetails.loading")}</div> : null}
 
         {!loading ? (
           <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr),390px]">
-            <section className="overflow-hidden rounded-[2rem] bg-white shadow-sm dark:bg-[#171717]">
+            <section className="overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
               <div className="border-b border-black/5 px-6 py-6 dark:border-white/5 md:px-8">
                 <div className="flex flex-wrap items-center gap-4">
                   <img src={getProfileAvatar(profile)} alt={getProfileName(profile)} className="h-16 w-16 rounded-full object-cover" />
@@ -150,7 +150,7 @@ export default function CreatorLiveDashboard() {
               <div className="space-y-5 px-6 py-6 md:px-8">
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   {metrics.map((metric) => (
-                    <div key={metric.key} className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                    <div key={metric.key} className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{metric.label}</p>
                       <p className="mt-2 text-2xl font-semibold text-black dark:text-white">{metric.value}</p>
                     </div>
@@ -180,7 +180,7 @@ export default function CreatorLiveDashboard() {
 
                 <div className="grid gap-4 xl:grid-cols-2">
                   {[{ key: "best", title: t("profile.bestSession"), video: bestSession, accent: "from-orange100 via-white to-pink-100 dark:from-[#2A2117] dark:via-[#211A15] dark:to-[#281A21]" }, { key: "reach", title: t("profile.topReach"), video: topReachSession, accent: "from-[#EEF2FF] via-white to-[#FCE7F3] dark:from-[#191E2E] dark:via-[#151515] dark:to-[#231822]" }].map((item) => (
-                    <section key={item.key} className={`rounded-[1.75rem] bg-gradient-to-br px-5 py-5 ${item.accent}`}>
+                    <section key={item.key} className={`rounded-[1.75rem] bg-linear-to-br px-5 py-5 ${item.accent}`}>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{item.title}</p>
                       {item.video ? (
                         <div className="mt-4 flex items-center gap-4">
@@ -199,7 +199,7 @@ export default function CreatorLiveDashboard() {
             </section>
 
             <aside className="space-y-4">
-              <section className="rounded-[2rem] bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold text-black dark:text-white">{t("profile.recentLiveSessions")}</h2>
@@ -210,9 +210,9 @@ export default function CreatorLiveDashboard() {
 
                 <div className="mt-4 space-y-3">
                   {sessions.length ? sessions.map((session) => (
-                    <article key={session.id} className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                    <article key={session.id} className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                       <div className="flex gap-3">
-                        <img src={getVideoThumbnail(session)} alt={getVideoTitle(session)} className="h-16 w-16 rounded-[1rem] object-cover" />
+                        <img src={getVideoThumbnail(session)} alt={getVideoTitle(session)} className="h-16 w-16 rounded-2xl object-cover" />
                         <div className="min-w-0 flex-1">
                           <p className="truncate text-sm font-semibold text-black dark:text-white">{getVideoTitle(session)}</p>
                           <p className="mt-1 text-xs text-slate500 dark:text-slate200">{formatRelativeTime(session.liveEndedAt || session.createdAt)} · {formatSessionDuration(session.liveStartedAt, session.liveEndedAt)}</p>
@@ -225,7 +225,7 @@ export default function CreatorLiveDashboard() {
                         <Link to={buildVideoLink(session, { isLive: false })} className="rounded-full bg-white px-4 py-2 text-xs font-semibold text-black dark:bg-[#171717] dark:text-white">{t("videoDetails.viewRecordedVideo")}</Link>
                       </div>
                     </article>
-                  )) : <div className="rounded-[1.5rem] bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("profile.noLiveSessions")}</div>}
+                  )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("profile.noLiveSessions")}</div>}
                 </div>
               </section>
             </aside>

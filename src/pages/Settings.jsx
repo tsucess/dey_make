@@ -1314,7 +1314,7 @@ export default function Settings() {
           </div>
         )}
       </div>
-      <button type="button" onClick={logout} className="mt-5 flex items-center gap-1 text-sm font-inter text-red300 md:hidden">
+      <button type="button" onClick={logout} className="mt-5 flex items-center gap-1 text-sm font-inter text-red300 md:hidden cursor-pointer">
         <MdArrowCircleLeft className="h-4 w-4" /> {t("common.logout")}
       </button>
 
