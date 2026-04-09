@@ -1,4 +1,6 @@
 // animations.js
+import { motion } from "motion/react";
+
 export const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   show: {
@@ -24,3 +26,6 @@ export const container = {
     }
   }
 };
+
+
+

@@ -26,7 +26,7 @@ export default function CreativesSection() {
 
         <MotionHeading variants={fadeUp}
           className="font-semibold font-bricolage text-slate100 dark:text-white mb-3"
-          style={{ fontSize: "clamp(36px, 4vw, 38px)" }}
+          style={{ fontSize: "clamp(34px, 4vw, 38px)" }}
         >
           {t("landing.creatives.titlePrefix")}{" "}
           <span className="text-orange100 italic font-inter">{t("landing.creatives.titleAccent")}</span>

@@ -5,6 +5,8 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 @theme {
+  --container-xs : 25rem;
+  
   --font-inter: "Inter", sans-serif;
   --font-bricolage: "Bricolage Grotesque", sans-serif;
   --color-slate100: #1a1a1a;
