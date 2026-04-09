@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -141,6 +141,7 @@ async function emitRemoteParticipant(uid = "remote-1") {
 describe("LiveRoom", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
     subscribeToPrivateChannelMock.mockImplementation(() => vi.fn());
     authState.isAuthenticated = true;
     authState.user = { id: 99, fullName: "Viewer Example", avatarUrl: "" };
@@ -304,6 +305,41 @@ describe("LiveRoom", () => {
 
     await waitFor(() => expect(screen.getAllByText("Realtime comment")).toHaveLength(2));
     expect(screen.getAllByText("Fan One")).toHaveLength(2);
+  });
+
+  it("shows floating hearts for the host when viewers send live likes", async () => {
+    const channelListeners = {};
+
+    subscribeToPrivateChannelMock.mockImplementation((channelName, listeners) => {
+      channelListeners[channelName] = listeners;
+      return vi.fn();
+    });
+
+    authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+    api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+    await screen.findByLabelText("Live camera preview");
+    await waitFor(() => expect(channelListeners["live.videos.10"]?.[".live.engagement.created"]).toEqual(expect.any(Function)));
+
+    await act(async () => {
+      channelListeners["live.videos.10"][".live.engagement.created"]({
+        videoId: 10,
+        engagement: {
+          id: "like-44",
+          type: "like",
+          createdAt: new Date().toISOString(),
+          actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" },
+        },
+        analytics: { liveLikes: 1, liveComments: 0 },
+      });
+    });
+
+    await waitFor(() => expect(screen.getAllByTestId("floating-heart").length).toBeGreaterThan(0));
+    expect(screen.getByText("Fan One")).toBeInTheDocument();
   });
 
   it("lets the host invite audience members from live engagement cards", async () => {
@@ -488,15 +524,41 @@ describe("LiveRoom", () => {
     expect(screen.getByText("+7 viewers joined this pulse.")).toBeInTheDocument();
   });
 
-  it("stops the live stream, uploads the recording, and redirects to the analytics page", async () => {
+  it("redirects viewers automatically when a live session ends on the status poll", async () => {
+    const intervalCallbacks = [];
+    const setIntervalSpy = vi.spyOn(window, "setInterval").mockImplementation((callback) => {
+      intervalCallbacks.push(callback);
+      return intervalCallbacks.length;
+    });
+    const clearIntervalSpy = vi.spyOn(window, "clearInterval").mockImplementation(() => {});
+
+    try {
+      api.getVideo
+        .mockResolvedValueOnce({ data: { video: buildVideo() } })
+        .mockResolvedValueOnce({ data: { video: buildVideo({ isLive: false, liveStartedAt: null, liveEndedAt: "2026-04-04T12:20:00Z" }) } });
+
+      renderRoom();
+
+      await screen.findByRole("heading", { name: "Alpha Live" });
+
+      await act(async () => {
+        await Promise.all(intervalCallbacks.map((callback) => callback()));
+      });
+
+      await screen.findByText("Recorded page");
+    } finally {
+      setIntervalSpy.mockRestore();
+      clearIntervalSpy.mockRestore();
+    }
+  });
+
+  it("redirects the host to analytics immediately after stopping live", async () => {
     authState.user = { id: 5, fullName: "Creator Example", avatarUrl: "" };
     api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
     api.getLiveAgoraSession.mockResolvedValue({ data: { session: { appId: "test-agora", channelName: "live-video-10", token: "token", uid: "user-5", role: "host" } } });
     api.stopVideoLive.mockResolvedValue({ data: { video: buildVideo({ isLive: false, liveStartedAt: null }) }, message: "Stopped" });
     api.presignUpload.mockResolvedValue({ data: { strategy: "client-direct-upload" } });
-    api.uploadFileDirect.mockResolvedValue({ secure_url: "https://cdn.example.com/live.webm", bytes: 4 });
-    api.uploadFile.mockResolvedValue({ data: { upload: { id: 88 } } });
-    api.updateVideo.mockResolvedValue({ data: { video: buildVideo({ isLive: false, liveStartedAt: null, mediaUrl: "https://cdn.example.com/live.webm" }) } });
+    api.uploadFileDirect.mockImplementation(() => new Promise(() => {}));
 
     renderRoom();
 
@@ -504,7 +566,7 @@ describe("LiveRoom", () => {
     await userEvent.click(screen.getByRole("button", { name: "Stop live" }));
 
     await waitFor(() => expect(api.stopVideoLive).toHaveBeenCalledWith(10));
-    await waitFor(() => expect(api.updateVideo).toHaveBeenCalled());
     await screen.findByText("Analytics page");
+    expect(api.updateVideo).not.toHaveBeenCalled();
   });
 });

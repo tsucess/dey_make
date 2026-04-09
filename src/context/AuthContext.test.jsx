@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../services/api', async () => {
   const actual = await vi.importActual('../services/api');
@@ -18,7 +18,7 @@ vi.mock('../services/api', async () => {
   };
 });
 
-import { api, getStoredToken, setStoredToken } from '../services/api';
+import { api, getStoredActivityAt, getStoredToken, setStoredToken, touchStoredActivity } from '../services/api';
 import { AuthProvider, useAuth } from './AuthContext';
 
 const PENDING_VERIFICATION_STORAGE_KEY = 'deymake.auth.pendingVerification';
@@ -68,6 +68,10 @@ describe('AuthContext', () => {
     vi.clearAllMocks();
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('clears an invalid stored token during bootstrap', async () => {
     setStoredToken('stale-token');
     api.me.mockRejectedValue(new Error('Unauthorized'));
@@ -82,6 +86,24 @@ describe('AuthContext', () => {
 
     expect(api.me).toHaveBeenCalledTimes(1);
     expect(getStoredToken()).toBeNull();
+    expect(screen.getByTestId('auth')).toHaveTextContent('false');
+  });
+
+  it('clears a long-idle stored session before bootstrap', async () => {
+    setStoredToken('stale-token');
+    touchStoredActivity(new Date(Date.now() - (60 * 60 * 1000)));
+
+    render(
+      <AuthProvider>
+        <AuthHarness />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+
+    expect(api.me).not.toHaveBeenCalled();
+    expect(getStoredToken()).toBeNull();
+    expect(getStoredActivityAt()).toBeNull();
     expect(screen.getByTestId('auth')).toHaveTextContent('false');
   });
 
