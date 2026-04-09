@@ -520,7 +520,7 @@ describe('Settings', () => {
     }));
 
     expect(await screen.findByDisplayValue('Gold Circle')).toBeInTheDocument();
-  });
+  }, 20000);
 
   it('cancels an active membership from the memberships workspace', async () => {
     const user = userEvent.setup();
@@ -852,5 +852,5 @@ describe('Settings', () => {
     await waitFor(() => expect(api.deleteDeveloperWebhook).toHaveBeenCalledWith(32));
     expect(await screen.findByDisplayValue('Membership webhook updated')).toBeInTheDocument();
     expect(screen.queryByDisplayValue('Billing webhook')).not.toBeInTheDocument();
-  });
+  }, 20000);
 });

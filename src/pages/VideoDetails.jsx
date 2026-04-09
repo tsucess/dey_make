@@ -5,25 +5,28 @@ import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-
 import { HiArrowLeft, HiShare } from "react-icons/hi";
 import { LuArrowRightFromLine } from "react-icons/lu";
 import { FaArrowLeftLong } from "react-icons/fa6";
+import MentionText from "../components/MentionText";
 import { useLanguage } from "../context/LanguageContext";
 import { api, DIRECT_UPLOAD_LARGE_FILE_THRESHOLD, firstError } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import { clearLiveCreationSession, getLiveCreationSession } from "../live/liveSessionStore";
 import {
   buildShareUrl,
+  buildVideoAnalyticsLink,
   buildVideoLink,
   formatCompactNumber,
   formatCountLabel,
   formatRelativeTime,
   formatSubscriberLabel,
   getVideoProcessingStatus,
+  hasPostLiveAnalytics,
   getProfileAvatar,
   getProfileName,
   isActiveLiveVideo,
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
-import { button } from "motion/react-client";
+import { normalizeMentionHandle } from "../utils/mentions";
 
 function stopMediaStream(stream) {
   stream?.getTracks?.().forEach((track) => track.stop());
@@ -164,6 +167,16 @@ async function uploadSelectedFile(file, type, callbacks = {}) {
   return uploadResponse?.data?.upload || null;
 }
 
+function buildMentionResolver(profiles = []) {
+  const knownProfiles = profiles.filter((profile) => profile?.id && profile?.username);
+
+  return (handle) => {
+    const normalizedHandle = normalizeMentionHandle(handle);
+    const matchingProfile = knownProfiles.find((profile) => normalizeMentionHandle(profile.username) === normalizedHandle);
+    return matchingProfile ? `/users/${matchingProfile.id}` : undefined;
+  };
+}
+
 function ActionButton({ children, active, disabled, onClick }) {
   return (
     <button
@@ -214,6 +227,7 @@ function CommentCard({
   onSubmitReply,
   onToggleReplies,
   onToggleReaction,
+  resolveMentionHref,
   compact = false,
 }) {
   const { t } = useLanguage();
@@ -239,13 +253,25 @@ function CommentCard({
             )}
             <span className="text-sm text-black200 dark:text-slate200">{formatRelativeTime(comment.createdAt)}</span>
           </div>
-          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-black200 dark:text-slate200`}>{comment.body || comment.text}</p>
+          <p className={`${compact ? "text-[15px] leading-7" : "text-sm leading-relaxed"} text-black200 dark:text-slate200`}>
+            <MentionText text={comment.body || comment.text} resolveMentionHref={resolveMentionHref} />
+          </p>
 
           <div className={`flex flex-wrap items-center ${compact ? "gap-4" : "gap-3"} text-xs text-slate500 dark:text-slate200`}>
-            <button type="button" onClick={() => onToggleReaction(comment.id, "like")} className={`${comment.currentUserState?.liked ? "text-orange100" : ""} flex items-center gap-1`}>
+            <button
+              type="button"
+              aria-label={comment.likes ? `${t("videoDetails.like")} (${formatCompactNumber(comment.likes)})` : t("videoDetails.like")}
+              onClick={() => onToggleReaction(comment.id, "like")}
+              className={`${comment.currentUserState?.liked ? "text-orange100" : ""} flex items-center gap-1`}
+            >
               <FaRegThumbsUp  className={`w-4 h-4  ${comment.currentUserState?.liked ? "text-orange100" : " text-black200"}`}/> {comment.likes ? `(${formatCompactNumber(comment.likes)})` : ""}
             </button>
-            <button type="button" onClick={() => onToggleReaction(comment.id, "dislike")} className={`${comment.currentUserState?.disliked ? "text-orange100" : ""} flex items-center gap-1`}>
+            <button
+              type="button"
+              aria-label={comment.dislikes ? `${t("videoDetails.dislike")} (${formatCompactNumber(comment.dislikes)})` : t("videoDetails.dislike")}
+              onClick={() => onToggleReaction(comment.id, "dislike")}
+              className={`${comment.currentUserState?.disliked ? "text-orange100" : ""} flex items-center gap-1`}
+            >
               <FaRegThumbsDown  className={`w-4 h-4  ${comment.currentUserState?.disliked ? "text-orange100" : " text-black200"}`}/> {comment.dislikes ? `(${formatCompactNumber(comment.dislikes)})` : ""}
             </button>
             <button type="button" onClick={() => onToggleReplies(comment.id)} className="text-black200">
@@ -1238,6 +1264,13 @@ export default function VideoDetails({ mode = "video" }) {
   }
 
   const creatorProfile = video.author || video.creator;
+  const resolveMentionHref = buildMentionResolver([
+    creatorProfile,
+    user,
+    ...comments.map((comment) => comment?.user),
+    ...Object.values(repliesByComment).flat().map((reply) => reply?.user),
+  ]);
+  const canViewAnalytics = !isVideoCurrentlyLive && creatorId === user?.id && hasPostLiveAnalytics(video);
   const isLiveWatchLayout = Boolean(isLiveRoom && isVideoCurrentlyLive);
   const showRemoteLivePlayer = Boolean(shouldReceiveRemoteLiveStream && remoteLiveStream);
   const livePlaceholderMessage = shouldUseLocalLivePreview && livePreviewStatus === "requesting"
@@ -1273,6 +1306,14 @@ export default function VideoDetails({ mode = "video" }) {
         >
           {video.currentUserState?.subscribed ? t("videoDetails.subscribed") : t("profile.subscribe")}
         </button>
+      ) : null}
+      {canViewAnalytics ? (
+        <Link
+          to={buildVideoAnalyticsLink(video)}
+          className="rounded-full border border-black/10 px-6 py-3 text-sm font-semibold text-black transition-opacity hover:opacity-80 dark:border-white/10 dark:text-white"
+        >
+          {t("videoDetails.viewAnalytics")}
+        </Link>
       ) : null}
     </>
   );
@@ -1373,6 +1414,7 @@ export default function VideoDetails({ mode = "video" }) {
               onSubmitReply={handleSubmitReply}
               onToggleReplies={handleToggleReplies}
               onToggleReaction={handleCommentReaction}
+              resolveMentionHref={resolveMentionHref}
             />
           ))
         ) : (
@@ -1406,6 +1448,7 @@ export default function VideoDetails({ mode = "video" }) {
                 onSubmitReply={handleSubmitReply}
                 onToggleReplies={handleToggleReplies}
                 onToggleReaction={handleCommentReaction}
+                resolveMentionHref={resolveMentionHref}
                 compact
               />
             ))
@@ -1531,14 +1574,16 @@ export default function VideoDetails({ mode = "video" }) {
                           {video.location ? <span>{video.location}</span> : null}
                         </div>
                       </div>
-                      {canSubscribeToAuthor || canManageLive ? <div className="shrink-0">{creatorControls}</div> : null}
+                      {canSubscribeToAuthor || canManageLive || canViewAnalytics ? <div className="shrink-0">{creatorControls}</div> : null}
                     </div>
 
                     <div className="flex flex-wrap gap-3">
                       {actionButtons}
                     </div>
 
-                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
+                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
+                      <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
+                    </p>
                   </>
                 )}
               </div>
@@ -1567,7 +1612,9 @@ export default function VideoDetails({ mode = "video" }) {
                   {actionButtons}
                 </div>
 
-                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">{videoDescription}</p>
+                <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
+                  <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
+                </p>
               </section>
             ) : null}
 

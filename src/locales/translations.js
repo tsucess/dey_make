@@ -31,6 +31,7 @@ const en = {
     notifications: "Notifications",
     logout: "Logout",
     upload: "Upload",
+    createLive: "Create live",
     goLive: "Go live",
     light: "Light",
     dark: "Dark",

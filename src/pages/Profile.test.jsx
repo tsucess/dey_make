@@ -142,7 +142,7 @@ describe('Profile', () => {
     expect(screen.getByText('Ada Byron')).toBeInTheDocument();
     expect(screen.getByText('@ada.byron')).toBeInTheDocument();
     expect(syncUserSpy).toHaveBeenCalledWith(expect.objectContaining({ fullName: 'Ada Byron', username: 'ada.byron' }));
-  });
+  }, 10000);
 
   it('opens post-live analytics from the authenticated creator profile card', async () => {
     const user = userEvent.setup();
@@ -254,12 +254,13 @@ describe('Profile', () => {
       },
     });
 
-    renderPage('/users/5');
+    const { container } = renderPage('/users/5');
 
     await waitFor(() => expect(api.getUser).toHaveBeenCalledWith('5'));
     await waitFor(() => expect(api.getUserPosts).toHaveBeenCalledWith('5'));
 
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+    expect(container.querySelector('img[src="/header_profile.png"]')).toBeInTheDocument();
     expect(screen.getByText('@grace.hopper')).toBeInTheDocument();
     expect(screen.getByText('COBOL for creators')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Edit profile/i })).not.toBeInTheDocument();

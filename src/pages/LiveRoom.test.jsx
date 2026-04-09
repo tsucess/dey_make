@@ -246,10 +246,10 @@ describe("LiveRoom", () => {
     renderRoom();
 
     await screen.findByRole("heading", { name: "Alpha Live" });
-    expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
+    await waitFor(() => expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
       "live.videos.10.users.99",
       expect.objectContaining({ ".live.signal.created": expect.any(Function) }),
-    );
+    ));
 
     realtimeListeners[".live.signal.created"]({
       videoId: 10,
@@ -281,6 +281,7 @@ describe("LiveRoom", () => {
     renderRoom();
 
     await screen.findByRole("heading", { name: "Alpha Live" });
+    await waitFor(() => expect(channelListeners["live.videos.10"]?.[".live.engagement.created"]).toEqual(expect.any(Function)));
 
     channelListeners["live.videos.10"][".live.engagement.created"]({
       videoId: 10,
@@ -337,7 +338,8 @@ describe("LiveRoom", () => {
     await screen.findByRole("heading", { name: "Alpha Live" });
     expect(await screen.findByText("Current co-hosts")).toBeInTheDocument();
     expect(screen.getByText("Manage guests who are already live with you right now.")).toBeInTheDocument();
-    expect(screen.getByText("Fan One")).toBeInTheDocument();
+    await waitFor(() => expect(api.getLiveSignals).toHaveBeenCalledWith(10, { after: 0 }));
+    expect(await screen.findByText("Fan One")).toBeInTheDocument();
     await user.click(await screen.findByRole("button", { name: "Remove co-host" }));
 
     await waitFor(() => expect(api.sendLiveSignal).toHaveBeenCalledWith(10, { recipientId: 12, type: "cohost_left" }));
@@ -380,6 +382,8 @@ describe("LiveRoom", () => {
     renderRoom();
 
     await screen.findByText("Active audience");
+    await waitFor(() => expect(channelListeners["live.videos.10"]?.[".live.presence.updated"]).toEqual(expect.any(Function)));
+    await waitFor(() => expect(channelListeners["live.videos.10.creator"]?.[".live.audience.updated"]).toEqual(expect.any(Function)));
 
     channelListeners["live.videos.10"][".live.presence.updated"]({
       videoId: 10,
@@ -415,6 +419,7 @@ describe("LiveRoom", () => {
     renderRoom();
 
     await screen.findByText("Top supporters");
+    await waitFor(() => expect(channelListeners["live.videos.10"]?.[".live.engagement.created"]).toEqual(expect.any(Function)));
 
     channelListeners["live.videos.10"][".live.engagement.created"]({
       videoId: 10,

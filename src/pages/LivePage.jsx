@@ -60,6 +60,13 @@ export default function LivePage() {
         <h1 className="mt-3 text-3xl font-semibold font-bricolage">{t("livePage.title")}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-white/80 md:text-base">{t("livePage.description")}</p>
         {!loading ? <p className="mt-4 text-sm font-medium text-orange-200">{t("livePage.activeStreams", { count: liveVideos.length })}</p> : null}
+        <button
+          type="button"
+          onClick={() => navigate("/create-live")}
+          className="mt-5 inline-flex rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black md:hidden"
+        >
+          {t("common.createLive")}
+        </button>
       </section>
 
       {error ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}

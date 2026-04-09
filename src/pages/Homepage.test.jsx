@@ -2,6 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+vi.mock('../context/AuthContext', () => ({
+  useAuth: () => ({ isAuthenticated: true, user: { id: 1, fullName: 'Viewer Example' } }),
+}));
+
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
   const t = actual.createTranslator('en');

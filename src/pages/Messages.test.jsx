@@ -414,10 +414,10 @@ describe('Messages', () => {
     render(<Messages />);
 
     await screen.findByPlaceholderText(/Mensaje para Bob Builder/i);
-    expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
+    await waitFor(() => expect(subscribeToPrivateChannelMock).toHaveBeenCalledWith(
       'conversations.10',
       expect.objectContaining({ '.conversation.message.created': expect.any(Function) }),
-    );
+    ));
 
     realtimeListeners['.conversation.message.created']({
       conversationId: 10,

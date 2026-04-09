@@ -32,6 +32,11 @@ import LandingPage from './LandingPage';
 describe('LandingPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    globalThis.IntersectionObserver = class IntersectionObserver {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    };
   });
 
   it('renders localized landing copy in Spanish', () => {
