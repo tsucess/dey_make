@@ -137,8 +137,8 @@ function MobileFeaturedCard({ video }) {
 
   return (
     <article className="cursor-pointer" onClick={() => navigate(buildVideoLink(video))}>
-      <div className="aspect-[1.18] overflow-hidden rounded-4xl bg-gray-200 dark:bg-[#2d2d2d]">
-        <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
+      <div className=" h-60 w-full overflow-hidden rounded-4xl bg-gray-200 dark:bg-[#2d2d2d]">
+        <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full " />
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">

@@ -23,7 +23,7 @@ export default function Notification({
 
   return (
     <section
-      className="absolute inset-0 z-100 flex justify-end bg-black/15 backdrop-blur-xs backdrop-brightness-75"
+      className=" inset-0 z-100 flex justify-end bg-black/15 backdrop-blur-xs backdrop-brightness-75 fixed"
       onClick={closeNotification}
     >
       <aside

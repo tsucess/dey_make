@@ -823,7 +823,7 @@ const en = {
   },
   content: {
     views: "views",
-    subscribers: "subscribers",
+    subscribers: "Subscribers",
     justNow: "Just now",
     unknownCreator: "Unknown creator",
     untitledVideo: "Untitled video",
