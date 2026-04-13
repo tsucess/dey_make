@@ -24,6 +24,7 @@ import {
 } from "../utils/content";
 import { TbEyeCheck } from "react-icons/tb";
 import { FiSend } from "react-icons/fi";
+import { MdClose } from "react-icons/md";
 
 const LIVE_ENGAGEMENT_POLL_MS = 4000;
 const LIVE_STATUS_POLL_MS = 5000;
@@ -1455,9 +1456,9 @@ export default function LiveRoom() {
 
         {video ? (
           <div className="xl:grid xl:gap-8 xl:grid-cols-[1fr,300px] w-full">
-            <div className="space-y-6 w-full">
-              <section className="overflow-hidden h-screen w-full  md:rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
-                <div className="relative md:aspect-video h-full w-full bg-black">
+            <div className="space-y-6 w-full ">
+              <section className="overflow-hidden h-screen md:h-auto w-full md:mb-6  md:rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
+                <div className="relative md:aspect-video h-full w-full bg-black ">
                   {isLive ? <div className="absolute top-4 left-4 z-20 flex gap-4 items-center md:hidden">
                     <div className="flex items-center gap-4">
                       <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-7 w-7 rounded-full object-cover" />
@@ -1468,10 +1469,16 @@ export default function LiveRoom() {
                     </div>
                     <div className="flex items-center gap-2 text-white text-base"><TbEyeCheck className="w-5 h-5 text-white"/> {formatCompactNumber(peakViewers)}</div>
                     <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">Live</span>
+                    
+                      {isCreator ? (
+                        <button type="button" disabled={busyAction === `${isLive ? "stop" : "start"}-live-${video.id}`} onClick={handleToggleLive} className="ml-auto disabled:cursor-not-allowed disabled:opacity-60">
+                          <MdClose className="w-8 h-8 text-white"/>
+                        </button>
+                      ) : null}
 
                   </div>: null}
-                  {isLive ? <div className=" absolute bottom-0 left-0 z-20 md:hidden">
-                    <div className="mt-4 space-y-3 max-h-70 max-w-60 overflow-auto">
+                  {isLive ? <div className=" absolute bottom-0 left-0 px-2 pb-2 z-20 md:hidden w-full">
+                    <div className="mt-4 space-y-3 max-h-50 max-w-60 overflow-auto">
                   {engagementFeed.length ? engagementFeed.map((item) => (
                     <article key={item.id} className="">
                       <div className="flex gap-3">
@@ -1491,13 +1498,26 @@ export default function LiveRoom() {
                     </article>
                   )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noLiveEngagement")}</div>}
                 </div>
-
+<div className="flex items-end justify-between gap-3 w-full">
                 <div className="flex items-center gap-5 space-y-3">
-                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={2} placeholder={t("videoDetails.commentPlaceholder")} className="w-full resize-none border-b min-w-80 border-b-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate500 dark:bg-[#1F1F1F] dark:text-white dark:placeholder:text-slate200" />
+                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={2} placeholder={t("videoDetails.commentPlaceholder")} className="w-full resize-none border-b min-w-60 border-b-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate500 dark:bg-[#1F1F1F] dark:text-white dark:placeholder:text-slate200" />
                     <button type="button" disabled={submittingComment || !commentBody.trim()} onClick={handleSubmitComment} className="rounded-full shrink-0 border border-white w-12 h-12 flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60">
                      <FiSend className="text-white w-7 h-7"/>
                     </button>
                   </div>
+
+                  {isLive ? (
+                        <button
+                          type="button"
+                          aria-label={`${t("videoDetails.like")} ${video?.likes || 0}`}
+                          onClick={handleSendLiveLike}
+                          className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-transform hover:scale-[1.02]"
+                        >
+                          <FaHeart className="h-4 w-4" />
+                          <span>{formatCompactNumber(video?.likes || 0)}</span>
+                        </button>
+                      ) : null}
+                      </div>
                   </div>: null}
 
                   
@@ -1595,7 +1615,7 @@ export default function LiveRoom() {
                   </div>
                 </div>
 
-                <div className="block space-y-5 px-5 py-5 md:px-6 md:py-6">
+                <div className="hidden md:block space-y-5 px-5 py-5 md:px-6 md:py-6">
                   <div className="space-y-2">
                     <h1 className="text-2xl font-semibold text-black dark:text-white">{getVideoTitle(video)}</h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
@@ -1879,7 +1899,7 @@ export default function LiveRoom() {
                 </div>
               </section>
 
-              <section className="max-h-[75vh] overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="max-h-[75vh] hidden md:block overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
                   <span className="text-sm text-slate500 dark:text-slate200">{comments.length}</span>
