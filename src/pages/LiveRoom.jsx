@@ -224,7 +224,7 @@ function StageTile({ stream, label, muted = false }) {
 function LiveStageActionModal({ title, body, acceptLabel, rejectLabel, onAccept, onReject, busy = false }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
-      <section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl dark:bg-[#171717]">
+      <section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-4xl bg-white p-6 shadow-2xl dark:bg-[#171717]">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange100">Live</p>
         <h2 className="mt-3 text-2xl font-semibold text-black dark:text-white">{title}</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate700 dark:text-slate200">{body}</p>
