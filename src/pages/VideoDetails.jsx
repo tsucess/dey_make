@@ -183,7 +183,7 @@ function ActionButton({ children, active, disabled, onClick }) {
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-full px-4 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`rounded-full px-4 self-start  py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         active
           ? "bg-orange100 text-black"
           : "bg-white300 text-slate100 hover:bg-slate150 dark:bg-black100 dark:text-white dark:hover:bg-[#2A2A2A]"
@@ -1321,19 +1321,19 @@ export default function VideoDetails({ mode = "video" }) {
   const actionButtons = (
     <>
       <ActionButton active={video.currentUserState?.liked} disabled={busyAction === `like-${video.id}`} onClick={() => handleVideoAction("like")}>
-        <span className="inline-flex items-center gap-2"><FaRegThumbsUp /> {formatCompactNumber(video.likes || 0)}</span>
+        <div className="inline-flex items-center gap-2"><FaRegThumbsUp /> <span className="hidden md:inline">{formatCompactNumber(video.likes || 0)}</span></div>
       </ActionButton>
       <ActionButton active={video.currentUserState?.disliked} disabled={busyAction === `dislike-${video.id}`} onClick={() => handleVideoAction("dislike")}>
-        <span className="inline-flex items-center gap-2"><FaRegThumbsDown /> {formatCompactNumber(video.dislikes || 0)}</span>
+        <div className="inline-flex items-center gap-2"><FaRegThumbsDown /> <span className="hidden md:inline">{formatCompactNumber(video.dislikes || 0)}</span></div>
       </ActionButton>
       <ActionButton active={video.currentUserState?.saved} disabled={busyAction === `save-${video.id}`} onClick={() => handleVideoAction("save")}>
-        <span className="inline-flex items-center gap-2"><FaRegBookmark /> {t("videoDetails.save")}</span>
+        <div className="inline-flex items-center gap-2"><FaRegBookmark /> <span className="hidden md:inline">{t("videoDetails.save")}</span> </div>
       </ActionButton>
       <ActionButton disabled={busyAction === `share-${video.id}`} onClick={handleShare}>
-        <span className="inline-flex items-center gap-2"><HiShare /> {t("videoDetails.share")}</span>
+        <div className="inline-flex items-center gap-2"><HiShare /> <span className="hidden md:inline">{t("videoDetails.share")}</span> </div>
       </ActionButton>
       <ActionButton disabled={busyAction === `report-${video.id}`} onClick={handleReport}>
-        <span className="inline-flex items-center gap-2"><FaRegFlag /> {t("videoDetails.report")}</span>
+        <div className="inline-flex items-center gap-2"><FaRegFlag /> <span className="hidden md:inline">{t("videoDetails.report")}</span></div>
       </ActionButton>
     </>
   );
@@ -1361,13 +1361,13 @@ export default function VideoDetails({ mode = "video" }) {
   const hasTopStatusPills = showProcessingBadge || isVideoCurrentlyLive;
   const recordedCreatorIdentity = creatorId ? (
     <Link to={`/users/${creatorId}`} className="flex items-center gap-3 rounded-2xl transition-opacity hover:opacity-80">
-      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
-      <p className="text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover md:block hidden" />
+      <p className="text-lg font-medium text-white md:text-black dark:text-white">{getProfileName(creatorProfile)}</p>
     </Link>
   ) : (
     <div className="flex items-center gap-3">
-      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover" />
-      <p className="text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>
+      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover hidden md:block" />
+      <p className="text-lg font-medium text-white md:text-black dark:text-white">{getProfileName(creatorProfile)}</p>
     </div>
   );
 
@@ -1505,10 +1505,10 @@ export default function VideoDetails({ mode = "video" }) {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col md:flex-row"}`}>
+        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row"}`}>
           <div className="space-y-6 md:flex-1">
             <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
-              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "overflow-hidden rounded-4xl"}`}>
+              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-screen md:h-auto md:overflow-hidden md:rounded-4xl"}`}>
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video
@@ -1563,7 +1563,7 @@ export default function VideoDetails({ mode = "video" }) {
                   </>
                 ) : (
                   <>
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="hidden md:flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 flex-1 space-y-4">
                         <h1 className="text-2xl font-semibold text-black dark:text-white md:text-[2.15rem]">{getVideoTitle(video)}</h1>
                         {recordedCreatorIdentity}
@@ -1577,11 +1577,13 @@ export default function VideoDetails({ mode = "video" }) {
                       {canSubscribeToAuthor || canManageLive || canViewAnalytics ? <div className="shrink-0">{creatorControls}</div> : null}
                     </div>
 
-                    <div className="flex flex-wrap gap-3">
+                    <div className="absolute md:static bottom-0 md:bottom-auto md:right-auto right-6 flex flex-col md:flex-row md:flex-wrap gap-3">
                       {actionButtons}
                     </div>
 
-                    <p className="text-sm leading-relaxed text-slate700 dark:text-slate200">
+                    <span className="text-white absolute bottom-5 left-5">{recordedCreatorIdentity}</span>
+
+                    <p className="absolute bottom-1 left-5 md:bottom-auto md:left-auto md:static md:block text-sm leading-relaxed text-white md:text-slate700 dark:text-slate200">
                       <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
                     </p>
                   </>
@@ -1590,7 +1592,7 @@ export default function VideoDetails({ mode = "video" }) {
             </section>
 
             {!isLiveWatchLayout ? (
-              <section className="space-y-4">
+              <section className="hidden md:block space-y-4">
                 <h2 className="text-[1.75rem] font-semibold text-black dark:text-white">{t("videoDetails.aboutCreator")}</h2>
                 <div className="rounded-4xl bg-[#F7F7F7] px-6 py-6 dark:bg-[#171717] md:px-8 md:py-7">
                   <p className="text-base font-medium text-black dark:text-white">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
@@ -1600,7 +1602,7 @@ export default function VideoDetails({ mode = "video" }) {
             ) : null}
           </div>
 
-          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "flex flex-col gap-4 self-start lg:sticky lg:top-6 "}>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "hidden md:flex flex-col gap-4 self-start w-full lg:sticky lg:top-6 "}>
             {isLiveWatchLayout ? (
               <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
