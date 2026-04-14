@@ -25,7 +25,7 @@ export default function LandingFooter({ onSignUp }) {
             onClick={onSignUp}
             className="text-xs md:text-sm text-black font-inter font-medium dark:text-white
                        hover:text-orange100 transition-colors
-                       bg-transparent border-none cursor-pointer"
+                       bg-transparent border-none cursor-pointer text-right md:text-left"
           >
             {t("landing.footer.joinWaitlist")}
           </button>
@@ -48,7 +48,7 @@ export default function LandingFooter({ onSignUp }) {
         </div>
         </div>
         {/* Logo */}
-         <img src="./DEYMAKE LOGO Yellow.svg" alt="DeyMake" className="w-full h-auto -mb-10"/>
+         <img src="./DEYMAKE LOGO Yellow.svg" alt="DeyMake" className="w-full h-auto -mb-3 md:-mb-10"/>
     </footer>
   );
 }

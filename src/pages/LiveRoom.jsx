@@ -22,6 +22,9 @@ import {
   getVideoTitle,
   isActiveLiveVideo,
 } from "../utils/content";
+import { TbEyeCheck } from "react-icons/tb";
+import { FiSend } from "react-icons/fi";
+import { MdClose } from "react-icons/md";
 
 const LIVE_ENGAGEMENT_POLL_MS = 4000;
 const LIVE_STATUS_POLL_MS = 5000;
@@ -221,7 +224,7 @@ function StageTile({ stream, label, muted = false }) {
 function LiveStageActionModal({ title, body, acceptLabel, rejectLabel, onAccept, onReject, busy = false }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
-      <section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-[2rem] bg-white p-6 shadow-2xl dark:bg-[#171717]">
+      <section role="dialog" aria-modal="true" aria-label={title} className="w-full max-w-md rounded-4xl bg-white p-6 shadow-2xl dark:bg-[#171717]">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange100">Live</p>
         <h2 className="mt-3 text-2xl font-semibold text-black dark:text-white">{title}</h2>
         <p className="mt-3 text-sm leading-relaxed text-slate700 dark:text-slate200">{body}</p>
@@ -1423,7 +1426,7 @@ export default function LiveRoom() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
+    <div className="min-h-screen w-full overflow-hidden bg-gray-50 px-4 py-5 dark:bg-[#121212] md:px-8 md:py-8">
       {stageNotification ? (
         <LiveStageActionModal
           title={stageNotification.kind === "request" ? t("videoDetails.stageRequestTitle") : t("videoDetails.stageInviteTitle")}
@@ -1437,8 +1440,8 @@ export default function LiveRoom() {
           busy={busyAction.startsWith(`stage-notification-${stageNotification.signalId}-`)}
         />
       ) : null}
-      <div className="mx-auto max-w-350 space-y-4">
-        <div className="flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-350 space-y-4 w-full">
+        <div className="hidden md:flex items-center justify-between gap-4">
           <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
             <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
           </button>
@@ -1452,17 +1455,79 @@ export default function LiveRoom() {
         {loading ? <div className="rounded-4xl bg-white p-8 text-sm text-slate600 shadow-sm dark:bg-[#171717] dark:text-slate200">{t("videoDetails.loading")}</div> : null}
 
         {video ? (
-          <div className="grid gap-8 xl:grid-cols-[minmax(0,1.2fr),400px]">
-            <div className="space-y-6">
-              <section className="overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
-                <div className="relative aspect-video bg-black">
+          <div className="xl:grid xl:gap-8 xl:grid-cols-[1fr,300px] w-full">
+            <div className="space-y-6 w-full ">
+              <section className="overflow-hidden h-screen md:h-auto w-full md:mb-6  md:rounded-4xl bg-white shadow-sm dark:bg-[#171717]">
+                <div className="relative md:aspect-video h-full w-full bg-black ">
+                  {isLive ? <div className="absolute top-4 left-4 z-20 flex gap-4 items-center md:hidden">
+                    <div className="flex items-center gap-4">
+                      <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-7 w-7 rounded-full object-cover" />
+                      <div className="min-w-0">
+                        {creatorId ? <Link to={`/users/${creatorId}`} className="truncate text-lg font-medium text-white hover:opacity-80 dark:text-white">{getProfileName(creatorProfile)}</Link> : <p className="truncate text-lg font-medium text-black dark:text-white">{getProfileName(creatorProfile)}</p>}
+                       
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-white text-base"><TbEyeCheck className="w-5 h-5 text-white"/> {formatCompactNumber(peakViewers)}</div>
+                    <span className="rounded-full bg-red-500 px-4 py-2 text-xs font-semibold tracking-wide text-white">Live</span>
+                    
+                      {isCreator ? (
+                        <button type="button" disabled={busyAction === `${isLive ? "stop" : "start"}-live-${video.id}`} onClick={handleToggleLive} className="ml-auto disabled:cursor-not-allowed disabled:opacity-60">
+                          <MdClose className="w-8 h-8 text-white"/>
+                        </button>
+                      ) : null}
+
+                  </div>: null}
+                  {isLive ? <div className=" absolute bottom-0 left-0 px-2 pb-2 z-20 md:hidden w-full">
+                    <div className="mt-4 space-y-3 max-h-50 max-w-60 overflow-auto">
+                  {engagementFeed.length ? engagementFeed.map((item) => (
+                    <article key={item.id} className="">
+                      <div className="flex gap-3">
+                        <img src={getProfileAvatar(item.actor)} alt={getProfileName(item.actor, t("videoDetails.you"))} className="h-7 w-7 rounded-full object-cover" />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-medium text-white">{getProfileName(item.actor, t("videoDetails.you"))}</p>
+                            <p className="mt-1 text-sm text-white">
+                            {item.type === "like" ? t("videoDetails.sentLikes") : t("videoDetails.commented")}
+                          </p>
+                          </div>
+                          
+                          {item.body ? <p className="mt-1 text-sm leading-relaxed text-white">{item.body}</p> : null}
+                          
+                        </div>
+                      </div>
+                    </article>
+                  )) : <div className="rounded-3xl bg-[#F7F7F7] px-4 py-8 text-center text-sm text-slate600 dark:bg-[#1F1F1F] dark:text-slate200">{t("videoDetails.noLiveEngagement")}</div>}
+                </div>
+<div className="flex items-end justify-between gap-3 w-full">
+                <div className="flex items-center gap-5 space-y-3">
+                    <textarea value={commentBody} onChange={(event) => setCommentBody(event.target.value)} rows={2} placeholder={t("videoDetails.commentPlaceholder")} className="w-full resize-none border-b min-w-60 border-b-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate500 dark:bg-[#1F1F1F] dark:text-white dark:placeholder:text-slate200" />
+                    <button type="button" disabled={submittingComment || !commentBody.trim()} onClick={handleSubmitComment} className="rounded-full shrink-0 border border-white w-12 h-12 flex items-center justify-center disabled:cursor-not-allowed disabled:opacity-60">
+                     <FiSend className="text-white w-7 h-7"/>
+                    </button>
+                  </div>
+
+                  {isLive ? (
+                        <button
+                          type="button"
+                          aria-label={`${t("videoDetails.like")} ${video?.likes || 0}`}
+                          onClick={handleSendLiveLike}
+                          className="inline-flex items-center gap-2 rounded-full bg-pink-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-transform hover:scale-[1.02]"
+                        >
+                          <FaHeart className="h-4 w-4" />
+                          <span>{formatCompactNumber(video?.likes || 0)}</span>
+                        </button>
+                      ) : null}
+                      </div>
+                  </div>: null}
+
+                  
                   <style>{`@keyframes live-heart-float {0% {transform: translate3d(-50%, 0, 0) scale(.42) rotate(var(--heart-rotate)); opacity: 0;} 10% {opacity: 1;} 32% {transform: translate3d(calc(-50% + var(--heart-sway)), calc(var(--heart-rise) * -.28), 0) scale(.95) rotate(calc(var(--heart-rotate) * .55)); opacity: .98;} 68% {transform: translate3d(calc(-50% + calc(var(--heart-drift) * .58)), calc(var(--heart-rise) * -.72), 0) scale(1.08) rotate(calc(var(--heart-rotate) * .82)); opacity: .9;} 100% {transform: translate3d(calc(-50% + var(--heart-drift)), calc(var(--heart-rise) * -1), 0) scale(1.2) rotate(var(--heart-rotate)); opacity: 0;}} @keyframes live-heart-spark {0%,100% {transform: translate(-50%, 0) scale(.35); opacity: 0;} 24% {opacity: .95;} 72% {transform: translate(calc(-50% + var(--spark-drift)), -18px) scale(1.12); opacity: 0;}} @keyframes live-heart-glow {0%,100% {transform: translate(-50%, -50%) scale(.62); opacity: 0;} 16% {opacity: .68;} 60% {transform: translate(-50%, -50%) scale(1.2); opacity: .26;}}`}</style>
                   {stageTiles.length ? (
                     <div className={`grid h-full w-full ${stageTiles.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
                       {stageTiles.map((tile) => (
                         <div key={tile.key} className="relative min-h-0">
                           <StageTile stream={tile.stream} label={tile.label} muted={tile.muted} />
-                          {tile.muted ? <span className="absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">{t("videoDetails.onStage")}</span> : null}
+                          {tile.muted ? <span className="hidden absolute left-3 top-3 rounded-full bg-black/60 px-3 py-1 text-xs font-medium text-white">{t("videoDetails.onStage")}</span> : null}
                         </div>
                       ))}
                     </div>
@@ -1550,7 +1615,7 @@ export default function LiveRoom() {
                   </div>
                 </div>
 
-                <div className="space-y-5 px-5 py-5 md:px-6 md:py-6">
+                <div className="hidden md:block space-y-5 px-5 py-5 md:px-6 md:py-6">
                   <div className="space-y-2">
                     <h1 className="text-2xl font-semibold text-black dark:text-white">{getVideoTitle(video)}</h1>
                     <div className="flex flex-wrap items-center gap-3 text-sm text-slate500 dark:text-slate200">
@@ -1605,7 +1670,7 @@ export default function LiveRoom() {
             </div>
 
             <aside className="flex flex-col gap-4 self-start xl:sticky xl:top-6">
-              <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.liveAnalytics")}</h2>
                   {isLive ? <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-500">{t("videoDetails.liveNow")}</span> : null}
@@ -1627,7 +1692,7 @@ export default function LiveRoom() {
               </section>
 
               {isCreator && isLive ? (
-                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.currentCohosts")}</h2>
@@ -1666,7 +1731,7 @@ export default function LiveRoom() {
               ) : null}
 
               {isCreator && isLive ? (
-                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.sessionSummary")}</h2>
@@ -1689,7 +1754,7 @@ export default function LiveRoom() {
                     ))}
                   </div>
 
-                  <div className="mt-4 rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                  <div className="hidden md:block mt-4 rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.topSupporters")}</h3>
@@ -1712,7 +1777,7 @@ export default function LiveRoom() {
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-4 xl:grid-cols-2">
+                  <div className="hidden md:grid mt-4 gap-4 xl:grid-cols-2">
                     <div className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                       <div>
                         <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.engagementTimeline")}</h3>
@@ -1756,7 +1821,7 @@ export default function LiveRoom() {
               ) : null}
 
               {isCreator && isLive ? (
-                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.activeAudience")}</h2>
@@ -1794,7 +1859,7 @@ export default function LiveRoom() {
                 </section>
               ) : null}
 
-              <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.liveEngagement")}</h2>
@@ -1834,7 +1899,7 @@ export default function LiveRoom() {
                 </div>
               </section>
 
-              <section className="max-h-[75vh] overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+              <section className="max-h-[75vh] hidden md:block overflow-hidden rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex items-center justify-between gap-3">
                   <h2 className="text-xl font-semibold text-black dark:text-white">{t("videoDetails.comments")}</h2>
                   <span className="text-sm text-slate500 dark:text-slate200">{comments.length}</span>
@@ -1879,7 +1944,7 @@ export default function LiveRoom() {
               </section>
 
               {!isLive ? (
-                <section className="rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
+                <section className="hidden md:block rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                   <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="aspect-video w-full rounded-3xl object-cover" />
                 </section>
               ) : null}
