@@ -1581,7 +1581,7 @@ export default function VideoDetails({ mode = "video" }) {
                       {actionButtons}
                     </div>
 
-                    <span className="text-white absolute bottom-5 left-5">{recordedCreatorIdentity}</span>
+                    <span className="text-white absolute bottom-5 left-5 md:hidden">{recordedCreatorIdentity}</span>
 
                     <p className="absolute bottom-1 left-5 md:bottom-auto md:left-auto md:static md:block text-sm leading-relaxed text-white md:text-slate700 dark:text-slate200">
                       <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
@@ -1602,7 +1602,7 @@ export default function VideoDetails({ mode = "video" }) {
             ) : null}
           </div>
 
-          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "hidden md:flex flex-col gap-4 self-start w-full lg:sticky lg:top-6 "}>
+          <aside className={isLiveWatchLayout ? "flex flex-col gap-4 self-start xl:sticky xl:top-6" : "hidden md:flex flex-col gap-4 self-start w-full lg:w-80 lg:sticky lg:top-6 "}>
             {isLiveWatchLayout ? (
               <section className="space-y-5 rounded-4xl bg-white p-5 shadow-sm dark:bg-[#171717] md:p-6">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
