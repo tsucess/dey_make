@@ -1,4 +1,3 @@
-import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
@@ -22,10 +21,13 @@ import {
   hasPostLiveAnalytics,
   getProfileAvatar,
   getProfileName,
+  getVideoMediaUrl,
   isActiveLiveVideo,
+  getVideoStreamUrl,
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+import { loadHls } from "../utils/loadHls";
 import { normalizeMentionHandle } from "../utils/mentions";
 
 function stopMediaStream(stream) {
@@ -366,6 +368,9 @@ export default function VideoDetails({ mode = "video" }) {
   const canManageLive = isLiveRoom && Boolean(creatorId) && user?.id === creatorId && video?.type === "video";
   const processingStatus = getVideoProcessingStatus(video);
   const showProcessingBadge = processingStatus !== "completed";
+  const videoThumbnailUrl = getVideoThumbnail(video);
+  const videoMediaUrl = getVideoMediaUrl(video);
+  const videoStreamUrl = getVideoStreamUrl(video);
   const shouldUseLocalLivePreview = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video");
   const shouldReceiveRemoteLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && !canManageLive && video?.type === "video" && isAuthenticated);
   const shouldBroadcastLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
@@ -389,10 +394,11 @@ export default function VideoDetails({ mode = "video" }) {
       return undefined;
     }
 
-    const fallbackUrl = video?.mediaUrl || "";
-    const streamUrl = video?.streamUrl || "";
+    const fallbackUrl = videoMediaUrl || "";
+    const streamUrl = videoStreamUrl || "";
     let hls = null;
     let hasFallenBackToMp4 = false;
+    let cancelled = false;
 
     const setPlaybackSource = (sourceUrl) => {
       if (!sourceUrl) {
@@ -416,39 +422,51 @@ export default function VideoDetails({ mode = "video" }) {
       setPlaybackSource(fallbackUrl);
     };
 
-    playbackElement.removeAttribute("src");
+    async function initializePlayback() {
+      playbackElement.removeAttribute("src");
 
-    if (!streamUrl) {
-      setPlaybackSource(fallbackUrl);
-
-      return undefined;
-    }
-
-    if (typeof playbackElement.canPlayType === "function" && playbackElement.canPlayType("application/vnd.apple.mpegurl")) {
-      setPlaybackSource(streamUrl);
-
-      return undefined;
-    }
-
-    if (!Hls.isSupported()) {
-      setPlaybackSource(fallbackUrl);
-
-      return undefined;
-    }
-
-    hls = new Hls();
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data?.fatal) {
-        fallbackToMp4();
+      if (!streamUrl) {
+        setPlaybackSource(fallbackUrl);
+        return;
       }
-    });
-    hls.loadSource(streamUrl);
-    hls.attachMedia(playbackElement);
+
+      if (typeof playbackElement.canPlayType === "function" && playbackElement.canPlayType("application/vnd.apple.mpegurl")) {
+        setPlaybackSource(streamUrl);
+        return;
+      }
+
+      try {
+        const Hls = await loadHls();
+
+        if (cancelled) return;
+
+        if (!Hls?.isSupported?.()) {
+          setPlaybackSource(fallbackUrl);
+          return;
+        }
+
+        hls = new Hls();
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data?.fatal) {
+            fallbackToMp4();
+          }
+        });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(playbackElement);
+      } catch {
+        if (!cancelled) {
+          setPlaybackSource(fallbackUrl);
+        }
+      }
+    }
+
+    initializePlayback();
 
     return () => {
+      cancelled = true;
       hls?.destroy();
     };
-  }, [isVideoCurrentlyLive, video?.id, video?.mediaUrl, video?.streamUrl, video?.type]);
+  }, [isVideoCurrentlyLive, video?.id, video?.type, videoMediaUrl, videoStreamUrl]);
 
   useEffect(() => () => {
     stopMediaStream(localLiveStream);
@@ -1528,7 +1546,7 @@ export default function VideoDetails({ mode = "video" }) {
                       playsInline
                       controls
                     />
-                  ) : isVideoCurrentlyLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !video.mediaUrl) ? (
+                  ) : isVideoCurrentlyLive && (shouldUseLocalLivePreview || shouldReceiveRemoteLiveStream || !videoMediaUrl) ? (
                     <div className="flex h-full items-center justify-center px-6 text-center text-white">
                       <div className="max-w-lg">
                         <p className="text-xs font-semibold uppercase tracking-[0.35em] text-red-300">{t("videoDetails.liveNow")}</p>
@@ -1536,13 +1554,13 @@ export default function VideoDetails({ mode = "video" }) {
                         <p className="mt-3 text-sm leading-relaxed text-slate-300">{livePlaceholderMessage}</p>
                       </div>
                     </div>
-                  ) : (video.streamUrl || video.mediaUrl) ? (
-                    <video ref={recordedPlaybackRef} poster={video.thumbnailUrl || getVideoThumbnail(video)} controls playsInline className="h-full w-full object-cover" />
+                  ) : (videoStreamUrl || videoMediaUrl) ? (
+                    <video ref={recordedPlaybackRef} poster={videoThumbnailUrl} controls playsInline className="h-full w-full object-cover" />
                   ) : (
-                    <img src={video.thumbnailUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-fit" />
+                    <img src={videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-fit" />
                   )
                 ) : (
-                  <img src={video.mediaUrl || getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-contain" />
+                  <img src={videoMediaUrl || videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-contain" />
                 )}
               </div>
 

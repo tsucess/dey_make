@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 
 function LiveNavIcon() {
@@ -13,7 +14,8 @@ function LiveNavIcon() {
   );
 }
 
-const navItems = [
+function getNavItems(isAdmin) {
+  return [
   {
     to: "/home",
     labelKey: "common.home",
@@ -64,6 +66,17 @@ const navItems = [
       </svg>
     ),
   },
+  ...(isAdmin ? [{
+    to: "/admin",
+    labelKey: "common.admin",
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 3l7 4v5c0 4.2-2.9 8.1-7 9-4.1-.9-7-4.8-7-9V7l7-4z"/>
+        <path d="M9.5 12l1.7 1.7L14.8 10"/>
+      </svg>
+    ),
+  }] : []),
   {
     to: "/profile",
     labelKey: "common.profile",
@@ -75,10 +88,13 @@ const navItems = [
       </svg>
     ),
   },
-];
+  ];
+}
 
 export default function BottomNav() {
+  const { user } = useAuth();
   const { t } = useLanguage();
+  const navItems = getNavItems(Boolean(user?.isAdmin));
 
   return (
     <nav

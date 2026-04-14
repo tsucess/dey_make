@@ -21,6 +21,8 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSubscribers = lazy(() => import("./pages/ProfileSubscribers"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Settings = lazy(() => import("./pages/Settings"));
+const AdminUsers = lazy(() => import("./pages/AdminUsers"));
+const Workspace = lazy(() => import("./pages/Workspace"));
 const VideoDetails = lazy(() => import("./pages/VideoDetails"));
 const LiveRoom = lazy(() => import("./pages/LiveRoom"));
 const PostLiveAnalytics = lazy(() => import("./pages/PostLiveAnalytics"));
@@ -58,6 +60,14 @@ function ProtectedRoute() {
   return isAuthenticated ? <Outlet /> : <Navigate to="/login" replace />;
 }
 
+function AdminRoute() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) return <FullPageLoader />;
+
+  return user?.isAdmin ? <Outlet /> : <Navigate to="/home" replace />;
+}
+
 function PublicOnlyRoute() {
   const { isAuthenticated, isLoading, pendingVerification } = useAuth();
   const location = useLocation();
@@ -86,7 +96,8 @@ function LandingRoute() {
 
   return (
     <RouteSuspense>
-      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} />
+      {/* <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} /> */}
+      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/")} />
     </RouteSuspense>
   );
 }
@@ -111,7 +122,8 @@ export default function App() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/welcome" element={<LandingRoute />} />
           <Route path="/login" element={renderLazyRoute(Login)} />
-          <Route path="/signup" element={renderLazyRoute(SignUp)} />
+          <Route path="/" element={renderLazyRoute(SignUp)} />
+          {/* <Route path="/signup" element={renderLazyRoute(SignUp)} /> */}
           <Route path="/forgot-password" element={renderLazyRoute(ForgotPassword)} />
           <Route path="/reset-password" element={renderLazyRoute(ResetPassword)} />
         </Route>
@@ -133,11 +145,15 @@ export default function App() {
             <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
+            </Route>
             <Route path="/profile" element={renderLazyRoute(Profile)} />
             <Route path="/profile/subscribers" element={renderLazyRoute(ProfileSubscribers)} />
             <Route path="/analytics/live" element={renderLazyRoute(CreatorLiveDashboard)} />
             <Route path="/search" element={renderLazyRoute(SearchResults)} />
             <Route path="/settings" element={renderLazyRoute(Settings)} />
+            <Route path="/workspace" element={renderLazyRoute(Workspace)} />
             <Route path="/video/:id/analytics" element={renderLazyRoute(PostLiveAnalytics)} />
           </Route>
           <Route path="/create" element={renderLazyRoute(CreateUpload)} />

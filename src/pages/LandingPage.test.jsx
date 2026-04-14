@@ -1,6 +1,9 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { createTranslator } from '../locales/translations';
+
+const t = createTranslator('es');
 
 vi.mock('../context/LanguageContext', async () => {
   const actual = await vi.importActual('../locales/translations');
@@ -42,12 +45,12 @@ describe('LandingPage', () => {
   it('renders localized landing copy in Spanish', () => {
     render(<LandingPage onSignUp={vi.fn()} />);
 
-    expect(screen.getByRole('link', { name: 'Acerca de' })).toBeInTheDocument();
-    expect(screen.getByText('Crea. Publica. Crece.')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Un nuevo hogar para creadores/i })).toBeInTheDocument();
-    expect(screen.getByText('Por qué los creadores eligen DeyMake')).toBeInTheDocument();
-    expect(screen.getByText('Preguntas frecuentes')).toBeInTheDocument();
-    expect(screen.getByText('©2025 DeyMake. Todos los derechos reservados.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: t('landing.navbar.about') })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Crea\.?\s*Publica\.?\s*Crece\./i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: `${t('landing.creatives.titlePrefix')} ${t('landing.creatives.titleAccent')}` })).toBeInTheDocument();
+    expect(screen.getByText(t('landing.why.title'))).toBeInTheDocument();
+    expect(screen.getByText(t('landing.faq.title'))).toBeInTheDocument();
+    expect(screen.getByText(t('landing.footer.copyright'))).toBeInTheDocument();
   });
 
   it('shows localized waitlist validation messages', async () => {

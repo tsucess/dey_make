@@ -39,7 +39,8 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     return newErrors;
   };
 
-  const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/signup"));
+  // const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/signup"));
+  const navigateToSignUp = onNavigateToSignUp ?? (() => navigate("/"));
   const navigateToForgotPassword = () => navigate("/forgot-password");
 
   const handleSubmit = async (e) => {

@@ -456,8 +456,8 @@ describe('VideoDetails', () => {
 
     renderPage();
 
-    const creatorLink = await screen.findByRole('link', { name: /Creator Uno/i });
-    expect(creatorLink).toHaveAttribute('href', '/users/5');
+    const creatorLinks = await screen.findAllByRole('link', { name: /Creator Uno/i });
+    expect(creatorLinks[0]).toHaveAttribute('href', '/users/5');
 
     await user.click(screen.getByRole('button', { name: 'Suscribirse' }));
 
