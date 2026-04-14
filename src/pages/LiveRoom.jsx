@@ -23,7 +23,7 @@ import {
   isActiveLiveVideo,
 } from "../utils/content";
 import { TbEyeCheck } from "react-icons/tb";
-import { FiSend } from "react-icons/fi";
+import { FiGift, FiSend } from "react-icons/fi";
 import { MdClose } from "react-icons/md";
 
 const LIVE_ENGAGEMENT_POLL_MS = 4000;
@@ -33,8 +33,15 @@ const LIVE_SIGNAL_POLL_MS = 3000;
 const LIVE_AUDIENCE_POLL_MS = 5000;
 const LIVE_HEART_COLORS = ["#f472b6", "#fb7185", "#f97316", "#ec4899"];
 const LIVE_HEART_LANES = [91.8, 94.1, 96.1];
+const LIVE_GIFT_PRESETS = [
+  { name: "Rose", type: "rose", amount: 500, count: 1 },
+  { name: "Spark", type: "spark", amount: 1200, count: 1 },
+  { name: "Crown", type: "crown", amount: 3500, count: 1 },
+  { name: "Galaxy", type: "galaxy", amount: 10000, count: 1 },
+];
 const EMPTY_LIVE_SUMMARY = {
   topFans: [],
+  topGifters: [],
   topCommenters: [],
   topLikers: [],
   timeline: [],
@@ -50,6 +57,8 @@ const EMPTY_LIVE_SUMMARY = {
   totals: {
     likes: 0,
     comments: 0,
+    tips: 0,
+    tipsAmount: 0,
     engagements: 0,
     uniqueFans: 0,
   },
@@ -171,6 +180,43 @@ function createRecordingUploadFile(blob, videoId) {
   return blob;
 }
 
+function formatMinorCurrency(amount = 0, currency = "NGN") {
+  const numericAmount = Number(amount || 0) / 100;
+
+  try {
+    return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(numericAmount);
+  } catch {
+    return `${currency} ${numericAmount.toFixed(2)}`;
+  }
+}
+
+function getGiftDisplayName(metadata = {}) {
+  const giftCount = Math.max(1, Number(metadata?.giftCount || 1));
+  const giftName = metadata?.giftName || "Gift";
+  return giftCount > 1 ? `${giftCount}× ${giftName}` : giftName;
+}
+
+function getLiveEngagementLabel(item, t) {
+  if (item?.type === "like") return t("videoDetails.sentLikes");
+  if (item?.type === "tip") {
+    const metadata = item?.metadata || {};
+    if (metadata.giftName) return t("videoDetails.sentGift", { gift: getGiftDisplayName(metadata) });
+    return t("videoDetails.sentTip", { amount: formatMinorCurrency(metadata.amount, metadata.currency) });
+  }
+  return t("videoDetails.commented");
+}
+
+function getLiveEngagementMeta(item, t) {
+  if (item?.type !== "tip") return null;
+
+  const metadata = item?.metadata || {};
+  const parts = [formatMinorCurrency(metadata.amount, metadata.currency)];
+
+  if (metadata.isPrivate) parts.push(t("videoDetails.privateGiftBadge"));
+
+  return parts.join(" · ");
+}
+
 function requiresDirectUpload(file, type) {
   return type === "video" || (file?.size ?? 0) > DIRECT_UPLOAD_LARGE_FILE_THRESHOLD;
 }
@@ -241,6 +287,45 @@ function LiveStageActionModal({ title, body, acceptLabel, rejectLabel, onAccept,
   );
 }
 
+function LiveGiftTray({ t, open, message, onMessageChange, onClose, onSendGift, sendingGiftKey = "" }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 px-4 py-6 sm:items-center">
+      <section role="dialog" aria-modal="true" aria-label={t("videoDetails.sendGift")} className="w-full max-w-2xl rounded-[2rem] bg-white p-6 shadow-2xl dark:bg-[#171717]">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange100">Live</p>
+            <h2 className="mt-3 text-2xl font-semibold text-black dark:text-white">{t("videoDetails.sendGiftTitle")}</h2>
+            <p className="mt-2 text-sm text-slate700 dark:text-slate200">{t("videoDetails.sendGiftBody")}</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-full bg-[#F7F7F7] p-3 text-black dark:bg-[#1F1F1F] dark:text-white">
+            <MdClose className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {LIVE_GIFT_PRESETS.map((gift) => {
+            const giftActionKey = `${gift.type}-${gift.amount}`;
+            return (
+              <button key={gift.type} type="button" onClick={() => onSendGift(gift)} disabled={sendingGiftKey !== ""} className="rounded-3xl border border-black/10 px-4 py-5 text-left transition hover:border-orange100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:hover:border-orange100">
+                <div className="inline-flex rounded-full bg-orange100/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-orange-600 dark:text-orange-200">{gift.name}</div>
+                <p className="mt-4 text-2xl font-semibold text-black dark:text-white">{formatMinorCurrency(gift.amount)}</p>
+                <p className="mt-2 text-sm text-slate600 dark:text-slate200">{sendingGiftKey === giftActionKey ? t("videoDetails.sendingGift") : t("videoDetails.sendGift")}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <label className="mt-6 block text-sm font-medium text-black dark:text-white" htmlFor="live-gift-message">
+          {t("videoDetails.giftMessage")}
+        </label>
+        <textarea id="live-gift-message" value={message} onChange={(event) => onMessageChange(event.target.value)} placeholder={t("videoDetails.giftMessagePlaceholder")} rows={3} className="mt-3 w-full resize-none rounded-3xl border border-black/10 px-4 py-3 text-sm outline-none dark:border-white/10 dark:bg-[#1F1F1F] dark:text-white" />
+      </section>
+    </div>
+  );
+}
+
 export default function LiveRoom() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -283,6 +368,9 @@ export default function LiveRoom() {
   const [stageActorsByUserId, setStageActorsByUserId] = useState({});
   const [stageNotificationQueue, setStageNotificationQueue] = useState([]);
   const [stageNotification, setStageNotification] = useState(null);
+  const [isGiftTrayOpen, setIsGiftTrayOpen] = useState(false);
+  const [giftMessage, setGiftMessage] = useState("");
+  const [sendingGiftKey, setSendingGiftKey] = useState("");
 
   const creatorId = video?.author?.id || video?.creator?.id;
   const creatorProfile = video?.author || video?.creator;
@@ -366,6 +454,10 @@ export default function LiveRoom() {
     if (isCreator) setStageRole("host");
     else if (!isLive) setStageRole("audience");
   }, [id, isCreator, isLive]);
+
+  useEffect(() => {
+    if (!isLive || isCreator) setIsGiftTrayOpen(false);
+  }, [isCreator, isLive]);
 
   useEffect(() => {
     let ignore = false;
@@ -1226,6 +1318,49 @@ export default function LiveRoom() {
     }
   }
 
+  async function handleSendLiveGift(gift) {
+    if (!video || !isLive || !isAuthenticated || isCreator) return;
+
+    const actionKey = `${gift.type}-${gift.amount}`;
+    setSendingGiftKey(actionKey);
+    setError("");
+    setFeedback("");
+
+    try {
+      const response = await api.sendLiveTip(video.id, {
+        amount: gift.amount,
+        currency: "NGN",
+        message: giftMessage.trim() || undefined,
+        giftName: gift.name,
+        giftType: gift.type,
+        giftCount: gift.count,
+      });
+      const nextVideo = response?.data?.video;
+      const nextEngagement = response?.data?.engagement;
+
+      if (nextVideo) {
+        setVideo((current) => ({
+          ...(current || {}),
+          ...nextVideo,
+          liveAnalytics: {
+            ...(current?.liveAnalytics || {}),
+            ...(nextVideo.liveAnalytics || {}),
+          },
+        }));
+      }
+
+      if (nextEngagement) appendEngagementItems([nextEngagement]);
+
+      setFeedback(response?.message || "");
+      setGiftMessage("");
+      setIsGiftTrayOpen(false);
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.liveStreamUnavailable")));
+    } finally {
+      setSendingGiftKey("");
+    }
+  }
+
   async function handleRequestToJoin() {
     if (!video || !isLive || !user?.id || isCreator || viewerStageStatus !== "idle") return;
 
@@ -1398,7 +1533,10 @@ export default function LiveRoom() {
   const peakViewers = video?.liveAnalytics?.peakViewers ?? 0;
   const liveLikes = video?.liveLikes ?? video?.liveAnalytics?.liveLikes ?? 0;
   const liveComments = video?.liveComments ?? video?.liveAnalytics?.liveComments ?? video?.commentsCount ?? comments.length ?? 0;
+  const liveTipsCount = video?.liveAnalytics?.liveTipsCount ?? 0;
+  const liveTipsAmount = video?.liveAnalytics?.liveTipsAmount ?? 0;
   const liveSummaryTopFans = liveSummary?.topFans || [];
+  const liveSummaryTopGifters = liveSummary?.topGifters || [];
   const liveSummaryPeakMoments = liveSummary?.peakMoments || [];
   const liveSummaryTimeline = liveSummary?.timeline || [];
   const liveSummaryRetention = liveSummary?.retention || EMPTY_LIVE_SUMMARY.retention;
@@ -1440,6 +1578,15 @@ export default function LiveRoom() {
           busy={busyAction.startsWith(`stage-notification-${stageNotification.signalId}-`)}
         />
       ) : null}
+      <LiveGiftTray
+        t={t}
+        open={isGiftTrayOpen}
+        message={giftMessage}
+        onMessageChange={setGiftMessage}
+        onClose={() => { setIsGiftTrayOpen(false); setGiftMessage(""); }}
+        onSendGift={handleSendLiveGift}
+        sendingGiftKey={sendingGiftKey}
+      />
       <div className="mx-auto max-w-350 space-y-4 w-full">
         <div className="hidden md:flex items-center justify-between gap-4">
           <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
@@ -1487,10 +1634,10 @@ export default function LiveRoom() {
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-sm font-medium text-white">{getProfileName(item.actor, t("videoDetails.you"))}</p>
                             <p className="mt-1 text-sm text-white">
-                            {item.type === "like" ? t("videoDetails.sentLikes") : t("videoDetails.commented")}
+                            {getLiveEngagementLabel(item, t)}
                           </p>
                           </div>
-                          
+                          {getLiveEngagementMeta(item, t) ? <p className="mt-1 text-xs text-slate200">{getLiveEngagementMeta(item, t)}</p> : null}
                           {item.body ? <p className="mt-1 text-sm leading-relaxed text-white">{item.body}</p> : null}
                           
                         </div>
@@ -1506,6 +1653,17 @@ export default function LiveRoom() {
                     </button>
                   </div>
 
+                  {!isCreator && isLive ? (
+                        <button
+                          type="button"
+                          aria-label={t("videoDetails.sendGift")}
+                          onClick={() => setIsGiftTrayOpen(true)}
+                          className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-3 text-sm font-semibold text-white shadow-sm backdrop-blur-sm transition hover:bg-white/20"
+                        >
+                          <FiGift className="h-4 w-4" />
+                          <span>{t("videoDetails.sendGift")}</span>
+                        </button>
+                      ) : null}
                   {isLive ? (
                         <button
                           type="button"
@@ -1635,6 +1793,16 @@ export default function LiveRoom() {
                     </div>
 
                     <div className="flex flex-wrap gap-3">
+                      {!isCreator && isLive ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsGiftTrayOpen(true)}
+                          className="inline-flex items-center gap-2 rounded-full bg-white300 px-5 py-3 text-sm font-semibold text-black shadow-sm transition-transform hover:scale-[1.02] dark:bg-black100 dark:text-white"
+                        >
+                          <FiGift className="h-4 w-4" />
+                          <span>{t("videoDetails.sendGift")}</span>
+                        </button>
+                      ) : null}
                       {isLive ? (
                         <button
                           type="button"
@@ -1682,6 +1850,8 @@ export default function LiveRoom() {
                     { key: "peak", label: t("videoDetails.peakViewers"), value: formatCompactNumber(peakViewers) },
                     { key: "likes", label: t("videoDetails.like"), value: formatCompactNumber(liveLikes) },
                     { key: "comments", label: t("videoDetails.comments"), value: formatCompactNumber(liveComments) },
+                    { key: "tips", label: t("videoDetails.giftsReceived"), value: formatCompactNumber(liveTipsCount) },
+                    { key: "tipRevenue", label: t("videoDetails.giftRevenue"), value: formatMinorCurrency(liveTipsAmount) },
                   ].map((metric) => (
                     <div key={metric.key} className="rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate500 dark:text-slate200">{metric.label}</p>
@@ -1744,6 +1914,8 @@ export default function LiveRoom() {
                     {[
                       { key: "engagements", label: t("videoDetails.engagementActions"), value: formatCompactNumber(liveSummaryTotals.engagements || 0) },
                       { key: "fans", label: t("videoDetails.uniqueFans"), value: formatCompactNumber(liveSummaryTotals.uniqueFans || 0) },
+                      { key: "tips", label: t("videoDetails.giftsReceived"), value: formatCompactNumber(liveSummaryTotals.tips || 0) },
+                      { key: "tipRevenue", label: t("videoDetails.giftRevenue"), value: formatMinorCurrency(liveSummaryTotals.tipsAmount || 0) },
                       { key: "average", label: t("videoDetails.averageViewers"), value: formatCompactNumber(liveSummaryRetention.averageViewers || 0) },
                       { key: "retention", label: t("videoDetails.retentionRate"), value: `${Math.max(0, Math.round(liveSummaryRetention.retentionRate || 0))}%` },
                     ].map((metric) => (
@@ -1769,11 +1941,37 @@ export default function LiveRoom() {
                           <img src={getProfileAvatar(fan.actor)} alt={getProfileName(fan.actor, t("videoDetails.guestAudience"))} className="h-10 w-10 rounded-full object-cover" />
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(fan.actor, t("videoDetails.guestAudience"))}</p>
-                            <p className="mt-1 text-xs text-slate500 dark:text-slate200">{formatCompactNumber(fan.engagementCount || 0)} {t("videoDetails.engagementActions")}</p>
+                            <p className="mt-1 text-xs text-slate500 dark:text-slate200">
+                              {formatCompactNumber(fan.engagementCount || 0)} {t("videoDetails.engagementActions")}
+                              {(fan.tipsCount || 0) > 0 ? ` · ${t("videoDetails.giftsCount", { count: fan.tipsCount || 0 })}` : ""}
+                            </p>
                           </div>
-                          <span className="rounded-full bg-orange100 px-3 py-1 text-xs font-semibold text-black dark:bg-[#2A2117] dark:text-white">{formatCompactNumber(fan.likesCount || 0)} ❤</span>
+                          <span className="rounded-full bg-orange100 px-3 py-1 text-xs font-semibold text-black dark:bg-[#2A2117] dark:text-white">{(fan.tipsAmount || 0) > 0 ? formatMinorCurrency(fan.tipsAmount || 0) : `${formatCompactNumber(fan.likesCount || 0)} ❤`}</span>
                         </div>
                       )) : <div className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noTopFans")}</div>}
+                    </div>
+                  </div>
+
+                  <div className="hidden md:block mt-4 rounded-3xl bg-[#F7F7F7] px-4 py-4 dark:bg-[#1F1F1F]">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-base font-semibold text-black dark:text-white">{t("videoDetails.topGifters")}</h3>
+                        <p className="mt-1 text-sm text-slate500 dark:text-slate200">{t("videoDetails.sendGiftTitle")}</p>
+                      </div>
+                      <span className="text-sm text-slate500 dark:text-slate200">{liveSummaryTopGifters.length}</span>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      {liveSummaryTopGifters.length ? liveSummaryTopGifters.slice(0, 3).map((gifter) => (
+                        <div key={`${gifter?.actor?.id || gifter?.actor?.fullName || "gifter"}-${gifter?.tipsAmount || 0}`} className="flex items-center gap-3 rounded-2xl bg-white px-4 py-3 dark:bg-[#171717]">
+                          <img src={getProfileAvatar(gifter.actor)} alt={getProfileName(gifter.actor, t("videoDetails.guestAudience"))} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(gifter.actor, t("videoDetails.guestAudience"))}</p>
+                            <p className="mt-1 text-xs text-slate500 dark:text-slate200">{t("videoDetails.giftsCount", { count: gifter.tipsCount || 0 })}</p>
+                          </div>
+                          <span className="rounded-full bg-orange100 px-3 py-1 text-xs font-semibold text-black dark:bg-[#2A2117] dark:text-white">{formatMinorCurrency(gifter.tipsAmount || 0)}</span>
+                        </div>
+                      )) : <div className="rounded-2xl bg-white px-4 py-6 text-center text-sm text-slate600 dark:bg-[#171717] dark:text-slate200">{t("videoDetails.noTopGifters")}</div>}
                     </div>
                   </div>
 
@@ -1879,8 +2077,9 @@ export default function LiveRoom() {
                             <span className="text-xs text-slate500 dark:text-slate200">{formatRelativeTime(item.createdAt)}</span>
                           </div>
                           <p className="mt-1 text-sm text-slate700 dark:text-slate200">
-                            {item.type === "like" ? t("videoDetails.sentLikes") : t("videoDetails.commented")}
+                            {getLiveEngagementLabel(item, t)}
                           </p>
+                          {getLiveEngagementMeta(item, t) ? <p className="mt-2 text-xs text-slate500 dark:text-slate200">{getLiveEngagementMeta(item, t)}</p> : null}
                           {item.body ? <p className="mt-2 text-sm leading-relaxed text-slate700 dark:text-slate200">{item.body}</p> : null}
                           {isCreator && isLive && item.actor?.id && item.actor.id !== creatorId ? (
                             <button

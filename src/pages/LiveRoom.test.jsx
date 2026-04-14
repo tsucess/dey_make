@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -75,6 +75,7 @@ vi.mock("../services/api", () => ({
     uploadFile: vi.fn(),
     updateVideo: vi.fn(),
     postComment: vi.fn(),
+    sendLiveTip: vi.fn(),
   },
 }));
 
@@ -110,7 +111,7 @@ function buildVideo(overrides = {}) {
     commentsCount: 0,
     liveComments: 0,
     currentViewers: 0,
-    liveAnalytics: { currentViewers: 0, peakViewers: 0, liveLikes: 0, liveComments: 0 },
+    liveAnalytics: { currentViewers: 0, peakViewers: 0, liveLikes: 0, liveComments: 0, liveTipsCount: 0, liveTipsAmount: 0 },
     isLive: true,
     liveStartedAt: "2026-04-04T12:00:00Z",
     author: { id: 5, fullName: "Creator Example", avatarUrl: "", subscriberCount: 12 },
@@ -129,6 +130,13 @@ function renderRoom() {
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function getSectionByHeading(name) {
+  const heading = screen.getByRole("heading", { name });
+  const section = heading.closest("section");
+  expect(section).not.toBeNull();
+  return section;
 }
 
 async function emitRemoteParticipant(uid = "remote-1") {
@@ -155,6 +163,20 @@ describe("LiveRoom", () => {
     api.recordLivePresence.mockResolvedValue({ data: { analytics: { currentViewers: 3, peakViewers: 7 } } });
     api.leaveLivePresence.mockResolvedValue({ data: { analytics: { currentViewers: 2, peakViewers: 7 } } });
     api.sendLiveSignal.mockResolvedValue({ data: { signal: { id: 1 } } });
+    api.sendLiveTip.mockResolvedValue({
+      message: 'Live gift sent.',
+      data: {
+        video: buildVideo({ liveAnalytics: { currentViewers: 3, peakViewers: 7, liveLikes: 0, liveComments: 0, liveTipsCount: 1, liveTipsAmount: 1200 } }),
+        engagement: {
+          id: 'tip-1',
+          type: 'tip',
+          body: 'Rose rain!',
+          createdAt: '2026-04-04T12:01:00Z',
+          actor: { id: 99, fullName: 'Viewer Example', avatarUrl: '', username: null },
+          metadata: { amount: 1200, currency: 'NGN', giftName: 'Spark', giftType: 'spark', giftCount: 1, isPrivate: false },
+        },
+      },
+    });
     api.likeLiveVideo.mockImplementation(async () => ({ data: { video: buildVideo({ likes: 1, liveLikes: 1, liveAnalytics: { currentViewers: 3, peakViewers: 7, liveLikes: 1, liveComments: 0 } }), engagement: { id: "like-1", type: "like", createdAt: "2026-04-04T12:01:00Z", actor: { id: 99, fullName: "Viewer Example", avatarUrl: "", username: null } } } }));
   });
 
@@ -178,7 +200,7 @@ describe("LiveRoom", () => {
 
     await screen.findByRole("heading", { name: "Alpha Live" });
     await emitRemoteParticipant();
-    await screen.findByLabelText("Live stream playback");
+    await waitFor(() => expect(screen.getAllByLabelText(/Live stream playback/i).length).toBeGreaterThan(0));
 
     await user.click(screen.getByRole("button", { name: "Request to join" }));
 
@@ -303,8 +325,12 @@ describe("LiveRoom", () => {
       analytics: { liveLikes: 0, liveComments: 1 },
     });
 
-    await waitFor(() => expect(screen.getAllByText("Realtime comment")).toHaveLength(2));
-    expect(screen.getAllByText("Fan One")).toHaveLength(2);
+    const liveEngagementSection = getSectionByHeading("Live engagement");
+    const commentsSection = getSectionByHeading("Comments");
+
+    await waitFor(() => expect(within(liveEngagementSection).getAllByText("Realtime comment").length).toBeGreaterThan(0));
+    expect(within(liveEngagementSection).getAllByText("Fan One").length).toBeGreaterThan(0);
+    expect(within(commentsSection).getByText("Realtime comment")).toBeInTheDocument();
   });
 
   it("shows floating hearts for the host when viewers send live likes", async () => {
@@ -338,8 +364,10 @@ describe("LiveRoom", () => {
       });
     });
 
+    const liveEngagementSection = getSectionByHeading("Live engagement");
+
     await waitFor(() => expect(screen.getAllByTestId("floating-heart").length).toBeGreaterThan(0));
-    expect(screen.getByText("Fan One")).toBeInTheDocument();
+    expect(within(liveEngagementSection).getAllByText("Fan One").length).toBeGreaterThan(0);
   });
 
   it("lets the host invite audience members from live engagement cards", async () => {
@@ -431,9 +459,12 @@ describe("LiveRoom", () => {
       audience: [{ sessionId: 91, role: "audience", joinedAt: "2026-04-04T12:00:00Z", lastSeenAt: "2026-04-04T12:02:00Z", actor: { id: 12, fullName: "Fan One", avatarUrl: "", username: "fan.one" } }],
     });
 
-    expect(await screen.findByText("Fan One")).toBeInTheDocument();
-    expect(screen.getByText("9")).toBeInTheDocument();
-    expect(screen.getByText("12")).toBeInTheDocument();
+    const analyticsSection = getSectionByHeading("Live analytics");
+    const audienceSection = getSectionByHeading("Active audience");
+
+    expect(await within(audienceSection).findByText("Fan One")).toBeInTheDocument();
+    expect(within(analyticsSection).getByText("9")).toBeInTheDocument();
+    expect(within(analyticsSection).getByText("12")).toBeInTheDocument();
   });
 
   it("refreshes creator insight panels immediately after realtime live events", async () => {
@@ -487,14 +518,44 @@ describe("LiveRoom", () => {
 
     await screen.findByRole("heading", { name: "Alpha Live" });
 
-    await user.click(screen.getByRole("button", { name: "Like 0" }));
-    await user.click(screen.getByRole("button", { name: "Like 1" }));
+    await user.click(screen.getAllByRole("button", { name: "Like 0" })[0]);
+    await user.click(screen.getAllByRole("button", { name: "Like 1" })[0]);
 
     await waitFor(() => expect(api.likeLiveVideo).toHaveBeenCalledTimes(2));
-    await screen.findByRole("button", { name: "Like 2" });
+    await waitFor(() => expect(screen.getAllByRole("button", { name: "Like 2" }).length).toBeGreaterThan(0));
     expect(screen.getAllByTestId("floating-heart").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Viewer Example").length).toBeGreaterThan(0);
     expect(screen.getAllByText("sent hearts").length).toBeGreaterThan(0);
+  });
+
+  it("lets viewers send a live gift and adds it to the engagement feed", async () => {
+    const user = userEvent.setup();
+
+    api.getVideo.mockResolvedValue({ data: { video: buildVideo() } });
+
+    renderRoom();
+
+    await screen.findByRole("heading", { name: "Alpha Live" });
+
+    await user.click(screen.getAllByRole("button", { name: "Send gift" })[0]);
+    expect(await screen.findByRole("dialog", { name: "Send gift" })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText("Gift message"), "Rose rain!");
+    await user.click(screen.getByRole("button", { name: /Spark/i }));
+
+    await waitFor(() => expect(api.sendLiveTip).toHaveBeenCalledWith(10, {
+      amount: 1200,
+      currency: 'NGN',
+      message: 'Rose rain!',
+      giftName: 'Spark',
+      giftType: 'spark',
+      giftCount: 1,
+    }));
+
+    const liveEngagementSection = getSectionByHeading("Live engagement");
+    await waitFor(() => expect(within(liveEngagementSection).getAllByText("sent Spark").length).toBeGreaterThan(0));
+    expect(within(liveEngagementSection).getByText("Rose rain!")).toBeInTheDocument();
+    expect(screen.getByText('Live gift sent.')).toBeInTheDocument();
   });
 
   it("shows live engagement activity and analytics from backend polling", async () => {
@@ -504,10 +565,12 @@ describe("LiveRoom", () => {
     renderRoom();
 
     await screen.findByRole("heading", { name: "Alpha Live" });
-    expect(await screen.findByText("Live analytics")).toBeInTheDocument();
-    expect(screen.getByText("7")).toBeInTheDocument();
-    expect(await screen.findByText("Fan One")).toBeInTheDocument();
-    expect(screen.getByText("This is fire")).toBeInTheDocument();
+    const analyticsSection = getSectionByHeading("Live analytics");
+    const liveEngagementSection = getSectionByHeading("Live engagement");
+
+    await waitFor(() => expect(within(analyticsSection).getAllByText("7").length).toBeGreaterThan(0));
+    expect(await within(liveEngagementSection).findByText("Fan One")).toBeInTheDocument();
+    expect(within(liveEngagementSection).getByText("This is fire")).toBeInTheDocument();
   });
 
   it("shows creator-only live momentum alerts when audience spikes", async () => {

@@ -8,7 +8,7 @@ Official reference for the backend API implemented in `deymake_backend`.
 - Auth: Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`)
 - Default content type: `application/json`
 - File upload endpoint uses `multipart/form-data`
-- Route count documented here: `139`
+- Route count documented here: `177`
 
 ## Conventions
 
@@ -582,6 +582,84 @@ The following authenticated endpoint groups were added after the initial referen
 | GET | `/monetization/transactions` | Yes | Query: `status?`, `type?`, `page?`, `per_page?` | `200`, `data.transactions`, `meta.transactions` |
 | GET | `/admin/payout-requests` | Admin | Query: `status?`, `page?`, `per_page?` | `200`, `data.payouts`, `meta.payouts` |
 | PATCH | `/admin/payout-requests/{payoutRequest}` | Admin | JSON: `status` required (`requested`, `processing`, `paid`, `rejected`); `notes?`; `rejectionReason?`; `externalReference?` | `200`, `data.payout` |
+
+### Creator verification
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/creator-verification` | Yes | None | `200`, `data.status`, `data.request`, `data.verifiedAt` |
+| POST | `/creator-verification` | Yes | JSON: `legalName` required string max 255; `country` required string max 100; `documentType` required (`passport`, `id_card`, `drivers_license`, `business_document`); `documentUrl` required URL; `about?` string max 2000; `socialLinks?` array of URLs | `201`, `data.request` |
+| GET | `/admin/creator-verification-requests` | Admin | Query: `status?`, `page?`, `per_page?` | `200`, `data.requests`, `meta.requests` |
+| PATCH | `/admin/creator-verification-requests/{creatorVerificationRequest}` | Admin | JSON: `status` required (`approved`, `rejected`, `pending`); `reviewNotes?` string max 2000 | `200`, `data.request` |
+
+### Fan tipping and revenue sharing
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| POST | `/creators/{creator}/tips` | Yes | JSON: `amount` required integer min 100; `currency?` string size 3; `message?` string max 500 | `201`, `data.tip` |
+| GET | `/tips/received` | Yes | Optional query: `page?`, `per_page?` | `200`, `data.tips`, `meta.tips` |
+| GET | `/tips/sent` | Yes | Optional query: `page?`, `per_page?` | `200`, `data.tips`, `meta.tips` |
+| GET | `/revenue-shares` | Yes | Query: `scope?` (`all`, `owned`, `incoming`), `page?`, `per_page?` | `200`, `data.agreements`, `meta.agreements` |
+| POST | `/revenue-shares` | Yes | JSON: `recipientId` required; `title` required string max 255; `sourceType` required string max 100; `sharePercentage` required numeric between 1 and 100; `currency?` string size 3; `notes?` string max 2000 | `201`, `data.agreement` |
+| PATCH | `/revenue-shares/{revenueShareAgreement}` | Yes | JSON: `action` required (`accept`, `reject`, `cancel`) | `200`, `data.agreement` |
+| POST | `/revenue-shares/{revenueShareAgreement}/settlements` | Yes | JSON: `grossAmount` required integer min 1; `notes?` string max 1000 | `201`, `data.settlement` |
+
+### Brand campaigns and sponsorships
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/brand/campaigns` | Yes | Query: `status?`, `page?`, `per_page?` | `200`, `data.campaigns`, `meta.campaigns` |
+| POST | `/brand/campaigns` | Yes | JSON: `title` required string max 255; `objective` required string max 100; `status?` (`draft`, `active`, `paused`, `closed`); `budgetAmount?` integer min 0; `currency?` string size 3; `minSubscribers?` integer min 0; `targetCategories?` array of category IDs; `deliverables?` string[] | `201`, `data.campaign` |
+| PATCH | `/brand/campaigns/{brandCampaign}` | Yes | Same fields as create, all optional | `200`, `data.campaign` |
+| GET | `/brand/campaigns/{brandCampaign}/matches` | Yes | Query: `q?`, `categoryId?`, `verifiedOnly?`, `minSubscribers?`, `hasActivePlans?`, `page?`, `per_page?` | `200`, `data.creators`, `meta.creators` |
+| GET | `/sponsorships/proposals` | Yes | Query: `scope?` (`sent`, `inbox`) | `200`, `data.proposals` |
+| POST | `/sponsorships/proposals` | Yes | JSON: `recipientId` required; `brandCampaignId?`; `title` required string max 255; `brief?` string max 4000; `feeAmount?` integer min 0; `currency?` string size 3; `deliverables?` string[] | `201`, `data.proposal` |
+| PATCH | `/sponsorships/proposals/{sponsorshipProposal}` | Yes | JSON: `action` required (`accept`, `reject`, `cancel`) | `200`, `data.proposal` |
+
+### Merch commerce
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/users/{user}/merch` | No | Path param `user`; query `status?` | `200`, `data.products` |
+| POST | `/merch/products` | Yes | JSON: `name` required string max 255; `description?` string max 4000; `priceAmount` required integer min 0; `currency?` string size 3; `inventoryCount?` integer min 0; `images?` string[] URLs | `201`, `data.product` |
+| PATCH | `/merch/products/{merchProduct}` | Yes | Same fields as create, all optional; creator only | `200`, `data.product` |
+| POST | `/merch/products/{merchProduct}/orders` | Yes | JSON: `quantity` required integer min 1; `shippingAddress` required object/array | `201`, `data.order` |
+| GET | `/merch/orders/mine` | Yes | Query: `status?` | `200`, `data.orders` |
+| GET | `/merch/orders/received` | Yes | Query: `status?` | `200`, `data.orders` |
+| PATCH | `/merch/orders/{merchOrder}` | Yes | JSON: `action` required (`fulfill`, `cancel`) | `200`, `data.order` |
+
+### Creator academy
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/academy/courses` | No | Query: `status?`, `page?`, `per_page?` | `200`, `data.courses`, `meta.courses` |
+| GET | `/academy/courses/{academyCourse}` | No | Path param `academyCourse` | `200`, `data.course` |
+| POST | `/academy/courses/{academyCourse}/enroll` | Yes | None | `200`, `data.enrollment` |
+| POST | `/academy/lessons/{academyLesson}/complete` | Yes | None | `200`, `data.enrollment` |
+| GET | `/academy/me` | Yes | Query: `status?` | `200`, `data.enrollments` |
+
+### AI studio
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/ai/studio/projects` | Yes | Query: `status?`, `page?`, `per_page?` | `200`, `data.projects`, `meta.projects` |
+| GET | `/ai/studio/projects/{aiStudioProject}` | Yes | Path param `aiStudioProject` | `200`, `data.project` |
+| POST | `/ai/studio/projects` | Yes | JSON: `sourceVideoId?`; `sourceUploadId?`; `title?` string max 255; `operations?` string[] | `201`, `data.project` |
+| POST | `/ai/studio/projects/{aiStudioProject}/generate` | Yes | None | `200`, `data.project` |
+
+### Offline upload queue
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/uploads/offline-queue` | Yes | Query: `status?`, `page?`, `per_page?` | `200`, `data.items`, `meta.items` |
+| POST | `/uploads/offline-queue` | Yes | JSON: `clientReference` required string max 255; `type` required (`image`, `gif`, `video`); `title?` string max 255; `uploadId?`; `videoId?`; `status?` (`queued`, `uploading`, `synced`, `failed`, `cancelled`); `metadata?` object | `201`, `data.item` |
+| PATCH | `/uploads/offline-queue/{offlineUploadQueueItem}` | Yes | JSON: `title?`; `uploadId?`; `videoId?`; `status?`; `metadata?` object | `200`, `data.item` |
+
+### Talent discovery
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/talent/discovery` | No | Query: `q?`, `categoryId?`, `verifiedOnly?`, `minSubscribers?`, `hasActivePlans?`, `page?`, `per_page?` | `200`, `data.creators`, `meta.creators` |
 
 ### Collaborations, duet invites, and deliverables
 

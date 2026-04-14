@@ -123,6 +123,28 @@ describe('Settings', () => {
     notificationPermission = 'default';
   });
 
+  it('shows the creator workspace launch card', async () => {
+    api.getPreferences.mockResolvedValue({
+      data: {
+        preferences: {
+          notificationSettings: { messages: true, comments: true, likes: true, subscriptions: true },
+          language: 'en',
+          displayPreferences: { theme: 'system', autoplay: true },
+          accessibilityPreferences: { captions: false, reducedMotion: false },
+        },
+      },
+    });
+
+    render(
+      <MemoryRouter>
+        <Settings />
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText('Open creator & brand workspace')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open workspace' })).toBeInTheDocument();
+  });
+
   it('loads preferences once without getting stuck in a sync loop', async () => {
     authState.mode = 'stateful';
 

@@ -18,6 +18,7 @@ function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/live")) return t("common.live");
   if (pathname.startsWith("/leaderboard")) return t("common.leaderboard");
   if (pathname.startsWith("/messages")) return t("common.messages");
+  if (pathname.startsWith("/admin")) return t("common.admin");
   if (pathname.startsWith("/profile") || pathname.startsWith("/users/")) return t("common.profile");
   if (pathname.startsWith("/search")) return t("common.search");
   if (pathname.startsWith("/settings")) return t("common.settings");

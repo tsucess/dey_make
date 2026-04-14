@@ -4,25 +4,26 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import {
   HiHome, HiChartBar, HiChatAlt2,
-  HiCog, HiUser
+  HiCog, HiShieldCheck, HiUser
 } from "react-icons/hi";
 import { MdOutlineSurroundSound } from "react-icons/md";
 
-function getNavItems(t) {
+function getNavItems(t, isAdmin) {
   return [
     { to: "/home", icon: HiHome, label: t("common.homepage") },
     { to: "/live", icon: MdOutlineSurroundSound, label: t("common.live") },
     { to: "/leaderboard", icon: HiChartBar, label: t("common.leaderboard") },
     { to: "/messages", icon: HiChatAlt2, label: t("common.messages") },
+    ...(isAdmin ? [{ to: "/admin", icon: HiShieldCheck, label: t("common.admin") }] : []),
     { to: "/settings", icon: HiCog, label: t("common.settings") },
     { to: "/profile", icon: HiUser, label: t("common.profile") },
   ];
 }
 
 export default function Sidebar() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { t } = useLanguage();
-  const navItems = getNavItems(t);
+  const navItems = getNavItems(t, Boolean(user?.isAdmin));
 
   return (
     <aside className="flex flex-col w-67.5 min-h-screen

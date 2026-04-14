@@ -1,4 +1,3 @@
-import Hls from "hls.js";
 import { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
@@ -26,6 +25,7 @@ import {
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+import { loadHls } from "../utils/loadHls";
 import { normalizeMentionHandle } from "../utils/mentions";
 
 function stopMediaStream(stream) {
@@ -393,6 +393,7 @@ export default function VideoDetails({ mode = "video" }) {
     const streamUrl = video?.streamUrl || "";
     let hls = null;
     let hasFallenBackToMp4 = false;
+    let cancelled = false;
 
     const setPlaybackSource = (sourceUrl) => {
       if (!sourceUrl) {
@@ -416,36 +417,48 @@ export default function VideoDetails({ mode = "video" }) {
       setPlaybackSource(fallbackUrl);
     };
 
-    playbackElement.removeAttribute("src");
+    async function initializePlayback() {
+      playbackElement.removeAttribute("src");
 
-    if (!streamUrl) {
-      setPlaybackSource(fallbackUrl);
-
-      return undefined;
-    }
-
-    if (typeof playbackElement.canPlayType === "function" && playbackElement.canPlayType("application/vnd.apple.mpegurl")) {
-      setPlaybackSource(streamUrl);
-
-      return undefined;
-    }
-
-    if (!Hls.isSupported()) {
-      setPlaybackSource(fallbackUrl);
-
-      return undefined;
-    }
-
-    hls = new Hls();
-    hls.on(Hls.Events.ERROR, (_, data) => {
-      if (data?.fatal) {
-        fallbackToMp4();
+      if (!streamUrl) {
+        setPlaybackSource(fallbackUrl);
+        return;
       }
-    });
-    hls.loadSource(streamUrl);
-    hls.attachMedia(playbackElement);
+
+      if (typeof playbackElement.canPlayType === "function" && playbackElement.canPlayType("application/vnd.apple.mpegurl")) {
+        setPlaybackSource(streamUrl);
+        return;
+      }
+
+      try {
+        const Hls = await loadHls();
+
+        if (cancelled) return;
+
+        if (!Hls?.isSupported?.()) {
+          setPlaybackSource(fallbackUrl);
+          return;
+        }
+
+        hls = new Hls();
+        hls.on(Hls.Events.ERROR, (_, data) => {
+          if (data?.fatal) {
+            fallbackToMp4();
+          }
+        });
+        hls.loadSource(streamUrl);
+        hls.attachMedia(playbackElement);
+      } catch {
+        if (!cancelled) {
+          setPlaybackSource(fallbackUrl);
+        }
+      }
+    }
+
+    initializePlayback();
 
     return () => {
+      cancelled = true;
       hls?.destroy();
     };
   }, [isVideoCurrentlyLive, video?.id, video?.mediaUrl, video?.streamUrl, video?.type]);

@@ -807,6 +807,22 @@ export default function Settings() {
         {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
         {savingSection ? <p className="mb-4 text-sm text-slate500 dark:text-slate200">{t("settings.saving", { section: t(`settings.sections.${savingSection}`) })}</p> : null}
 
+        <section className="mb-4 rounded-3xl bg-gradient-to-r from-orange100/20 via-orange100/10 to-transparent p-5 dark:from-orange100/15 dark:via-orange100/5 dark:to-transparent">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-slate100 dark:text-white">{t("settings.workspace.launchTitle")}</h2>
+              <p className="mt-1 max-w-2xl text-sm text-slate600 dark:text-slate200">{t("settings.workspace.launchDescription")}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate("/workspace")}
+              className="inline-flex items-center justify-center rounded-full bg-orange100 px-5 py-3 text-sm font-medium text-black transition hover:opacity-90"
+            >
+              {t("settings.workspace.openAction")}
+            </button>
+          </div>
+        </section>
+
         {loading ? (
           <div className="rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
             <Spinner/>
