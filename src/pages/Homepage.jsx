@@ -12,6 +12,7 @@ import {
   filterActiveLiveVideos,
   formatCompactNumber,
   formatSubscriberLabel,
+  getCategoryThumbnail,
   getProfileAvatar,
   getProfileName,
   getVideoThumbnail,
@@ -341,7 +342,7 @@ export default function Homepage() {
               .map((category) => (
                 <CategoryCard
                   key={category.id}
-                  thumb={category.thumbnailUrl}
+                  thumb={getCategoryThumbnail(category)}
                   label={category.label}
                   subs={formatSubscriberLabel(category.subscriberCount || 0)}
                   active={activeCategory === category.slug}

@@ -96,7 +96,8 @@ function LandingRoute() {
 
   return (
     <RouteSuspense>
-      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} />
+      {/* <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} /> */}
+      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/")} />
     </RouteSuspense>
   );
 }
@@ -121,7 +122,8 @@ export default function App() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/welcome" element={<LandingRoute />} />
           <Route path="/login" element={renderLazyRoute(Login)} />
-          <Route path="/signup" element={renderLazyRoute(SignUp)} />
+          <Route path="/" element={renderLazyRoute(SignUp)} />
+          {/* <Route path="/signup" element={renderLazyRoute(SignUp)} /> */}
           <Route path="/forgot-password" element={renderLazyRoute(ForgotPassword)} />
           <Route path="/reset-password" element={renderLazyRoute(ResetPassword)} />
         </Route>

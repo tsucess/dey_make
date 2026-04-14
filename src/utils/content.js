@@ -1,7 +1,83 @@
 import { getActiveLocale, translate } from "../locales/translations";
+import { getBackendBaseUrl } from "../services/api";
 
 export const FALLBACK_AVATAR = "/default avatar.jpg";
 export const FALLBACK_THUMBNAIL = "/Trending image.png";
+
+const LOCAL_NETWORK_HOSTNAME_PATTERNS = [
+  /^localhost$/i,
+  /^127(?:\.[0-9]+){0,3}$/,
+  /^0\.0\.0\.0$/,
+  /^::1$/,
+  /^10(?:\.[0-9]+){3}$/,
+  /^192\.168(?:\.[0-9]+){2}$/,
+  /^172\.(1[6-9]|2[0-9]|3[0-1])(?:\.[0-9]+){2}$/,
+];
+
+function isLocalNetworkHostname(hostname = "") {
+  const normalizedHostname = `${hostname}`.trim().toLowerCase();
+
+  if (!normalizedHostname) return false;
+
+  return LOCAL_NETWORK_HOSTNAME_PATTERNS.some((pattern) => pattern.test(normalizedHostname));
+}
+
+function resolveBackendOrigin(backendBaseUrl = getBackendBaseUrl()) {
+  try {
+    return new URL(backendBaseUrl).origin;
+  } catch {
+    return "";
+  }
+}
+
+export function normalizeAssetUrl(value, options = {}) {
+  if (typeof value !== "string") return "";
+
+  const trimmedValue = value.trim();
+
+  if (!trimmedValue) return "";
+  if (!/^https?:\/\//i.test(trimmedValue)) return trimmedValue;
+
+  let assetUrl;
+
+  try {
+    assetUrl = new URL(trimmedValue);
+  } catch {
+    return trimmedValue;
+  }
+
+  const currentHostname = options.currentHostname
+    ?? (typeof window === "undefined" ? "" : window.location.hostname);
+  const currentProtocol = options.currentProtocol
+    ?? (typeof window === "undefined" ? "" : window.location.protocol);
+
+  if (isLocalNetworkHostname(currentHostname)) {
+    return trimmedValue;
+  }
+
+  const backendOrigin = resolveBackendOrigin(options.backendBaseUrl);
+
+  if (!backendOrigin) {
+    return trimmedValue;
+  }
+
+  let backendUrl;
+
+  try {
+    backendUrl = new URL(backendOrigin);
+  } catch {
+    return trimmedValue;
+  }
+
+  const shouldReplaceOrigin = isLocalNetworkHostname(assetUrl.hostname)
+    || (currentProtocol === "https:" && assetUrl.protocol === "http:" && assetUrl.hostname === backendUrl.hostname);
+
+  if (!shouldReplaceOrigin) {
+    return trimmedValue;
+  }
+
+  return `${backendOrigin}${assetUrl.pathname}${assetUrl.search}${assetUrl.hash}`;
+}
 
 export function formatCompactNumber(value) {
   const numericValue = Number(value ?? 0);
@@ -56,8 +132,8 @@ export function formatRelativeTime(value) {
   return translate(locale, "content.justNow");
 }
 
-export function getProfileAvatar(profile) {
-  return profile?.avatarUrl || FALLBACK_AVATAR;
+export function getProfileAvatar(profile, options = {}) {
+  return normalizeAssetUrl(profile?.avatarUrl, options) || FALLBACK_AVATAR;
 }
 
 export function getProfileName(profile, fallback = translate(getActiveLocale(), "content.unknownCreator")) {
@@ -137,16 +213,24 @@ export function buildShareUrl(videoOrId, options = {}) {
   return `${window.location.origin}${path}`;
 }
 
-export function getVideoThumbnail(video) {
+export function getVideoThumbnail(video, options = {}) {
   if (!video) return FALLBACK_THUMBNAIL;
-  if (video.thumbnailUrl) return video.thumbnailUrl;
-  if (["image", "gif"].includes(video.type) && video.mediaUrl) return video.mediaUrl;
+  if (video.thumbnailUrl) return normalizeAssetUrl(video.thumbnailUrl, options) || FALLBACK_THUMBNAIL;
+  if (["image", "gif"].includes(video.type) && video.mediaUrl) return normalizeAssetUrl(video.mediaUrl, options) || FALLBACK_THUMBNAIL;
 
   return FALLBACK_THUMBNAIL;
 }
 
-export function getCategoryThumbnail(category) {
-  return category?.thumbnailUrl || FALLBACK_THUMBNAIL;
+export function getVideoMediaUrl(video, options = {}) {
+  return normalizeAssetUrl(video?.mediaUrl, options);
+}
+
+export function getVideoStreamUrl(video, options = {}) {
+  return normalizeAssetUrl(video?.streamUrl, options);
+}
+
+export function getCategoryThumbnail(category, options = {}) {
+  return normalizeAssetUrl(category?.thumbnailUrl, options) || FALLBACK_THUMBNAIL;
 }
 
 export function getVideoProcessingStatus(video) {

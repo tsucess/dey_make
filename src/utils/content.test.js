@@ -7,12 +7,16 @@ import {
   buildShareUrl,
   formatCompactNumber,
   filterActiveLiveVideos,
+  getCategoryThumbnail,
   getVideoProcessingStatus,
+  getVideoMediaUrl,
   getProfileAvatar,
   getProfileName,
+  getVideoStreamUrl,
   getVideoThumbnail,
   hasPostLiveAnalytics,
   mapVideoToCardProps,
+  normalizeAssetUrl,
 } from './content';
 
 describe('content helpers', () => {
@@ -33,6 +37,31 @@ describe('content helpers', () => {
     expect(getProfileAvatar({})).toBe(FALLBACK_AVATAR);
     expect(getVideoThumbnail(null)).toBe(FALLBACK_THUMBNAIL);
     expect(getVideoThumbnail({ type: 'image', mediaUrl: 'https://cdn.example/image.png' })).toBe('https://cdn.example/image.png');
+  });
+
+  it('rewrites localhost asset urls to the configured backend on https pages', () => {
+    const options = {
+      currentHostname: 'deymake.com',
+      currentProtocol: 'https:',
+      backendBaseUrl: 'https://api.deymake.com',
+    };
+
+    expect(normalizeAssetUrl('http://localhost:8000/storage/uploads/post.png', options)).toBe('https://api.deymake.com/storage/uploads/post.png');
+    expect(getProfileAvatar({ avatarUrl: 'http://localhost:8000/storage/uploads/avatar.png' }, options)).toBe('https://api.deymake.com/storage/uploads/avatar.png');
+    expect(getVideoThumbnail({ thumbnailUrl: 'http://127.0.0.1:8000/storage/uploads/thumb.jpg' }, options)).toBe('https://api.deymake.com/storage/uploads/thumb.jpg');
+    expect(getVideoMediaUrl({ mediaUrl: 'http://localhost:8000/storage/uploads/video.mp4' }, options)).toBe('https://api.deymake.com/storage/uploads/video.mp4');
+    expect(getVideoStreamUrl({ streamUrl: 'http://localhost:8000/storage/uploads/video.m3u8' }, options)).toBe('https://api.deymake.com/storage/uploads/video.m3u8');
+    expect(getCategoryThumbnail({ thumbnailUrl: 'http://localhost:8000/storage/uploads/category.png' }, options)).toBe('https://api.deymake.com/storage/uploads/category.png');
+  });
+
+  it('keeps localhost asset urls unchanged during local development', () => {
+    const localOptions = {
+      currentHostname: 'localhost',
+      currentProtocol: 'http:',
+      backendBaseUrl: 'https://api.deymake.com',
+    };
+
+    expect(normalizeAssetUrl('http://localhost:8000/storage/uploads/post.png', localOptions)).toBe('http://localhost:8000/storage/uploads/post.png');
   });
 
   it('maps video card props using creator helper resolution', () => {
