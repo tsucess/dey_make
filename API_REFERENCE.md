@@ -8,7 +8,7 @@ Official reference for the backend API implemented in `deymake_backend`.
 - Auth: Laravel Sanctum personal access tokens (`Authorization: Bearer <token>`)
 - Default content type: `application/json`
 - File upload endpoint uses `multipart/form-data`
-- Route count documented here: `73`
+- Route count documented here: `139`
 
 ## Conventions
 
@@ -541,3 +541,65 @@ This document was compiled from:
 - API resources in `deymake_backend/app/Http/Resources`
 - Validation requests in `deymake_backend/app/Http/Requests`
 - A verified `php artisan route:list --path=api/v1` run
+
+## Recent feature additions
+
+The following authenticated endpoint groups were added after the initial reference was written.
+
+### AI assistant
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| POST | `/ai/captions` | Yes | JSON: `topic?`, `context?`, `categoryId?`, `tone?`, `goal?`, `audience?`, `keywords?`, `includeHashtags?`, `count?` | `200`, `data.captions[]`, `data.meta` |
+| POST | `/ai/ideas` | Yes | JSON: `topic?`, `goal?`, `format?`, `tone?`, `audience?`, `categoryId?`, `keywords?`, `count?` | `200`, `data.ideas[]`, `data.meta` |
+
+### Content moderation (admin)
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/admin/moderation/cases` | Admin | Query: `status?`, `contentType?`, `page?`, `per_page?` | `200`, `data.cases`, `meta.cases` |
+| GET | `/admin/moderation/cases/{contentModerationCase}` | Admin | Path param `contentModerationCase` | `200`, `data.case` |
+| PATCH | `/admin/moderation/cases/{contentModerationCase}` | Admin | JSON: `action` required (`approve`, `restrict`, `remove`); `notes?`; `reason?` | `200`, `data.case` |
+| POST | `/admin/moderation/videos/{video}/rescan` | Admin | None | `200`, `data.case`, `data.video` |
+| POST | `/admin/moderation/comments/{comment}/rescan` | Admin | None | `200`, `data.case`, `data.comment` |
+
+### Creator analytics
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/me/analytics` | Yes | Query: `period?` (`7d`, `30d`, `90d`, `365d`), `limit?` | `200`, `data.overview`, `data.trends`, `data.topVideos`, `data.audience`, `data.live` |
+| GET | `/me/analytics/videos/{video}` | Yes | Path param `video`; query `period?` | `200`, `data.video`, `data.summary`, `data.trend`, `data.audience` |
+
+### Monetization and payouts
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/monetization/summary` | Yes | None | `200`, `data.summary` |
+| GET | `/monetization/payout-account` | Yes | None | `200`, `data.account` |
+| PUT | `/monetization/payout-account` | Yes | JSON: `provider?`, `accountName`, `accountReference`, `bankName?`, `bankCode?`, `currency?`, `metadata?` | `200`, `data.account` |
+| GET | `/monetization/payouts` | Yes | Query: `status?` | `200`, `data.payouts[]` |
+| POST | `/monetization/payouts` | Yes | JSON: `amount` required integer min 100; `payoutAccountId?`; `notes?` | `201`, `data.payout` |
+| GET | `/monetization/transactions` | Yes | Query: `status?`, `type?`, `page?`, `per_page?` | `200`, `data.transactions`, `meta.transactions` |
+| GET | `/admin/payout-requests` | Admin | Query: `status?`, `page?`, `per_page?` | `200`, `data.payouts`, `meta.payouts` |
+| PATCH | `/admin/payout-requests/{payoutRequest}` | Admin | JSON: `status` required (`requested`, `processing`, `paid`, `rejected`); `notes?`; `rejectionReason?`; `externalReference?` | `200`, `data.payout` |
+
+### Collaborations, duet invites, and deliverables
+
+| Method | Path | Auth | Request | Success response |
+| --- | --- | --- | --- | --- |
+| GET | `/collaborations/invites` | Yes | Query: `scope?` (`inbox`, `sent`), `status?` | `200`, `data.invites[]` |
+| POST | `/collaborations/invites` | Yes | JSON: `inviteeId`, `videoId`, `type?` (`duet`, `remix`, `collab`), `message?`, `expiresInDays?` | `201`, `data.invite` |
+| PATCH | `/collaborations/invites/{collaborationInvite}` | Yes | JSON: `action` required (`accept`, `reject`, `cancel`) | `200`, `data.invite` |
+| GET | `/collaborations/invites/{collaborationInvite}/deliverables` | Yes | Path param `collaborationInvite` | `200`, `data.deliverables[]` |
+| POST | `/collaborations/invites/{collaborationInvite}/deliverables` | Yes | JSON: `title?`, `brief?`, `draftVideoId?` | `201`, `data.deliverable` |
+| PATCH | `/collaborations/deliverables/{collaborationDeliverable}` | Yes | JSON: `action` required (`save`, `submit`, `request_changes`, `approve`, `cancel`); `title?`; `brief?`; `feedback?`; `draftVideoId?` | `200`, `data.deliverable` |
+
+### New resource additions
+
+- `Video.moderation.status`, `Video.moderation.notes`, `Video.moderation.moderatedAt` (only for owner/admin viewers)
+- `Comment.moderation.status`, `Comment.moderation.notes`, `Comment.moderation.moderatedAt` (only for owner/admin viewers)
+- `PayoutAccount`: `id`, `provider`, `accountName`, `accountMask`, `bankName`, `bankCode`, `currency`, `verifiedAt`, `createdAt`, `updatedAt`
+- `PayoutRequest`: `id`, `amount`, `currency`, `status`, `notes`, `rejectionReason`, `externalReference`, `requestedAt`, `reviewedAt`, `processedAt`, `account`, `creator`, `reviewer`
+- `WalletTransaction`: `id`, `type`, `direction`, `status`, `amount`, `currency`, `description`, `metadata`, `occurredAt`, `membershipId`, `payoutRequestId`
+- `CollaborationInvite`: `id`, `type`, `status`, `message`, `conversationId`, `deliverablesCount`, `canRespond`, `canCancel`, `isExpired`, `expiresAt`, `respondedAt`, `inviter`, `invitee`, `sourceVideo`
+- `CollaborationDeliverable`: `id`, `inviteId`, `title`, `brief`, `feedback`, `status`, `submittedAt`, `reviewedAt`, `createdAt`, `updatedAt`, `canEdit`, `canReview`, `creator`, `reviewer`, `draftVideo`
