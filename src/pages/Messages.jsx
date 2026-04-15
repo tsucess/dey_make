@@ -94,8 +94,8 @@ function ConversationRow({ conversation, active, typingParticipant, onClick }) {
           : "bg-[#F5F5F5] hover:bg-[#ECECEC] dark:bg-black100 dark:hover:bg-[#262626]"
       }`}
     >
-      <div className="flex min-w-0 items-center gap-4">
-        <div className="relative">
+      <div className="flex min-w-0 items-center gap-4 md:gap-2">
+        <div className="relative flex shrink-0">
           <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-12 w-12 rounded-full object-cover" />
           {participant?.isOnline ? (
             <span className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green100 dark:border-black100" />
@@ -145,7 +145,7 @@ function MessageBubble({ message }) {
 
 function SectionCard({ title, children }) {
   return (
-    <section className="space-y-4 rounded-3xl bg-white300 px-5 py-5 dark:bg-black100 md:px-6 md:py-6">
+    <section className="space-y-4 rounded-3xl bg-white300 px-5 py-5 dark:bg-black100 md:px-4 md:py-6">
       <h2 className="text-lg font-medium font-bricolage text-black dark:text-white md:text-2xl">{title}</h2>
       {children}
     </section>
@@ -682,8 +682,8 @@ export default function Messages() {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className="grid gap-6 lg:grid-cols-[340px,minmax(0,1fr)]">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-8 md:gap-2 md:grid-cols-[300px_1fr]">
+          <div className="space-y-6 md:col-start-1 md:col-span-1">
             <SectionCard title={t("messages.inbox")}>
               {loadingConversations ? (
                 <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
@@ -704,7 +704,8 @@ export default function Messages() {
               )}
             </SectionCard>
 
-            <SectionCard title={t("messages.suggestedCreators")}>
+
+            {/* <SectionCard title={t("messages.suggestedCreators")}>
               {loadingSuggestions ? (
                 <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
               ) : suggestedCreators.length ? (
@@ -734,10 +735,10 @@ export default function Messages() {
               ) : (
                 <p className="text-sm text-slate600 dark:text-slate200">{t("messages.noSuggestions")}</p>
               )}
-            </SectionCard>
+            </SectionCard> */}
           </div>
 
-          <section className="flex min-h-135 flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
+          <section className="flex min-h-135 flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6 md:col-start-2">
             {activeConversation ? (
               <>
                 <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8">

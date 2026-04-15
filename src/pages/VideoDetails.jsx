@@ -1526,7 +1526,7 @@ export default function VideoDetails({ mode = "video" }) {
         <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row"}`}>
           <div className="space-y-6 md:flex-1">
             <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
-              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-screen md:h-auto md:overflow-hidden md:rounded-4xl"}`}>
+              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-screen md:h-screen md:w-xs md:mx-auto md:overflow-hidden md:rounded-4xl"}`}>
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video
@@ -1557,10 +1557,10 @@ export default function VideoDetails({ mode = "video" }) {
                   ) : (videoStreamUrl || videoMediaUrl) ? (
                     <video ref={recordedPlaybackRef} poster={videoThumbnailUrl} controls playsInline className="h-full w-full object-cover" />
                   ) : (
-                    <img src={videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-fit" />
+                    <img src={videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-fill" />
                   )
                 ) : (
-                  <img src={videoMediaUrl || videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-contain" />
+                  <img src={videoMediaUrl || videoThumbnailUrl} alt={getVideoTitle(video)} className="h-full w-full object-fill" />
                 )}
               </div>
 
@@ -1581,7 +1581,7 @@ export default function VideoDetails({ mode = "video" }) {
                   </>
                 ) : (
                   <>
-                    <div className="hidden md:flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="hidden  flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                       <div className="min-w-0 flex-1 space-y-4">
                         <h1 className="text-2xl font-semibold text-black dark:text-white md:text-[2.15rem]">{getVideoTitle(video)}</h1>
                         {recordedCreatorIdentity}
@@ -1595,13 +1595,13 @@ export default function VideoDetails({ mode = "video" }) {
                       {canSubscribeToAuthor || canManageLive || canViewAnalytics ? <div className="shrink-0">{creatorControls}</div> : null}
                     </div>
 
-                    <div className="absolute md:static bottom-0 md:bottom-auto md:right-auto right-6 flex flex-col md:flex-row md:flex-wrap gap-3">
+                    <div className="absolute bottom-0 right-6 md:right-3/7 md:translate-x-1/2 flex flex-col gap-3">
                       {actionButtons}
                     </div>
 
                     <span className="text-white absolute bottom-5 left-5 md:hidden">{recordedCreatorIdentity}</span>
 
-                    <p className="absolute bottom-1 left-5 md:bottom-auto md:left-auto md:static md:block text-sm leading-relaxed text-white md:text-slate700 dark:text-slate200">
+                    <p className="absolute bottom-1 left-5 md:hidden text-sm leading-relaxed text-white md:text-slate700 dark:text-slate200">
                       <MentionText text={videoDescription} resolveMentionHref={resolveMentionHref} />
                     </p>
                   </>
@@ -1610,7 +1610,7 @@ export default function VideoDetails({ mode = "video" }) {
             </section>
 
             {!isLiveWatchLayout ? (
-              <section className="hidden md:block space-y-4">
+              <section className="hidden  space-y-4">
                 <h2 className="text-[1.75rem] font-semibold text-black dark:text-white">{t("videoDetails.aboutCreator")}</h2>
                 <div className="rounded-4xl bg-[#F7F7F7] px-6 py-6 dark:bg-[#171717] md:px-8 md:py-7">
                   <p className="text-base font-medium text-black dark:text-white">{formatSubscriberLabel(creatorProfile?.subscriberCount || 0, t("content.subscribers"))}</p>
