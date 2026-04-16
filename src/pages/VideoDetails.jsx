@@ -185,7 +185,7 @@ function ActionButton({ children, active, disabled, onClick }) {
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className={`rounded-full px-4 self-start  py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+      className={`rounded-full px-3 py-2 md:px-4 self-start  md:py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
         active
           ? "bg-orange100 text-black"
           : "bg-white300 text-slate100 hover:bg-slate150 dark:bg-black100 dark:text-white dark:hover:bg-[#2A2A2A]"
@@ -1503,13 +1503,13 @@ export default function VideoDetails({ mode = "video" }) {
 
   return (
     
-    <div className={`min-h-screen px-4 py-5 md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212]" : "bg-white dark:bg-[#121212]"}`}>
-      {!isLiveWatchLayout && <button onClick={()=> navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm mb-4 dark:bg-black100 dark:text-white"><FaArrowLeftLong /> Back</button>}
-      <div className="mx-auto max-w-350 space-y-4">
+    <div className={` md:px-8 md:py-8 ${isLiveWatchLayout ? "bg-gray-50 dark:bg-[#121212] min-h-screen" : "bg-white dark:bg-[#121212] h-screen md:min-h-screen"}`}>
+      {!isLiveWatchLayout && <button onClick={()=> navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm mb-4 dark:bg-black100 dark:text-white absolute top-2 left-4 z-30 md:static"><FaArrowLeftLong /> <span className="hidden md:inline">Back</span></button>}
+      <div className="mx-auto max-w-350 space-y-4 h-full">
         {isLiveWatchLayout || hasTopStatusPills ? (
           <div className={`flex items-center gap-4 ${isLiveWatchLayout ? "justify-between" : "justify-end"}`}>
             {isLiveWatchLayout ? (
-              <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white">
+              <button type="button" onClick={() => navigate(-1)} className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-3 text-sm font-medium text-black shadow-sm dark:bg-[#1D1D1D] dark:text-white ">
                 <HiArrowLeft className="h-5 w-5" /> {t("videoDetails.back")}
               </button>
             ) : null}
@@ -1523,10 +1523,10 @@ export default function VideoDetails({ mode = "video" }) {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row"}`}>
-          <div className="space-y-6 md:flex-1">
-            <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
-              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-screen md:h-screen md:w-xs md:mx-auto md:overflow-hidden md:rounded-4xl"}`}>
+        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row h-full"}`}>
+          <div className="space-y-6 md:flex-1 h-full">
+            <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5 h-full"}>
+              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-full md:min-h-100 md:w-xs md:mx-auto md:overflow-hidden md:rounded-4xl"}`}>
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video
@@ -1595,7 +1595,7 @@ export default function VideoDetails({ mode = "video" }) {
                       {canSubscribeToAuthor || canManageLive || canViewAnalytics ? <div className="shrink-0">{creatorControls}</div> : null}
                     </div>
 
-                    <div className="absolute bottom-0 right-6 md:right-3/7 md:translate-x-1/2 flex flex-col gap-3">
+                    <div className="absolute bottom-10 right-6 md:right-1/7 lg:right-3/7 md:translate-x-1/2 flex flex-col gap-1.5 md:gap-3">
                       {actionButtons}
                     </div>
 

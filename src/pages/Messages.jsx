@@ -682,7 +682,7 @@ export default function Messages() {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className="grid grid-cols-1 gap-8 md:gap-2 md:grid-cols-[300px_1fr]">
+        <div className="grid grid-cols-1 gap-8 md:gap-2 md:grid-cols-[300px_1fr] md:h-[70vh]">
           <div className="space-y-6 md:col-start-1 md:col-span-1">
             <SectionCard title={t("messages.inbox")}>
               {loadingConversations ? (
@@ -738,10 +738,10 @@ export default function Messages() {
             </SectionCard> */}
           </div>
 
-          <section className="flex min-h-135 flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6 md:col-start-2">
+          <section className="flex min-h-135 md:h-[70vh] flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6 md:col-start-2 w-full">
             {activeConversation ? (
               <>
-                <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8">
+                <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8 md:sticky md:top-0 md:z-10">
                   <img
                     src={getProfileAvatar(activeConversation.participant)}
                     alt={getProfileName(activeConversation.participant)}
@@ -771,14 +771,14 @@ export default function Messages() {
                   )}
                 </div>
 
-                <form onSubmit={handleSendMessage} className="border-t border-black/8 pt-4 dark:border-white/8">
+                <form onSubmit={handleSendMessage} className="border-t border-black/8 pt-4 dark:border-white/8 md:sticky md:bottom-0 md:z-30">
                   <div className="flex items-end gap-3">
                     <textarea
                       value={draftMessage}
                       onChange={(event) => setDraftMessage(event.target.value)}
-                      rows={2}
+                      rows={1}
                       placeholder={t("messages.messagePlaceholder", { name: getProfileName(activeConversation.participant) })}
-                      className="min-h-24 flex-1 resize-none rounded-3xl bg-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate400 dark:bg-[#1E1E1E] dark:text-white"
+                      className="min-h-14 flex-1 resize-none rounded-3xl bg-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate400 dark:bg-[#1E1E1E] dark:text-white"
                     />
                     <button
                       type="submit"
