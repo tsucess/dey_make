@@ -5,6 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import {
+  buildVideoLink,
   formatCountLabel,
   formatSubscriberLabel,
   getProfileAvatar,
@@ -44,7 +45,7 @@ function FeedTile({ video, onOpen }) {
 
   return (
     <article
-      onClick={() => onOpen(video.id)}
+      onClick={() => onOpen(video)}
       className="group relative h-75 cursor-pointer overflow-hidden rounded-2xl bg-slate200/95 dark:bg-slate200"
     >
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -237,8 +238,8 @@ export default function Profile() {
     setIsAvatarPreviewOpen(true);
   }
 
-  function handleOpenFeedItem(videoId) {
-    navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${videoId}` : `/video/${videoId}`);
+  function handleOpenFeedItem(nextVideo) {
+    navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${nextVideo.id}` : buildVideoLink(nextVideo));
   }
 
   return (

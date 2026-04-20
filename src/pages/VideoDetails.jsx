@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { FaRegBookmark, FaRegFlag, FaRegThumbsDown, FaRegThumbsUp } from "react-icons/fa";
-import { HiArrowLeft, HiShare } from "react-icons/hi";
+import { HiArrowLeft, HiChevronDown, HiChevronUp, HiShare } from "react-icons/hi";
 import { LuArrowRightFromLine } from "react-icons/lu";
 import { FaArrowLeftLong } from "react-icons/fa6";
 import MentionText from "../components/MentionText";
@@ -17,6 +17,7 @@ import {
   formatCountLabel,
   formatRelativeTime,
   formatSubscriberLabel,
+  getVideoRouteId,
   getVideoProcessingStatus,
   hasPostLiveAnalytics,
   getProfileAvatar,
@@ -35,6 +36,9 @@ function stopMediaStream(stream) {
 }
 
 const LIVE_SIGNAL_POLL_INTERVAL_MS = 1500;
+const CONTENT_NAVIGATION_WHEEL_THRESHOLD = 60;
+const CONTENT_NAVIGATION_SWIPE_THRESHOLD = 80;
+const CONTENT_NAVIGATION_COOLDOWN_MS = 700;
 const LIVE_PEER_CONFIGURATION = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
 };
@@ -202,7 +206,7 @@ function RelatedVideoCard({ video, onOpen }) {
   const showProcessingBadge = processingStatus !== "completed";
 
   return (
-    <button type="button" onClick={() => onOpen(video.id)} className="overflow-hidden rounded-3xl bg-white300 text-left dark:bg-black100">
+    <button type="button" onClick={() => onOpen(video)} className="overflow-hidden rounded-3xl bg-white300 text-left dark:bg-black100">
       <div className="relative aspect-video overflow-hidden">
         <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover" />
         <div className="absolute left-3 top-3 flex flex-col gap-2">
@@ -325,8 +329,39 @@ function CommentCard({
   );
 }
 
+function normalizeContentQueueItem(item) {
+  if (!item) return null;
+
+  const id = getVideoRouteId(item);
+  if (id === null || id === undefined || id === "") return null;
+
+  return {
+    id: `${id}`,
+    isLive: isActiveLiveVideo(item),
+  };
+}
+
+function mergeContentQueue(currentVideo, relatedVideos = [], existingQueue = []) {
+  const mergedQueue = [];
+  const seenIds = new Set();
+
+  [...existingQueue, currentVideo, ...relatedVideos].forEach((item) => {
+    const normalizedItem = normalizeContentQueueItem(item);
+
+    if (!normalizedItem || seenIds.has(normalizedItem.id)) {
+      return;
+    }
+
+    seenIds.add(normalizedItem.id);
+    mergedQueue.push(normalizedItem);
+  });
+
+  return mergedQueue;
+}
+
 export default function VideoDetails({ mode = "video" }) {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { isAuthenticated, user } = useAuth();
@@ -344,8 +379,10 @@ export default function VideoDetails({ mode = "video" }) {
   const liveRecorderRef = useRef(null);
   const liveRecordingChunksRef = useRef([]);
   const liveRecordingStopPromiseRef = useRef(null);
+  const lastContentNavigationAtRef = useRef(0);
+  const touchStartYRef = useRef(null);
   const [video, setVideo] = useState(null);
-  const [, setRelatedVideos] = useState([]);
+  const [relatedVideos, setRelatedVideos] = useState([]);
   const [comments, setComments] = useState([]);
   const [repliesByComment, setRepliesByComment] = useState({});
   const [expandedReplies, setExpandedReplies] = useState({});
@@ -374,6 +411,21 @@ export default function VideoDetails({ mode = "video" }) {
   const shouldUseLocalLivePreview = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video");
   const shouldReceiveRemoteLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && !canManageLive && video?.type === "video" && isAuthenticated);
   const shouldBroadcastLiveStream = Boolean(isLiveRoom && isVideoCurrentlyLive && canManageLive && video?.type === "video" && localLiveStream && isAuthenticated);
+  const contentQueue = mergeContentQueue(video, relatedVideos, location.state?.contentQueue || []);
+  const currentRouteId = getVideoRouteId(video) || `${id}`;
+  const matchesCurrentVideoParam = Boolean(video) && (`${video?.id ?? ""}` === `${id}` || getVideoRouteId(video) === `${id}`);
+  const currentContentIndex = contentQueue.findIndex((item) => item.id === currentRouteId);
+  const previousContent = currentContentIndex > 0 ? contentQueue[currentContentIndex - 1] : null;
+  const nextContent = currentContentIndex >= 0 ? contentQueue[currentContentIndex + 1] : null;
+  const hasAdjacentContent = Boolean(previousContent || nextContent);
+
+  useEffect(() => {
+    touchStartYRef.current = null;
+
+    if (typeof window.scrollTo === "function") {
+      window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }
+  }, [id]);
 
   useEffect(() => {
     if (livePreviewRef.current) {
@@ -978,6 +1030,52 @@ export default function VideoDetails({ mode = "video" }) {
     };
   }, [id, isLiveRoom, t]);
 
+  function navigateToAdjacentContent(target) {
+    if (!target || target.id === currentRouteId) return;
+
+    touchStartYRef.current = null;
+    setError("");
+    setFeedback("");
+    navigate(buildVideoLink(target.id, { isLive: target.isLive }), {
+      state: { contentQueue },
+    });
+  }
+
+  function handleViewerWheel(event) {
+    if (loading || Math.abs(event.deltaY) < CONTENT_NAVIGATION_WHEEL_THRESHOLD) return;
+
+    const target = event.deltaY > 0 ? nextContent : previousContent;
+    if (!target) return;
+
+    const now = Date.now();
+    if (now - lastContentNavigationAtRef.current < CONTENT_NAVIGATION_COOLDOWN_MS) return;
+
+    event.preventDefault();
+    lastContentNavigationAtRef.current = now;
+    navigateToAdjacentContent(target);
+  }
+
+  function handleViewerTouchStart(event) {
+    touchStartYRef.current = event.touches?.[0]?.clientY ?? null;
+  }
+
+  function handleViewerTouchEnd(event) {
+    const startY = touchStartYRef.current;
+    const endY = event.changedTouches?.[0]?.clientY ?? null;
+    touchStartYRef.current = null;
+
+    if (startY === null || endY === null) return;
+
+    const deltaY = startY - endY;
+    if (Math.abs(deltaY) < CONTENT_NAVIGATION_SWIPE_THRESHOLD) return;
+
+    const now = Date.now();
+    if (now - lastContentNavigationAtRef.current < CONTENT_NAVIGATION_COOLDOWN_MS) return;
+
+    lastContentNavigationAtRef.current = now;
+    navigateToAdjacentContent(deltaY > 0 ? nextContent : previousContent);
+  }
+
   function requireAuth() {
     if (isAuthenticated) return true;
     navigate("/login");
@@ -1274,11 +1372,15 @@ export default function VideoDetails({ mode = "video" }) {
   }
 
   if (isLiveRoom && (video.type !== "video" || (!isVideoCurrentlyLive && !canManageLive))) {
-    return <Navigate to={buildVideoLink(video, { isLive: false })} replace />;
+    return <Navigate to={buildVideoLink(video, { isLive: false })} replace state={location.state} />;
   }
 
   if (!isLiveRoom && isVideoCurrentlyLive) {
-    return <Navigate to={buildVideoLink(video, { isLive: true })} replace />;
+    return <Navigate to={buildVideoLink(video, { isLive: true })} replace state={location.state} />;
+  }
+
+  if (matchesCurrentVideoParam && currentRouteId !== `${id}`) {
+    return <Navigate to={buildVideoLink(video, { isLive: isLiveRoom })} replace state={location.state} />;
   }
 
   const creatorProfile = video.author || video.creator;
@@ -1377,6 +1479,34 @@ export default function VideoDetails({ mode = "video" }) {
   const creatorBio = creatorProfile?.bio?.trim() || t("profile.emptyBio");
   const videoDescription = video.description || video.caption || t("videoDetails.noDescription");
   const hasTopStatusPills = showProcessingBadge || isVideoCurrentlyLive;
+  const contentNavigationControls = hasAdjacentContent ? (
+    <div className="pointer-events-none absolute inset-y-0 right-4 z-10 flex items-center">
+      <div className="pointer-events-auto flex flex-col gap-3">
+        <button
+          type="button"
+          aria-label={t("videoDetails.previousContent")}
+          title={t("videoDetails.previousContent")}
+          disabled={!previousContent}
+          onClick={() => navigateToAdjacentContent(previousContent)}
+          className="inline-flex items-center justify-center rounded-full bg-black/60 px-3 py-3 text-white shadow-lg backdrop-blur transition hover:bg-black/75 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <HiChevronUp className="h-5 w-5" />
+          <span className="sr-only">{t("videoDetails.previousContent")}</span>
+        </button>
+        <button
+          type="button"
+          aria-label={t("videoDetails.nextContent")}
+          title={t("videoDetails.nextContent")}
+          disabled={!nextContent}
+          onClick={() => navigateToAdjacentContent(nextContent)}
+          className="inline-flex items-center justify-center rounded-full bg-black/60 px-3 py-3 text-white shadow-lg backdrop-blur transition hover:bg-black/75 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <HiChevronDown className="h-5 w-5" />
+          <span className="sr-only">{t("videoDetails.nextContent")}</span>
+        </button>
+      </div>
+    </div>
+  ) : null;
   const recordedCreatorIdentity = creatorId ? (
     <Link to={`/users/${creatorId}`} className="flex items-center gap-3 rounded-2xl transition-opacity hover:opacity-80">
       <img src={getProfileAvatar(creatorProfile)} alt={getProfileName(creatorProfile)} className="h-14 w-14 rounded-full object-cover md:block hidden" />
@@ -1523,10 +1653,16 @@ export default function VideoDetails({ mode = "video" }) {
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row h-full"}`}>
-          <div className="space-y-6 md:flex-1 h-full">
-            <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5 h-full"}>
-              <div className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-full md:min-h-100 md:w-xs md:mx-auto md:overflow-hidden md:rounded-4xl"}`}>
+        <div className={` gap-8 ${isLiveWatchLayout ? "grid xl:grid-cols-[minmax(0,1.2fr),400px]" : "flex flex-col lg:flex-row"}`}>
+          <div className="space-y-6 md:flex-1">
+            <section className={isLiveWatchLayout ? "overflow-hidden rounded-4xl bg-white shadow-sm dark:bg-[#171717]" : "space-y-5"}>
+              <div
+                className={`relative aspect-video bg-black ${isLiveWatchLayout ? "" : "w-full h-screen md:h-auto md:overflow-hidden md:rounded-4xl"}`}
+                onWheel={handleViewerWheel}
+                onTouchStart={handleViewerTouchStart}
+                onTouchEnd={handleViewerTouchEnd}
+              >
+                {contentNavigationControls}
                 {video.type === "video" ? (
                   shouldUseLocalLivePreview && localLiveStream ? (
                     <video

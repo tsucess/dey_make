@@ -742,6 +742,8 @@ const en = {
   },
   videoDetails: {
     back: "Back",
+    previousContent: "Previous content",
+    nextContent: "Next content",
     liveNow: "LIVE NOW",
     liveCameraPreview: "Live camera preview",
     liveStreamPlayback: "Live stream playback",
@@ -1490,6 +1492,8 @@ const fr = {
   },
   videoDetails: {
     back: "Retour",
+    previousContent: "Contenu précédent",
+    nextContent: "Contenu suivant",
     liveNow: "EN DIRECT",
     liveCameraPreview: "Aperçu caméra du direct",
     liveStreamPlayback: "Lecture du direct",
@@ -2225,6 +2229,8 @@ const es = {
   },
   videoDetails: {
     back: "Volver",
+    previousContent: "Contenido anterior",
+    nextContent: "Siguiente contenido",
     liveNow: "EN VIVO AHORA",
     liveCameraPreview: "Vista previa de la cámara en vivo",
     liveStreamPlayback: "Reproductor de la transmisión en vivo",
