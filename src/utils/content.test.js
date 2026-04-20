@@ -67,6 +67,7 @@ describe('content helpers', () => {
   it('maps video card props using creator helper resolution', () => {
     expect(mapVideoToCardProps({
       id: 7,
+      publicId: 'launch-7',
       title: 'Launch day',
       thumbnailUrl: 'https://cdn.example/thumb.jpg',
       isLive: true,
@@ -74,7 +75,7 @@ describe('content helpers', () => {
       category: { label: 'Technology' },
       creator: { username: 'rise', avatarUrl: 'https://cdn.example/avatar.jpg' },
     })).toEqual({
-      id: 7,
+      id: 'launch-7',
       thumb: 'https://cdn.example/thumb.jpg',
       title: 'Launch day',
       author: 'rise',
@@ -89,10 +90,10 @@ describe('content helpers', () => {
   });
 
   it('detects post-live analytics links for ended lives', () => {
-    const video = { id: 21, isLive: false, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } };
+    const video = { id: 21, publicId: 'live-21', isLive: false, liveEndedAt: '2026-04-04T12:12:30Z', liveAnalytics: { peakViewers: 17 } };
 
     expect(hasPostLiveAnalytics(video)).toBe(true);
-    expect(buildVideoAnalyticsLink(video)).toBe('/video/21/analytics');
+    expect(buildVideoAnalyticsLink(video)).toBe('/video/live-21/analytics');
   });
 
   it('normalizes video processing status safely', () => {
@@ -105,11 +106,13 @@ describe('content helpers', () => {
     expect(buildShareUrl(42)).toBe(`${window.location.origin}/video/42`);
     expect(buildShareUrl(42, true)).toBe(`${window.location.origin}/live/42`);
     expect(buildVideoLink({ id: 7, isLive: true })).toBe('/live/7');
+    expect(buildShareUrl({ id: 7, publicId: 'clip-7' })).toBe(`${window.location.origin}/video/clip-7`);
   });
 
   it('normalizes live flags before filtering or building links', () => {
     expect(buildVideoLink({ id: 8, isLive: 'true' })).toBe('/live/8');
     expect(buildVideoLink({ id: 9, isLive: 'false' })).toBe('/video/9');
+    expect(buildVideoLink({ id: 10, publicId: 'alpha10', isLive: 'false' })).toBe('/video/alpha10');
     expect(filterActiveLiveVideos([
       { id: 1, isLive: 'true' },
       { id: 2, isLive: 'false' },

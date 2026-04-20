@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const hlsMockState = vi.hoisted(() => ({
@@ -231,9 +231,17 @@ function buildMediaStream(tracks) {
   return new MockMediaStream(tracks);
 }
 
+function LocationDisplay() {
+  const location = useLocation();
+  return <div data-testid="location-display">{location.pathname}</div>;
+}
+
 function buildVideo(overrides = {}) {
+  const id = overrides.id ?? 10;
+
   return {
-    id: 10,
+    id,
+    publicId: `clip-${id}`,
     type: 'video',
     title: 'Alpha Session',
     mediaUrl: 'https://cdn.example.com/alpha.mp4',
@@ -263,9 +271,10 @@ function buildComment(overrides = {}) {
   };
 }
 
-function renderPage(initialEntry = '/video/10') {
+function renderPage(initialEntry = '/video/clip-10') {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
+      <LocationDisplay />
       <Routes>
         <Route path="/video/:id" element={<VideoDetails />} />
         <Route path="/live/:id" element={<VideoDetails mode="live" />} />
@@ -303,6 +312,10 @@ describe('VideoDetails', () => {
       configurable: true,
       value: vi.fn(() => ''),
     });
+    Object.defineProperty(window, 'scrollTo', {
+      configurable: true,
+      value: vi.fn(),
+    });
     api.sendLiveSignal.mockResolvedValue({ data: {} });
     api.getLiveSignals.mockResolvedValue({ data: { signals: [], latestSignalId: 0 } });
     api.presignUpload.mockResolvedValue({ data: { strategy: 'client-direct-upload', endpoint: 'https://upload.example.com', fields: {} } });
@@ -325,9 +338,9 @@ describe('VideoDetails', () => {
     api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
     api.recordView.mockResolvedValue({});
 
-    renderPage();
+    renderPage('/video/clip-10');
 
-    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('10'));
+    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('clip-10'));
 
     expect(await screen.findByRole('heading', { name: 'Alpha Session' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Volver/i })).not.toBeInTheDocument();
@@ -343,6 +356,88 @@ describe('VideoDetails', () => {
     expect(screen.getByText('Comentarios')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('¡Dile al creador lo que piensas!')).toBeInTheDocument();
     expect(screen.getByText('Aún no hay comentarios. Empieza la conversación.')).toBeInTheDocument();
+  });
+
+  it('moves through the related content queue with next and previous buttons', async () => {
+    const user = userEvent.setup();
+
+    api.getVideo
+      .mockResolvedValueOnce({ data: { video: buildVideo({ id: 10, title: 'Alpha Session' }) } })
+      .mockResolvedValueOnce({ data: { video: buildVideo({ id: 11, title: 'Beta Session' }) } })
+      .mockResolvedValueOnce({ data: { video: buildVideo({ id: 10, title: 'Alpha Session' }) } });
+    api.getRelatedVideos
+      .mockResolvedValueOnce({
+        data: {
+          videos: [
+            buildVideo({ id: 11, title: 'Beta Session' }),
+            buildVideo({ id: 12, title: 'Gamma Session' }),
+          ],
+        },
+      })
+      .mockResolvedValueOnce({
+        data: {
+          videos: [
+            buildVideo({ id: 12, title: 'Gamma Session' }),
+            buildVideo({ id: 13, title: 'Delta Session' }),
+          ],
+        },
+      })
+      .mockResolvedValueOnce({ data: { videos: [buildVideo({ id: 11, title: 'Beta Session' })] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    renderPage('/video/clip-10');
+
+    expect(await screen.findByRole('heading', { name: 'Alpha Session' })).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Siguiente contenido' }));
+
+    expect(await screen.findByRole('heading', { name: 'Beta Session' })).toBeInTheDocument();
+    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('clip-11'));
+
+    await user.click(screen.getByRole('button', { name: 'Contenido anterior' }));
+
+    expect(await screen.findByRole('heading', { name: 'Alpha Session' })).toBeInTheDocument();
+    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('clip-10'));
+  });
+
+  it('supports wheel navigation on the player surface like a vertical feed', async () => {
+    api.getVideo
+      .mockResolvedValueOnce({ data: { video: buildVideo({ id: 10, title: 'Alpha Session' }) } })
+      .mockResolvedValueOnce({ data: { video: buildVideo({ id: 11, title: 'Beta Session' }) } });
+    api.getRelatedVideos
+      .mockResolvedValueOnce({ data: { videos: [buildVideo({ id: 11, title: 'Beta Session' })] } })
+      .mockResolvedValueOnce({ data: { videos: [buildVideo({ id: 12, title: 'Gamma Session' })] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    const { container } = renderPage('/video/clip-10');
+
+    await screen.findByRole('heading', { name: 'Alpha Session' });
+
+    const player = container.querySelector('video');
+
+    expect(player).not.toBeNull();
+    fireEvent.wheel(player, { deltaY: 180 });
+
+    expect(await screen.findByRole('heading', { name: 'Beta Session' })).toBeInTheDocument();
+    await waitFor(() => expect(api.getVideo).toHaveBeenCalledWith('clip-11'));
+  });
+
+  it('normalizes numeric video urls to the public route id after loading', async () => {
+    api.getVideo.mockResolvedValue({
+      data: {
+        video: buildVideo({ id: 10, publicId: 'clip-10' }),
+      },
+    });
+    api.getRelatedVideos.mockResolvedValue({ data: { videos: [] } });
+    api.getVideoComments.mockResolvedValue({ data: { comments: [] } });
+    api.recordView.mockResolvedValue({});
+
+    renderPage('/video/10');
+
+    await screen.findByRole('heading', { name: 'Alpha Session' });
+    await waitFor(() => expect(screen.getByTestId('location-display')).toHaveTextContent('/video/clip-10'));
   });
 
   it('shows a view analytics CTA for the creator on their ended live video page', async () => {

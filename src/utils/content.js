@@ -174,13 +174,23 @@ export function filterActiveLiveVideos(videos) {
   return Array.isArray(videos) ? videos.filter(isActiveLiveVideo) : [];
 }
 
+export function getVideoRouteId(videoOrId) {
+  const routeId = videoOrId?.publicId ?? videoOrId?.public_id ?? videoOrId?.id ?? videoOrId;
+
+  if (routeId === null || routeId === undefined || routeId === "") {
+    return "";
+  }
+
+  return `${routeId}`;
+}
+
 function resolveVideoRouteOptions(videoOrId, options = {}) {
   if (typeof options === "boolean") {
-    return { id: videoOrId?.id ?? videoOrId, isLive: normalizeBooleanFlag(options) };
+    return { id: getVideoRouteId(videoOrId), isLive: normalizeBooleanFlag(options) };
   }
 
   return {
-    id: videoOrId?.id ?? videoOrId,
+    id: getVideoRouteId(videoOrId),
     isLive: options.isLive ?? isActiveLiveVideo(videoOrId),
   };
 }
@@ -191,7 +201,7 @@ export function buildVideoLink(videoOrId, options = {}) {
 }
 
 export function buildVideoAnalyticsLink(videoOrId) {
-  const id = videoOrId?.id ?? videoOrId;
+  const id = getVideoRouteId(videoOrId);
   return `/video/${id}/analytics`;
 }
 
@@ -245,7 +255,7 @@ export function getVideoProcessingStatus(video) {
 
 export function mapVideoToCardProps(video) {
   return {
-    id: video?.id,
+    id: getVideoRouteId(video),
     thumb: getVideoThumbnail(video),
     title: getVideoTitle(video),
     author: getProfileName(video?.author || video?.creator),
