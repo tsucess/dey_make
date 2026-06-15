@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { HiSearch, HiPlus } from "react-icons/hi";
+import { HiSearch, HiPlus, HiChevronDown } from "react-icons/hi";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { api, firstError } from "../../services/api";
@@ -188,18 +188,18 @@ export default function TopBar({ notificationState = null }) {
         />
       </>
     ) : null}
-    <header className="flex items-center justify-between pl-30 pr-6 pb-3 pt-10
-                       bg-white dark:bg-slate100
-                       sticky top-0 z-10 ">
+    <header className="flex items-center justify-between pl-10 pr-6 h-[74px]
+                       bg-[#1e1e1e] border-t border-b border-orange100
+                       sticky top-0 z-10 shrink-0">
 
       {/* Search */}
       <div ref={lookupRef} className="relative w-70">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 rounded-full border-[0.15px] border-slate700 bg-white300 px-4 py-2 dark:bg-black100"
+          className="flex items-center gap-2 rounded-full bg-[#333333] px-4 py-2.5"
         >
-          <button type="submit" className="shrink-0 border-none bg-transparent p-0" aria-label={t("topbar.submitSearch")}>
-            <HiSearch className="h-4 w-4 text-black dark:text-slate200" />
+          <button type="submit" className="shrink-0 border-none bg-transparent p-0 flex items-center justify-center" aria-label={t("topbar.submitSearch")}>
+            <HiSearch className="h-4 w-4 text-slate-300" />
           </button>
           <input
             type="text"
@@ -211,7 +211,7 @@ export default function TopBar({ notificationState = null }) {
             onKeyDown={handleInputKeyDown}
             placeholder={t("topbar.searchPlaceholder")}
             aria-label={t("topbar.searchAriaLabel")}
-            className="w-full border-none bg-transparent text-sm font-inter text-black outline-none placeholder-black dark:text-slate200 dark:placeholder-slate200"
+            className="w-full border-none bg-transparent text-sm font-inter text-white outline-none placeholder-slate-400"
           />
         </form>
 
@@ -307,9 +307,9 @@ export default function TopBar({ notificationState = null }) {
             {/* Create */}
             <button onClick={toggleVisiblity}
               className="flex items-center gap-1.5
-                         bg-orange100 font-inter hover:bg-[#e09510]
+                         bg-orange100 hover:bg-[#e09510]
                          text-black font-semibold text-sm
-                         px-6 py-2.5 rounded-full
+                         px-6 py-2 rounded-full
                          border-none cursor-pointer
                          transition-colors"
             >
@@ -319,21 +319,26 @@ export default function TopBar({ notificationState = null }) {
             <CreateDropdown isVisible={isVisible}/>
 
             {/* Bell */}
-            <NotificationButton
-              onClick={openNotification}
-              ariaLabel={t("common.notifications")}
-              unreadCount={unreadNotificationCount}
-              className="flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent cursor-pointer transition-colors hover:bg-gray-100 dark:hover:bg-[#2d2d2d]"
-            />
+            <div className="relative flex items-center justify-center ml-2 mr-2">
+              <NotificationButton
+                onClick={openNotification}
+                ariaLabel={t("common.notifications")}
+                unreadCount={0}
+                className="flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent cursor-pointer transition-colors hover:bg-white/10 text-slate-300 hover:text-white"
+                iconClassName="h-5 w-5"
+              />
+              {/* Blue dot indicator for notifications */}
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 border border-[#1e1e1e]"></span>
+            </div>
             
-
             {/* Avatar */}
-            <Link to="/profile">
+            <Link to="/profile" className="flex items-center gap-2 cursor-pointer ml-2">
               <img
                 src={user?.avatarUrl || "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80"}
                 alt={user?.fullName || t("common.profile")}
-                className="w-10 h-10 rounded-full object-cover cursor-pointer"
+                className="w-8 h-8 rounded-full object-cover"
               />
+              <HiChevronDown className="w-4 h-4 text-slate-300" />
             </Link>
           </>
         ) : null}

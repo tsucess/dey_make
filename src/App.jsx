@@ -12,6 +12,7 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/Homepage"));
+const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const CreateUpload = lazy(() => import("./pages/CreateUpload"));
@@ -139,6 +140,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={renderLazyRoute(AppLayout)}>
             <Route path="/home" element={renderLazyRoute(Homepage)} />
+            <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
             <Route path="/live" element={renderLazyRoute(LivePage)} />
             <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
