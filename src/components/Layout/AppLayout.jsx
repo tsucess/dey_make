@@ -98,9 +98,11 @@ export default function AppLayout() {
 
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* TopBar — desktop only */}
-        <div className="hidden md:block">
-          <TopBar notificationState={notificationState} />
-        </div>
+        {!location.pathname.startsWith("/messages") && !location.pathname.startsWith("/challenge") && (
+          <div className="hidden md:block">
+            <TopBar notificationState={notificationState} />
+          </div>
+        )}
 
         {/* Mobile TopBar */}
         <RealtimeNotificationPopup
@@ -122,22 +124,23 @@ export default function AppLayout() {
           onMarkNotificationRead={handleMarkNotificationRead}
           onMarkAllRead={handleMarkAllNotificationsRead}
         />
-        <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
-          {isHomepage ? (
-            <img src="/DEYMAKE LOGO Yellow.svg" alt={t("app.name")} className="h-10 w-auto" />
-          ) : (
-            <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
-              {mobileTitle}
-            </h1>
-          )}
-
-          <div className="flex items-center gap-3">
+        {!location.pathname.startsWith("/messages") && !location.pathname.startsWith("/challenge") && (
+          <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
             {isHomepage ? (
-              <>
-              
-                <MobileActionButton onClick={openSearch} ariaLabel={t("layout.openSearch")}>
-                  <HiOutlineSearch className="h-5 w-5" />
-                </MobileActionButton>
+              <img src="/DEYMAKE LOGO Yellow.svg" alt={t("app.name")} className="h-10 w-auto" />
+            ) : (
+              <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
+                {mobileTitle}
+              </h1>
+            )}
+
+            <div className="flex items-center gap-3">
+              {isHomepage ? (
+                <>
+                
+                  <MobileActionButton onClick={openSearch} ariaLabel={t("layout.openSearch")}>
+                    <HiOutlineSearch className="h-5 w-5" />
+                  </MobileActionButton>
                 {isAuthenticated ? (
                   <NotificationButton
                     onClick={openNotification}
@@ -160,6 +163,7 @@ export default function AppLayout() {
             ) : null}
           </div>
         </div>
+        )}
 
         {/* Page content */}
         <main className="flex-1 overflow-y-auto pb-27 bg-white dark:bg-slate100 md:pb-0">

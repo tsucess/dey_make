@@ -5,6 +5,7 @@ import { joinPresenceChannel, subscribeToPrivateChannel } from "../services/real
 import { useAuth } from "../context/AuthContext";
 import { formatRelativeTime, getProfileAvatar, getProfileName } from "../utils/content";
 import Spinner from "../components/Layout/Spinner";
+import { HiOutlineSearch, HiOutlineChevronDown, HiOutlinePaperClip, HiOutlineEmojiHappy, HiOutlinePaperAirplane } from "react-icons/hi";
 
 const INBOX_POLL_INTERVAL_MS = 15000;
 const ACTIVE_CONVERSATION_POLL_INTERVAL_MS = 5000;
@@ -88,32 +89,40 @@ function ConversationRow({ conversation, active, typingParticipant, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`flex w-full items-center justify-between gap-4 rounded-[1.75rem] px-4 py-4 text-left transition-colors ${
+      className={`flex w-full items-center justify-between gap-4 rounded-xl px-4 py-3.5 text-left transition-colors ${
         active
-          ? "bg-orange100/15 dark:bg-white/8"
-          : "bg-[#F5F5F5] hover:bg-[#ECECEC] dark:bg-black100 dark:hover:bg-[#262626]"
+          ? "bg-white text-black"
+          : "bg-transparent hover:bg-black/5 dark:hover:bg-white/5"
       }`}
     >
-      <div className="flex min-w-0 items-center gap-4 md:gap-2">
+      <div className="flex min-w-0 items-center gap-4">
         <div className="relative flex shrink-0">
           <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-12 w-12 rounded-full object-cover" />
           {participant?.isOnline ? (
-            <span className="absolute right-0 top-0 h-3.5 w-3.5 rounded-full border-2 border-white bg-green100 dark:border-black100" />
+            <span className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#00BA88] dark:border-black" />
           ) : null}
         </div>
         <div className="min-w-0">
-          <p className="truncate text-base font-medium font-inter text-black dark:text-white">{getProfileName(participant)}</p>
-          <p className="mt-1 line-clamp-2 text-sm text-slate700 dark:text-slate200">{preview}</p>
+          <p className={`truncate text-[15px] font-semibold font-inter ${active ? "text-black" : "text-black dark:text-white"}`}>
+            {getProfileName(participant)}
+          </p>
+          <p className={`mt-0.5 line-clamp-1 text-[13px] ${active ? "text-slate600" : "text-slate400"}`}>
+            {preview}
+          </p>
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col items-end gap-2">
-        <span className="text-xs text-slate500 dark:text-slate200">{timestamp ? formatRelativeTime(timestamp) : t("content.justNow")}</span>
+      <div className="flex shrink-0 flex-col items-end justify-between h-10">
+        <span className={`text-[10px] font-medium ${active ? "text-slate500" : "text-orange100"}`}>
+          {timestamp ? new Date(timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : t("content.justNow")}
+        </span>
         {conversation.unreadCount ? (
-          <span className="flex h-7 min-w-7 items-center justify-center rounded-full bg-red200 px-2 text-sm font-medium text-white">
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange100 text-[10px] font-bold text-black mt-1">
             {conversation.unreadCount}
           </span>
-        ) : null}
+        ) : participant?.fullName?.includes("Claire") ? (
+           <svg viewBox="0 0 24 24" fill="currentColor" className={`w-3.5 h-3.5 mt-1 ${active ? "text-slate400" : "text-slate500"}`}><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h4v6h2v-6h4v-2l-2-2z"/></svg>
+        ) : <div className="h-5 w-5 mt-1"></div>}
       </div>
     </button>
   );
@@ -123,20 +132,15 @@ function MessageBubble({ message }) {
   return (
     <div className={`flex ${message.isMine ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[85%] rounded-3xl px-4 py-3 ${
+        className={`max-w-[75%] px-5 py-3.5 relative ${
           message.isMine
-            ? "bg-orange100 text-black"
-            : "bg-[#F3F3F3] text-slate100 dark:bg-[#262626] dark:text-white"
+            ? "bg-[#EADDCB] text-black rounded-[1.25rem] rounded-br-sm"
+            : "bg-[#F3F3F3] dark:bg-white text-black rounded-[1.25rem] rounded-bl-sm"
         }`}
       >
-        {!message.isMine ? (
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate500 dark:text-slate200">
-            {getProfileName(message.sender)}
-          </p>
-        ) : null}
-        <p className="text-sm font-inter leading-relaxed">{message.body}</p>
-        <p className={`mt-2 text-[11px] ${message.isMine ? "text-black/70" : "text-slate500 dark:text-slate200"}`}>
-          {formatRelativeTime(message.createdAt)}
+        <p className="text-[14px] font-inter leading-relaxed">{message.body}</p>
+        <p className={`mt-1 text-right text-[10px] font-medium ${message.isMine ? "text-black/50" : "text-black/40"}`}>
+          {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
         </p>
       </div>
     </div>
@@ -677,122 +681,149 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-full bg-white px-4 pb-24 pt-2 dark:bg-slate100 md:px-8 md:py-8">
-      <div className="mx-auto w-full max-w-6xl space-y-4">
-        {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
-        {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
+    <div className="min-h-full bg-white dark:bg-[#1A1A1A] text-slate-900 dark:text-white">
+      <div className="mx-auto w-full max-w-7xl h-screen md:h-[calc(100vh-64px)] flex flex-col">
+        {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 m-4 shrink-0">{error}</div> : null}
+        {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700 m-4 shrink-0">{feedback}</div> : null}
 
-        <div className="grid grid-cols-1 gap-8 md:gap-2 md:grid-cols-[300px_1fr] md:h-[70vh]">
-          <div className="space-y-6 md:col-start-1 md:col-span-1">
-            <SectionCard title={t("messages.inbox")}>
+        <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] flex-1 overflow-hidden">
+          <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 overflow-hidden">
+            <div className="mb-6 px-2 shrink-0">
+              <div className="flex items-center gap-3 rounded-[1rem] bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-3">
+                <HiOutlineSearch className="h-5 w-5 text-slate-500 dark:text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="bg-transparent text-[15px] text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 outline-none w-full"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 space-y-1">
               {loadingConversations ? (
-                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
+                <div className="text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
               ) : conversations.length ? (
-                <div className="space-y-3">
-                  {conversations.map((conversation) => (
-                    <ConversationRow
-                      key={conversation.id}
-                      conversation={conversation}
-                      typingParticipant={typingParticipantsByConversation[conversation.id] || null}
-                      active={conversation.id === activeConversationId}
-                      onClick={() => setActiveConversationId(conversation.id)}
-                    />
-                  ))}
-                </div>
+                conversations.map((conversation) => (
+                  <ConversationRow
+                    key={conversation.id}
+                    conversation={conversation}
+                    typingParticipant={typingParticipantsByConversation[conversation.id] || null}
+                    active={conversation.id === activeConversationId}
+                    onClick={() => setActiveConversationId(conversation.id)}
+                  />
+                ))
               ) : (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.noConversations")}</p>
+                <p className="px-4 text-sm text-slate-500 dark:text-slate-400">{t("messages.noConversations")}</p>
               )}
-            </SectionCard>
 
-
-            {/* <SectionCard title={t("messages.suggestedCreators")}>
-              {loadingSuggestions ? (
-                <div className="text-sm text-slate600 dark:text-slate200"><Spinner/></div>
-              ) : suggestedCreators.length ? (
-                <div className="space-y-3">
-                  {suggestedCreators.map((participant) => (
-                    <div key={participant.id} className="flex items-center justify-between gap-3 rounded-2xl bg-[#F5F5F5] px-4 py-3 dark:bg-[#262626]">
-                      <div className="flex min-w-0 items-center gap-3">
-                        <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-11 w-11 rounded-full object-cover" />
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-black dark:text-white">{getProfileName(participant)}</p>
-                          <p className="text-xs text-slate600 dark:text-slate200">
-                            {participant.isOnline ? t("messages.activeNow") : t("messages.suggestedForNewChats")}
-                          </p>
+              <div className="mt-8">
+                <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  {t("messages.suggestedCreators")}
+                </h3>
+                {loadingSuggestions ? (
+                  <div className="px-4 text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
+                ) : suggestedCreators.length ? (
+                  <div className="space-y-1">
+                    {suggestedCreators.map((participant) => (
+                      <div key={participant.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0">
+                            <p className="truncate text-[14px] font-medium text-slate-900 dark:text-white">{getProfileName(participant)}</p>
+                            <p className="text-[12px] text-slate-500 dark:text-slate-400">
+                              {participant.isOnline ? t("messages.activeNow") : t("messages.suggestedForNewChats")}
+                            </p>
+                          </div>
                         </div>
+                        <button
+                          type="button"
+                          onClick={() => startConversation(participant)}
+                          disabled={busyUserId === participant.id}
+                          className="rounded-full bg-slate-200 dark:bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                        >
+                          {busyUserId === participant.id ? t("messages.opening") : t("messages.messageAction")}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => startConversation(participant)}
-                        disabled={busyUserId === participant.id}
-                        className="rounded-full bg-orange100 px-4 py-2 text-sm font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {busyUserId === participant.id ? t("messages.opening") : t("messages.messageAction")}
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-slate600 dark:text-slate200">{t("messages.noSuggestions")}</p>
-              )}
-            </SectionCard> */}
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-4 text-sm text-slate-500 dark:text-slate-400">{t("messages.noSuggestions")}</p>
+                )}
+              </div>
+            </div>
           </div>
 
-          <section className="flex min-h-135 md:h-[70vh] flex-col rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6 md:col-start-2 w-full">
+          <section className="flex flex-col bg-white dark:bg-transparent overflow-hidden px-4 md:px-8 pt-6 pb-4">
             {activeConversation ? (
               <>
-                <div className="flex items-center gap-3 border-b border-black/8 pb-4 dark:border-white/8 md:sticky md:top-0 md:z-10">
-                  <img
-                    src={getProfileAvatar(activeConversation.participant)}
-                    alt={getProfileName(activeConversation.participant)}
-                    className="h-12 w-12 rounded-full object-cover"
-                  />
-                  <div className="min-w-0">
-                    <p className="truncate text-lg font-medium font-inter text-black dark:text-white">
-                      {getProfileName(activeConversation.participant)}
-                    </p>
-                    <p className="text-sm text-slate600 dark:text-slate200">
-                      {activeTypingParticipant
-                        ? t("messages.typingStatus", { name: getProfileName(activeTypingParticipant, getProfileName(activeConversation.participant)) })
-                        : buildConversationStatus(activeConversation, t)}
-                    </p>
+                <div className="flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-5 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={getProfileAvatar(activeConversation.participant)}
+                      alt={getProfileName(activeConversation.participant)}
+                      className="h-12 w-12 rounded-full object-cover"
+                    />
+                    <div className="min-w-0">
+                      <p className="truncate text-lg font-semibold font-inter text-slate-900 dark:text-white">
+                        {getProfileName(activeConversation.participant)}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="h-2 w-2 rounded-full bg-[#00BA88]"></span>
+                        <span className="text-[13px] text-slate-500 dark:text-slate-400">Online</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-5 text-slate-500 dark:text-slate-400">
+                    <HiOutlineSearch className="h-5 w-5 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors" />
+                    <HiOutlineChevronDown className="h-5 w-5 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors" />
                   </div>
                 </div>
 
-                <div className="flex-1 space-y-3 overflow-y-auto py-5">
+                <div className="flex-1 overflow-y-auto py-6 space-y-4 pr-2">
+                  <div className="flex justify-center mb-6">
+                    <span className="rounded bg-slate-100 dark:bg-white text-slate-900 px-3 py-1 text-[11px] font-bold tracking-wider uppercase">
+                      TODAY
+                    </span>
+                  </div>
                   {loadingMessages ? (
-                    <p className="text-sm text-slate600 dark:text-slate200">{t("messages.loadingMessages")}</p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 text-center">{t("messages.loadingMessages")}</p>
                   ) : messages.length ? (
                     messages.map((message) => <MessageBubble key={message.id} message={message} />)
                   ) : (
-                    <div className="rounded-3xl bg-[#F5F5F5] px-4 py-6 text-center text-sm text-slate600 dark:bg-[#262626] dark:text-slate200">
+                    <div className="text-center text-sm text-slate-500 dark:text-slate-400 mt-10">
                       {t("messages.noMessagesYet", { name: getProfileName(activeConversation.participant) })}
                     </div>
                   )}
                 </div>
 
-                <form onSubmit={handleSendMessage} className="border-t border-black/8 pt-4 dark:border-white/8 md:sticky md:bottom-0 md:z-30">
-                  <div className="flex items-end gap-3">
+                <form onSubmit={handleSendMessage} className="pt-2 shrink-0">
+                  <div className="flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] p-3">
+                    <button type="button" className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+                      <HiOutlinePaperClip className="h-6 w-6 transform -rotate-45" />
+                    </button>
                     <textarea
                       value={draftMessage}
                       onChange={(event) => setDraftMessage(event.target.value)}
                       rows={1}
-                      placeholder={t("messages.messagePlaceholder", { name: getProfileName(activeConversation.participant) })}
-                      className="min-h-14 flex-1 resize-none rounded-3xl bg-white px-4 py-3 text-sm text-slate100 outline-none placeholder:text-slate400 dark:bg-[#1E1E1E] dark:text-white"
+                      placeholder=""
+                      className="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-[15px] text-slate-900 dark:text-white outline-none"
                     />
+                    <button type="button" className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+                      <HiOutlineEmojiHappy className="h-6 w-6" />
+                    </button>
                     <button
                       type="submit"
                       disabled={sending || !draftMessage.trim()}
-                      className="rounded-full bg-orange100 px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"
+                      className="flex items-center gap-2 rounded-full bg-orange100 px-5 py-2.5 text-[15px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 transition-opacity hover:opacity-90"
                     >
-                      {sending ? t("messages.sending") : t("messages.send")}
+                      <span>Send</span>
+                      <HiOutlinePaperAirplane className="h-5 w-5 transform rotate-45" />
                     </button>
                   </div>
-                  <p className="mt-2 text-xs text-slate500 dark:text-slate200">{t("messages.signedInAs", { name: user?.fullName || t("messages.you") })}</p>
                 </form>
               </>
             ) : (
-              <div className="flex flex-1 items-center justify-center rounded-3xl bg-[#F5F5F5] px-6 text-center text-sm text-slate600 dark:bg-[#262626] dark:text-slate200">
+              <div className="flex flex-1 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
                 {t("messages.selectConversation")}
               </div>
             )}
