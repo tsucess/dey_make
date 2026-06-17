@@ -1,22 +1,55 @@
 export default function AuthLayout({ children }) {
   return (
-    <div className="flex h-full w-screen 
-                    bg-white dark:bg-slate100">
-
+    <div className="flex min-h-screen w-full bg-white dark:bg-slate100">
       {/* Left: VR image — desktop only */}
-      <div
-        className="hidden md:block w-2/5 shrink-0 h-auto"
-      ><img src="/auth-img.png" alt="" className="w-full h-full"/></div>
-
-      {/* Right: form */}
-      <div className="flex-1 flex items-start justify-center
-                       pt-6 pb-8 md:py-12
-                      bg-white dark:bg-slate100">
-        <div className="w-full max-w-132.5 px-6 md:px-12">
-          {children}
-        </div>
+      <div className="hidden md:block w-2/5 shrink-0">
+        <img
+          src="/auth_bg.png"
+          alt=""
+          className="w-full h-full object-cover min-h-screen"
+        />
       </div>
 
+      {/* Right: form */}
+      <div className="flex-1 flex items-center justify-center py-8 md:py-12 bg-white dark:bg-slate100 relative">
+        <div className="w-full max-w-[600px] px-6 md:px-12">
+          <div className="absolute top-0 left-0 right-0">
+            <svg
+              className="w-full"
+              viewBox="0 0 836 217"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M1101 -55L1082.65 -66.3688C1064.3 -77.3125 1027.6 -100.688 990.9 -89C954.2 -77.3125 917.5 -32.6875 880.8 7.36874C844.1 47 807.4 81 770.7 103.631C734 126.688 697.3 137.312 660.6 126.369C623.9 115 587.2 81 550.5 69.6313C513.8 58.6875 477.1 69.3125 440.4 58.3687C403.7 47 367 13 330.3 1.63126C293.6 -9.3125 256.9 1.3125 220.2 13C183.5 24.6875 146.8 35.3125 110.1 35.6313C73.4 35.3125 36.7 24.6875 18.35 18.6313L0 13V-123H18.35C36.7 -123 73.4 -123 110.1 -123C146.8 -123 183.5 -123 220.2 -123C256.9 -123 293.6 -123 330.3 -123C367 -123 403.7 -123 440.4 -123C477.1 -123 513.8 -123 550.5 -123C587.2 -123 623.9 -123 660.6 -123C697.3 -123 734 -123 770.7 -123C807.4 -123 844.1 -123 880.8 -123C917.5 -123 954.2 -123 990.9 -123C1027.6 -123 1064.3 -123 1082.65 -123H1101V-55Z"
+                fill="#FDB300"
+              />
+            </svg>
+          </div>
+          {children}
+
+          <div className="absolute bottom-0 left-0 right-0">
+            <svg
+              className="w-full"
+              viewBox="0 0 1082 165"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <g clip-path="url(#clip0_394_737)">
+                <path
+                  d="M-56 -23L-34.8167 -1.43375C-13.6333 20.5375 28.7333 63.0625 71.1 74.2C113.467 85.3375 155.833 63.0625 198.2 63.3663C240.567 63.0625 282.933 85.3375 325.3 85.0338C367.667 85.3375 410.033 63.0625 452.4 79.5663C494.767 95.4625 537.133 150.138 579.5 171.4C621.867 192.663 664.233 182.538 706.6 176.766C748.967 171.4 791.333 171.4 833.7 149.834C876.067 127.863 918.433 85.3375 960.8 74.2C1003.17 63.0625 1045.53 85.3375 1087.9 90.4C1130.27 95.4625 1172.63 85.3375 1193.82 79.5663L1215 74.2V301H1193.82C1172.63 301 1130.27 301 1087.9 301C1045.53 301 1003.17 301 960.8 301C918.433 301 876.067 301 833.7 301C791.333 301 748.967 301 706.6 301C664.233 301 621.867 301 579.5 301C537.133 301 494.767 301 452.4 301C410.033 301 367.667 301 325.3 301C282.933 301 240.567 301 198.2 301C155.833 301 113.467 301 71.1 301C28.7333 301 -13.6333 301 -34.8167 301H-56V-23Z"
+                  fill="#FDB300"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_394_737">
+                  <rect width="1190" height="313" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

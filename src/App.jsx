@@ -12,10 +12,12 @@ const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/Homepage"));
+const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const CreateUpload = lazy(() => import("./pages/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
+const Challenges = lazy(() => import("./pages/Challenges"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
 const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSubscribers = lazy(() => import("./pages/ProfileSubscribers"));
@@ -139,9 +141,11 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={renderLazyRoute(AppLayout)}>
             <Route path="/home" element={renderLazyRoute(Homepage)} />
+            <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
             <Route path="/live" element={renderLazyRoute(LivePage)} />
             <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
+            <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
