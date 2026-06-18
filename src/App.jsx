@@ -23,6 +23,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSubscribers = lazy(() => import("./pages/ProfileSubscribers"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const VideoDetails = lazy(() => import("./pages/VideoDetails"));
@@ -147,6 +148,7 @@ export default function App() {
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
+            <Route path="/notifications" element={renderLazyRoute(Notifications)} />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>
