@@ -32,6 +32,8 @@ const PostLiveAnalytics = lazy(() => import("./pages/PostLiveAnalytics"));
 const CreatorLiveDashboard = lazy(() => import("./pages/CreatorLiveDashboard"));
 const CreateLive = lazy(() => import("./components/CreateLive"));
 const PreviewLive = lazy(() => import("./components/PreviewLive"));
+const Connection = lazy(() => import("./pages/Connections"));
+const Mutual = lazy(() => import("./pages/Mutual"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -148,7 +150,8 @@ export default function App() {
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
-            <Route path="/notifications" element={renderLazyRoute(Notifications)} />
+            <Route path="/connection" element={renderLazyRoute(Connection)} />
+            <Route path="/mutual" element={renderLazyRoute(Mutual)} />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>
