@@ -42,6 +42,7 @@ const CreateLive = lazy(() => import("./components/CreateLive"));
 const PreviewLive = lazy(() => import("./components/PreviewLive"));
 const Connection = lazy(() => import("./pages/Connections"));
 const Mutual = lazy(() => import("./pages/Mutual"));
+const ChallengeEntries = lazy(() => import("./pages/ChallengeEntries"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -169,6 +170,10 @@ export default function App() {
             <Route path="/messages" element={renderLazyRoute(Messages)} />
             <Route path="/connection" element={renderLazyRoute(Connection)} />
             <Route path="/mutual" element={renderLazyRoute(Mutual)} />
+            <Route
+              path="/challenge-entries"
+              element={renderLazyRoute(ChallengeEntries)}
+            />
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>

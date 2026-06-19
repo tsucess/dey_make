@@ -8,8 +8,8 @@ const stories = [
 
 function Story() {
   return (
-    <div className="w-full md:w-2/3 md:max-w-2/3 overflow-x-auto">
-      <div className="flex gap-4">
+    <div className="w-full md:w-2/3 md:max-w-2/3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x">
+      <div className="flex gap-3">
         {stories.map((story) => (
           <img
             key={story}
