@@ -23,6 +23,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const ProfileSubscribers = lazy(() => import("./pages/ProfileSubscribers"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const VideoDetails = lazy(() => import("./pages/VideoDetails"));

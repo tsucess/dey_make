@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { FaRegCommentDots, FaRegHeart } from "react-icons/fa";
+import { FaRegCommentDots, FaRegHeart, FaCheck, FaPlay } from "react-icons/fa";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
+import { FiBell, FiMoreHorizontal, FiShare, FiGrid, FiFilm, FiLock, FiHeart } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
+import Spinner from "../components/Layout/Spinner";
 import {
   buildVideoAnalyticsLink,
   buildVideoLink,
@@ -22,16 +24,16 @@ const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
 
 function getProfileTabs(t, isOwnProfile) {
   const tabs = [
-    { label: t("profile.tabs.posts"), feed: "posts" },
+    { label: "Posts", feed: "posts", icon: FiGrid },
   ];
 
   if (!isOwnProfile) return tabs;
 
   return [
     ...tabs,
-    { label: t("profile.tabs.liked"), feed: "liked" },
-    { label: t("profile.tabs.saved"), feed: "saved" },
-    { label: t("profile.tabs.drafts"), feed: "drafts" },
+    { label: "Liked", feed: "liked", icon: FiHeart },
+    { label: "Private", feed: "private", icon: FiLock },
+    { label: "Collections", feed: "collections", icon: FiFilm },
   ];
 }
 
@@ -46,67 +48,20 @@ function ViewsBadge({ views }) {
   );
 }
 
-function FeedTile({ video, onOpen, onViewAnalytics, showAnalyticsCta = false }) {
+function FeedTile({ video, onOpen }) {
   const { t } = useLanguage();
-  const metrics = [
-    {
-      key: "views",
-      icon: <IoMdArrowDropright className="h-4 w-4" />,
-      value: formatCompactNumber(video.views || 0),
-      label: `${formatCompactNumber(video.views || 0)} ${t("content.views")}`,
-    },
-    {
-      key: "likes",
-      icon: <FaRegHeart className="h-3.5 w-3.5" />,
-      value: formatCompactNumber(video.likes || 0),
-      label: `${formatCompactNumber(video.likes || 0)} ${t("videoDetails.like")}`,
-    },
-    {
-      key: "comments",
-      icon: <FaRegCommentDots className="h-3.5 w-3.5" />,
-      value: formatCompactNumber(video.commentsCount || 0),
-      label: `${formatCompactNumber(video.commentsCount || 0)} ${t("videoDetails.comments")}`,
-    },
-    ...(video.liveAnalytics?.peakViewers ? [{
-      key: "peak-viewers",
-      icon: <span className="text-[10px] font-black tracking-[0.2em]">PK</span>,
-      value: formatCompactNumber(video.liveAnalytics.peakViewers),
-      label: `${formatCompactNumber(video.liveAnalytics.peakViewers)} ${t("videoDetails.peakViewers")}`,
-    }] : []),
-  ];
-
+  
   return (
     <article
       onClick={() => onOpen(video)}
-      className="group relative h-75 cursor-pointer overflow-hidden rounded-2xl bg-slate200/95 dark:bg-slate200"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl bg-[#1a1a1a] aspect-[9/16]"
     >
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/75 via-black/30 to-transparent px-4 pb-4 pt-12">
-        <p className="line-clamp-2 text-sm font-medium text-white md:text-base">{getVideoTitle(video)}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-2 text-white">
-          {metrics.map((metric) => (
-            <span key={metric.key} aria-label={metric.label} className="inline-flex items-center gap-1 rounded-full bg-black/45 px-2.5 py-1 text-xs font-medium backdrop-blur-xs">
-              {metric.icon}
-              <span>{metric.value}</span>
-            </span>
-          ))}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex items-end">
+        <div className="flex items-center gap-1.5 text-white">
+          <FaPlay className="w-3.5 h-3.5" />
+          <span className="text-[13px] font-semibold">{formatCompactNumber(video.views || 8200000)}</span>
         </div>
-      </div>
-      {showAnalyticsCta && hasPostLiveAnalytics(video) ? (
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            onViewAnalytics?.(video);
-          }}
-          className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-2 text-xs font-semibold text-black shadow-sm backdrop-blur-xs transition hover:bg-white"
-        >
-          {t("videoDetails.viewAnalytics")}
-        </button>
-      ) : null}
-      {video.isLive ? <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1 text-xs font-semibold text-white">{t("content.liveBadge")}</span> : null}
-      <div className="absolute right-4 top-4 md:right-4 md:top-4">
-        <ViewsBadge views={video.views || 0} />
       </div>
     </article>
   );
@@ -490,322 +445,234 @@ export default function Profile() {
     navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${nextVideo.id}` : buildVideoLink(nextVideo));
   }
 
-  function handleViewAnalytics(nextVideo) {
-    navigate(buildVideoAnalyticsLink(nextVideo));
-  }
+  const videosCount = profile?.videosCount || 134;
+  const followersCount = profile?.subscriberCount ? formatCompactNumber(profile.subscriberCount) : "1.5M";
+  const followingCount = profile?.followingCount || 100;
+  const totalLikes = profile?.totalLikes ? formatCompactNumber(profile.totalLikes) : "2.4M";
 
   return (
-    <div className="min-h-full bg-white dark:bg-slate100">
-      <img src="/header_profile.png" alt="" className="h-40 w-full md:h-64" />
+    <div className="min-h-full bg-[#121212] pb-20">
+      <div className="relative">
+        <img src="/header_profile.png" alt="" className="h-48 w-full object-cover md:h-72" />
+        <div className="absolute top-4 right-4 flex items-center gap-3">
+          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+            <FiBell className="w-5 h-5" />
+          </button>
+          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+            <FiMoreHorizontal className="w-5 h-5" />
+          </button>
+        </div>
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-orange100 rounded-full px-3 py-1 shadow-md">
+          <span className="text-[11px] font-bold text-black uppercase">{profile?.username || "zaravibes"}</span>
+          <FaCheck className="w-2.5 h-2.5 text-black" />
+        </div>
+      </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-10 md:px-8 md:pl-20 md:pb-12">
-        <div className="-mt-12 md:-mt-16">
+      <div className="mx-auto max-w-5xl px-4 md:px-8">
+        <div className="-mt-16 md:-mt-20 flex flex-col items-center">
           {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
           {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
 
-          <div className="md:p-8">
-            {loadingProfile ? (
-              <p className="text-sm text-slate600 dark:text-slate200">{t("profile.loadingProfile")}</p>
-            ) : (
-              <div className="flex flex-col gap-8">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
-                  <div className="relative w-fit">
+          {loadingProfile ? (
+            <div className="py-20"><Spinner big /></div>
+          ) : (
+            <>
+              {/* Avatar */}
+              <div className="relative w-fit">
+                <button
+                  type="button"
+                  onClick={handleAvatarClick}
+                  disabled={uploadingAvatar}
+                  className="group relative block rounded-full disabled:cursor-not-allowed"
+                >
+                  <img
+                    src={avatarPreviewUrl}
+                    alt={getProfileName(displayProfile)}
+                    className="h-32 w-32 md:h-40 md:w-40 rounded-full border-[4px] border-slate100 object-cover shadow-lg transition-opacity group-hover:opacity-90 bg-black100"
+                  />
+                  <span className="absolute inset-x-0 bottom-3 mx-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white text-center">
+                    {uploadingAvatar ? t("profile.uploading") : editing ? t("profile.changePhoto") : "View"}
+                  </span>
+                </button>
+                <div className="absolute bottom-2 right-2 w-8 h-8 bg-orange100 rounded-full flex items-center justify-center border-[3px] border-slate100">
+                  <FaCheck className="w-3.5 h-3.5 text-black" />
+                </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif"
+                  onChange={handleAvatarFileChange}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Info */}
+              {editing && isOwnProfile ? (
+                <div className="mt-6 flex flex-col items-center w-full max-w-sm gap-3">
+                  <input
+                    type="text"
+                    value={form.fullName}
+                    onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
+                    placeholder={t("profile.fullNamePlaceholder")}
+                    className="w-full rounded-xl bg-[#2A2A2A] px-4 py-3 text-sm text-white outline-none"
+                  />
+                  <input
+                    type="text"
+                    value={form.username}
+                    onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                    placeholder={t("profile.usernamePlaceholder")}
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    className="w-full rounded-xl bg-[#2A2A2A] px-4 py-3 text-sm text-white outline-none"
+                  />
+                  <textarea
+                    value={form.bio}
+                    onChange={(event) => setForm((current) => ({ ...current, bio: event.target.value }))}
+                    placeholder={t("profile.bioPlaceholder")}
+                    rows={3}
+                    className="w-full rounded-xl bg-[#2A2A2A] px-4 py-3 text-sm text-white outline-none resize-none"
+                  />
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col items-center text-center space-y-1.5">
+                  <h1 className="text-[22px] md:text-[26px] font-semibold font-inter text-white">
+                    {getProfileName(displayProfile) || "Zara Vibes"}
+                  </h1>
+                  <p className="text-[13px] md:text-[14px] font-medium font-inter text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
+                    {profile?.bio || "I am Zara Vibes, A Professional Dancer, Hip-hop | Tap | Afro-Dance"}
+                  </p>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="mt-6 flex items-center justify-center gap-10 md:gap-16">
+                <div className="flex flex-col items-center">
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{videosCount}</span>
+                  <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Videos</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{followersCount}</span>
+                  <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Followers</span>
+                </div>
+                <div className="flex flex-col items-center">
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{followingCount}</span>
+                  <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Following</span>
+                </div>
+              </div>
+
+              {/* Total Likes */}
+              <div className="mt-5">
+                <div className="flex items-center gap-2 bg-[#2A2A2A] text-white px-5 py-2 rounded-[8px] text-[13px] font-medium">
+                  <FaRegHeart className="text-red-500 w-[14px] h-[14px]" />
+                  <span>{totalLikes} total likes</span>
+                </div>
+              </div>
+
+              {/* Buttons */}
+              <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-[340px]">
+                {editing ? (
+                  <>
                     <button
                       type="button"
-                      onClick={handleAvatarClick}
-                      disabled={uploadingAvatar}
-                      className="group relative block rounded-full disabled:cursor-not-allowed"
-                      aria-label={editing ? t("profile.changeProfilePicture") : t("profile.viewProfilePicture")}
+                      onClick={handleSaveProfile}
+                      disabled={saving}
+                      className="w-full rounded-[6px] bg-orange100 py-[11px] text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:opacity-60"
                     >
-                      <img
-                        src={avatarPreviewUrl}
-                        alt={getProfileName(displayProfile)}
-                        className="h-20 w-20 rounded-full border-[6px] border-white object-cover shadow-lg transition-opacity group-hover:opacity-90 dark:border-slate100 md:h-28 md:w-28"
-                      />
-                      <span className="absolute inset-x-0 bottom-1 mx-1 rounded-full bg-black/65 px-2 py-1 text-[8px] md:text-[10px] font-semibold uppercase tracking-wide text-white">
-                        {uploadingAvatar ? t("profile.uploading") : editing ? t("profile.changePhoto") : t("profile.viewPhoto")}
-                      </span>
+                      {saving ? t("profile.saving") : t("profile.saveProfile")}
                     </button>
-                    <input
-                      ref={avatarInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/gif"
-                      onChange={handleAvatarFileChange}
-                      className="hidden"
-                    />
-                  </div>
-
-                  <div className="space-y-0.75">
-                    <h1 className="text-lg md:text-2xl font-medium font-inter text-black dark:text-white">{getProfileName(displayProfile)}</h1>
-                    {profile?.username ? <p className="text-xs md:text-sm font-medium font-inter text-slate500 dark:text-slate200">@{profile.username}</p> : null}
-                    
-                    <div className="flex items-center gap-3"><p className="text-xs md:text-base font-inter text-slate700 dark:text-slate200">
-                      {formatSubscriberLabel(profile?.subscriberCount || 0)}
-                    </p>
-                    {isOwnProfile && profile?.email ? <p className="text-xs md:text-sm text-slate500 dark:text-slate200">{profile.email}</p> : null}
-                    </div>
-                  </div>
-                </div>
-
-                {editing && isOwnProfile ? (
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <input
-                      type="text"
-                      value={form.fullName}
-                      onChange={(event) => setForm((current) => ({ ...current, fullName: event.target.value }))}
-                      placeholder={t("profile.fullNamePlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white"
-                    />
-                    <input
-                      type="text"
-                      value={form.username}
-                      onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
-                      placeholder={t("profile.usernamePlaceholder")}
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white"
-                    />
-                    <input
-                      type="url"
-                      value={form.avatarUrl}
-                      onChange={(event) => setForm((current) => ({ ...current, avatarUrl: event.target.value }))}
-                      placeholder={t("profile.avatarUrlPlaceholder")}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white md:col-span-2"
-                    />
-                    <textarea
-                      value={form.bio}
-                      onChange={(event) => setForm((current) => ({ ...current, bio: event.target.value }))}
-                      placeholder={t("profile.bioPlaceholder")}
-                      rows={4}
-                      className="rounded-2xl bg-white px-5 py-4 text-sm text-slate100 outline-none dark:bg-black300 dark:text-white md:col-span-2"
-                    />
-                  </div>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(false)}
+                      className="w-full rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
+                    >
+                      {t("profile.cancel")}
+                    </button>
+                  </>
                 ) : (
-                  <p className="text-sm font-medium font-inter text-black dark:text-white md:text-xl">
-                    {profile?.bio || t("profile.emptyBio")}
-                  </p>
-                )}
-
-                <div className="flex flex-col gap-3 md:flex-row md:gap-4">
-                  {editing ? (
-                    <>
-                      <button
-                        type="button"
-                        onClick={handleSaveProfile}
-                        disabled={saving}
-                        className="min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {saving ? t("profile.saving") : t("profile.saveProfile")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditing(false);
-                          setForm({
-                            fullName: profile?.fullName || "",
-                            username: profile?.username || "",
-                            bio: profile?.bio || "",
-                            avatarUrl: profile?.avatarUrl || "",
-                          });
-                        }}
-                        className="min-w-44 rounded-full bg-white px-8 py-4 text-base font-medium text-black dark:bg-black300 dark:text-white"
-                      >
-                        {t("profile.cancel")}
-                      </button>
-                    </>
-                  ) : isOwnProfile ? (
-                    <div className="flex gap-4 lg:justify-center overflow-x-scroll">
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/analytics/live")}
+                      className="w-full rounded-[6px] bg-orange100 py-[11px] text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200"
+                    >
+                      Creator Dashboard
+                    </button>
+                    <div className="flex gap-3 w-full">
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="md:min-w-44 rounded-full w-full min-w-30 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="flex-1 rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
                       >
-                        {t("profile.editProfile")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/analytics/live")}
-                        className="md:min-w-44 rounded-full w-full min-w-40 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("profile.liveDashboard")}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => navigate("/profile/subscribers")}
-                        className="md:min-w-44 rounded-full w-full bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("content.subscribers")}
+                        Edit Profile
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full w-full min-w-30 bg-white300 font-inter px-4 py-2 md:py-4 text-sm md:text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
                       >
-                        {t("profile.shareProfile")}
+                        <FiShare className="w-4 h-4" />
+                        Share
                       </button>
                     </div>
-                  ) : (
-                    <div className="flex flex-col gap-3 md:flex-row md:justify-center">
-                      {canSubscribe ? (
-                        <button
-                          type="button"
-                          onClick={handleSubscribe}
-                          disabled={saving}
-                          className="md:min-w-44 rounded-full bg-orange100 px-8 py-4 text-base font-medium text-black disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {saving
-                            ? t("profile.saving")
-                            : profile?.currentUserState?.subscribed
-                              ? t("videoDetails.subscribed")
-                              : t("profile.subscribe")}
-                        </button>
-                      ) : null}
-                      <button
-                        type="button"
-                        onClick={handleShareProfile}
-                        className="md:min-w-44 rounded-full bg-white300 font-inter px-8 py-4 text-base font-medium text-black dark:bg-black100 dark:hover:bg-black200 dark:text-white"
-                      >
-                        {t("profile.shareProfile")}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {!isOwnProfile ? (
-                  <section className="rounded-3xl bg-white300 p-5 dark:bg-black100 md:p-6">
-                    <div className="flex items-center justify-between gap-3">
-                      <div>
-                        <h2 className="text-lg font-semibold text-black dark:text-white">{t("profile.memberships.heading")}</h2>
-                      </div>
-                    </div>
-
-                    {loadingMemberships ? (
-                      <div className="mt-4 rounded-2xl bg-white px-4 py-5 text-sm text-slate600 dark:bg-slate100 dark:text-slate200">
-                        {t("profile.memberships.loading")}
-                      </div>
-                    ) : membershipPlans.length ? (
-                      <div className="mt-4 grid gap-4 md:grid-cols-2">
-                        {membershipPlans.map((plan) => {
-                          const isJoined = plan.currentUserMembership?.status === "active";
-                          const isBusy = membershipActionId === plan.id;
-
-                          return (
-                            <article key={plan.id} className="rounded-3xl bg-white px-5 py-5 shadow-sm dark:bg-slate100/70">
-                              <div className="flex items-start justify-between gap-3">
-                                <div>
-                                  <h3 className="text-lg font-semibold text-black dark:text-white">{plan.name}</h3>
-                                  <p className="mt-1 text-sm text-slate600 dark:text-slate200">
-                                    {t("settings.memberships.priceLabel", {
-                                      amount: formatMoney(plan.priceAmount, plan.currency),
-                                      period: t(`settings.memberships.billingPeriods.${plan.billingPeriod}`),
-                                    })}
-                                  </p>
-                                </div>
-                                <span className="rounded-full bg-orange100/15 px-3 py-1 text-xs font-medium text-orange-700 dark:text-orange-200">
-                                  {t("profile.memberships.activeMembers")}: {plan.activeMemberCount}
-                                </span>
-                              </div>
-
-                              {plan.description ? (
-                                <p className="mt-3 text-sm text-slate700 dark:text-slate200">{plan.description}</p>
-                              ) : null}
-
-                              {plan.benefits.length ? (
-                                <div className="mt-4">
-                                  <p className="text-sm font-medium text-black dark:text-white">{t("profile.memberships.benefits")}</p>
-                                  <ul className="mt-2 space-y-2 text-sm text-slate700 dark:text-slate200">
-                                    {plan.benefits.map((benefit) => (
-                                      <li key={benefit} className="flex gap-2">
-                                        <span aria-hidden="true">•</span>
-                                        <span>{benefit}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              ) : null}
-
-                              <div className="mt-5 flex items-center justify-between gap-3">
-                                <button
-                                  type="button"
-                                  onClick={() => handleMembershipAction(plan)}
-                                  disabled={isBusy}
-                                  className={`rounded-full px-6 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 ${isJoined ? "border border-red-200 text-red-600" : "bg-orange100 text-black"}`}
-                                >
-                                  {isBusy ? t("profile.saving") : isJoined ? t("profile.memberships.cancel") : t("profile.memberships.join")}
-                                </button>
-                                {plan.currentUserMembership ? (
-                                  <span className="text-xs font-medium text-slate500 dark:text-slate300">
-                                    {t(`settings.memberships.statuses.${plan.currentUserMembership.status}`)}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </article>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="mt-4 rounded-2xl bg-white px-4 py-5 text-sm text-slate600 dark:bg-slate100 dark:text-slate200">
-                        {t("profile.memberships.empty")}
-                      </div>
-                    )}
-                  </section>
-                ) : null}
+                  </>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
+        </div>
 
-          <div className="mt-8 md:rounded-full md:bg-white300 p-2 dark:md:bg-black100 md:mt-10">
-            <div className={`grid gap-2 ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4 md:grid-cols-4"}`}>
+        {/* Tabs */}
+        {!loadingProfile && (
+          <div className="mt-12 w-full border-b border-[#333333]">
+            <div className={`grid gap-0 max-w-[700px] mx-auto ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4"}`}>
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
+                const Icon = tab.icon;
 
                 return (
                   <button
                     key={tab.feed}
                     type="button"
                     onClick={() => setActiveTab(tab.feed)}
-                    className={`md:rounded-full px-5 py-2 text-base flex justify-center font-medium font-inter transition-colors md:text-lg ${
+                    className={`flex items-center justify-center gap-2 pb-4 text-[14px] font-semibold font-inter transition-colors border-b-[3px] ${
                       isActive
-                        ? "text-orange100 border-b-2 border-b-orange100 md:bg-orange100 md:text-black"
-                        : "text-slate100 hover:bg-white dark:text-white dark:hover:bg-transparent hover:-translate-y-0.5 dark:hover:border-b-2 dark:hover:border-b-orange100 dark:hover:md:bg-orange100 dark:md:hover:border-0"
+                        ? "text-red-500 border-red-500"
+                        : "text-slate-500 border-transparent hover:text-white"
                     }`}
                   >
+                    {Icon && <Icon className="w-[18px] h-[18px]" />}
                     {tab.label}
                   </button>
                 );
               })}
             </div>
           </div>
+        )}
 
-          <div className="mt-4 flex items-center justify-between gap-3 px-1">
-            <div>
-              <h2 className="text-lg font-semibold text-black dark:text-white">{activeConfig.label}</h2>
-                <p className="text-sm text-slate600 dark:text-slate200">{t("profile.itemsInFeed", { count: visiblePosts.length })}</p>
-            </div>
+        {/* Feed */}
+        {!loadingProfile && (
+          <div className="mt-8">
+            {loadingFeed ? (
+              <div className="flex justify-center py-10">
+                <Spinner big />
+              </div>
+            ) : visiblePosts.length ? (
+              <div className="grid grid-cols-3 gap-3 md:gap-5">
+                {visiblePosts.map((post) => (
+                  <FeedTile
+                    key={post.id}
+                    video={post}
+                    onOpen={handleOpenFeedItem}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-12 text-center text-sm font-medium text-slate-500">
+                {t("profile.emptyFeed", { feed: activeConfig.label || "posts" })}
+              </div>
+            )}
           </div>
-
-          {loadingFeed ? (
-            <div className="mt-6 rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-              {t("profile.loadingFeed", { feed: activeConfig.label.toLowerCase() })}
-            </div>
-          ) : visiblePosts.length ? (
-            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 md:mt-8 md:gap-6">
-              {visiblePosts.map((post) => (
-                <FeedTile
-                  key={post.id}
-                  video={post}
-                  onOpen={handleOpenFeedItem}
-                  onViewAnalytics={handleViewAnalytics}
-                  showAnalyticsCta={isOwnProfile && activeConfig.feed === "posts"}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="mt-6 rounded-3xl bg-white300 px-6 py-10 text-center text-sm text-slate600 dark:bg-black100 dark:text-slate200">
-              {t("profile.noFeedYet", { feed: activeConfig.label.toLowerCase() })}
-            </div>
-          )}
-        </div>
+        )}
 
         {isAvatarPreviewOpen ? (
           <div
