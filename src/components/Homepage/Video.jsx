@@ -9,7 +9,7 @@ function Video() {
   return (
     <section className="w-full md:w-2/3 flex justify-center relative">
       <div className="max-w-md w-full max-h-215 h-full relative">
-        <img src="/video-img.jpg" alt="" className="rounded-3xl h-full" />
+        <img src="/home_img.jpg" alt="" className="rounded-3xl" />
         <div className="flex flex-col gap-2 absolute right-4 bottom-4 items-center">
           <img
             src="/user1.jpg"
@@ -51,7 +51,7 @@ function Video() {
             className="w-10 h-10 rounded-full mt-6"
           />
         </div>
-        <div className="flex flex-col gap-1 absolute left-3 bottom-4">
+        <div className="flex flex-col gap-1 absolute left-2 bottom-4">
           <div className="flex items-center gap-1.5">
             <IoLocationOutline className="text-white w-4 h-4" />
             <span className="text-xs font-inter text-white">Location</span>

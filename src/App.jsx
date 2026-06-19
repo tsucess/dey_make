@@ -1,5 +1,13 @@
 import { Suspense, lazy } from "react";
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { useLanguage } from "./context/LanguageContext";
 import Spinner from "./components/Layout/Spinner";
@@ -11,7 +19,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
-const Homepage = lazy(() => import("./pages/Homepage"));
+const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const LivePage = lazy(() => import("./pages/LivePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
@@ -40,7 +48,7 @@ function FullPageLoader() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
-      <Spinner big/>
+      <Spinner big />
     </div>
   );
 }
@@ -101,7 +109,10 @@ function LandingRoute() {
 
   return (
     <RouteSuspense>
-      <LandingPage onLogin={() => navigate("/login")} onSignUp={() => navigate("/signup")} />
+      <LandingPage
+        onLogin={() => navigate("/login")}
+        onSignUp={() => navigate("/signup")}
+      />
     </RouteSuspense>
   );
 }
@@ -127,8 +138,14 @@ export default function App() {
           <Route path="/welcome" element={<LandingRoute />} />
           <Route path="/login" element={renderLazyRoute(Login)} />
           <Route path="/signup" element={renderLazyRoute(SignUp)} />
-          <Route path="/forgot-password" element={renderLazyRoute(ForgotPassword)} />
-          <Route path="/reset-password" element={renderLazyRoute(ResetPassword)} />
+          <Route
+            path="/forgot-password"
+            element={renderLazyRoute(ForgotPassword)}
+          />
+          <Route
+            path="/reset-password"
+            element={renderLazyRoute(ResetPassword)}
+          />
         </Route>
 
         <Route element={<PendingVerificationRoute />}>
@@ -156,12 +173,21 @@ export default function App() {
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>
             <Route path="/profile" element={renderLazyRoute(Profile)} />
-            <Route path="/profile/subscribers" element={renderLazyRoute(ProfileSubscribers)} />
-            <Route path="/analytics/live" element={renderLazyRoute(CreatorLiveDashboard)} />
+            <Route
+              path="/profile/subscribers"
+              element={renderLazyRoute(ProfileSubscribers)}
+            />
+            <Route
+              path="/analytics/live"
+              element={renderLazyRoute(CreatorLiveDashboard)}
+            />
             <Route path="/search" element={renderLazyRoute(SearchResults)} />
             <Route path="/settings" element={renderLazyRoute(Settings)} />
             <Route path="/workspace" element={renderLazyRoute(Workspace)} />
-            <Route path="/video/:id/analytics" element={renderLazyRoute(PostLiveAnalytics)} />
+            <Route
+              path="/video/:id/analytics"
+              element={renderLazyRoute(PostLiveAnalytics)}
+            />
           </Route>
           <Route path="/create" element={renderLazyRoute(CreateUpload)} />
           <Route path="/create-live" element={renderLazyRoute(CreateLive)} />
