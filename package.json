@@ -13,11 +13,13 @@
   },
   "dependencies": {
     "agora-rtc-sdk-ng": "^4.24.3",
+    "chart.js": "^4.5.1",
     "hls.js": "^1.6.15",
     "laravel-echo": "^2.3.3",
     "motion": "^12.38.0",
     "pusher-js": "^8.5.0",
     "react": "^19.2.4",
+    "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.4",
     "react-icons": "^5.6.0",
     "react-router-dom": "^7.13.1"

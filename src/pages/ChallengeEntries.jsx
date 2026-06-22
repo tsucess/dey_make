@@ -4,16 +4,24 @@ import StatsSection from "../components/ChallengeEntries/StatsSection";
 import { useState } from "react";
 import EntriesSection from "../components/ChallengeEntries/EntriesSection";
 import LeaderboardSection from "../components/ChallengeEntries/LeaderboardSection";
+import ChallengeModal from "../components/ChallengeEntries/ChallengeModal";
 
 function ChallengeEntries() {
   const [activeTab, setActiveTab] = useState("entries");
+  const [openJoinChallengeModal, setOpenJoinChallengeModal] = useState(false)
 
   function handleActiveTabChange(value) {
     setActiveTab(value);
   }
+
+  function handleJoinChallengeModal(){
+    setOpenJoinChallengeModal(prev => !prev)
+  }
+
   return (
-    <div className="bg-black300 flex gap-10 flex-col pb-20">
-      <HeroSection />
+    <div className="bg-black300 flex gap-10 flex-col pb-20 relative">
+      {openJoinChallengeModal && <ChallengeModal closeModal={handleJoinChallengeModal}/>}
+      <HeroSection handleChallengeModal ={handleJoinChallengeModal} />
       <StatsSection />
       <div className="px-6 flex">
         <button

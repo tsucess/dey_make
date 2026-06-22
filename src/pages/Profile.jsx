@@ -488,7 +488,7 @@ export default function Profile() {
                   <img
                     src={avatarPreviewUrl}
                     alt={getProfileName(displayProfile)}
-                    className="h-32 w-32 md:h-40 md:w-40 rounded-full border-[4px] border-slate100 object-cover shadow-lg transition-opacity group-hover:opacity-90 bg-black100"
+                    className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-slate100 object-cover shadow-lg transition-opacity group-hover:opacity-90 bg-black100"
                   />
                   <span className="absolute inset-x-0 bottom-3 mx-2 rounded-full bg-black/65 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-white text-center">
                     {uploadingAvatar ? t("profile.uploading") : editing ? t("profile.changePhoto") : "View"}
@@ -562,28 +562,28 @@ export default function Profile() {
 
               {/* Total Likes */}
               <div className="mt-5">
-                <div className="flex items-center gap-2 bg-[#2A2A2A] text-white px-5 py-2 rounded-[8px] text-[13px] font-medium">
-                  <FaRegHeart className="text-red-500 w-[14px] h-[14px]" />
+                <div className="flex items-center gap-2 bg-[#2A2A2A] text-white px-5 py-2 rounded-lg text-[13px] font-medium">
+                  <FaRegHeart className="text-red-500 w-3.5 h-3.5" />
                   <span>{totalLikes} total likes</span>
                 </div>
               </div>
 
               {/* Buttons */}
-              <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-[340px]">
+              <div className="mt-8 flex flex-col items-center gap-3 w-full max-w-85">
                 {editing ? (
                   <>
                     <button
                       type="button"
                       onClick={handleSaveProfile}
                       disabled={saving}
-                      className="w-full rounded-[6px] bg-orange100 py-[11px] text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:opacity-60"
+                      className="w-full rounded-md bg-orange100 py-2.75 text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200 disabled:opacity-60"
                     >
                       {saving ? t("profile.saving") : t("profile.saveProfile")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditing(false)}
-                      className="w-full rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
+                      className="w-full rounded-md bg-black100 py-2.75 text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
                     >
                       {t("profile.cancel")}
                     </button>
@@ -592,8 +592,8 @@ export default function Profile() {
                   <>
                     <button
                       type="button"
-                      onClick={() => navigate("/analytics/live")}
-                      className="w-full rounded-[6px] bg-orange100 py-[11px] text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200"
+                      onClick={() => navigate("/creator-dashboard")}
+                      className="w-full rounded-md bg-orange100 py-2.75 text-[14px] font-semibold font-inter text-black transition-colors hover:bg-orange200"
                     >
                       Creator Dashboard
                     </button>
@@ -601,14 +601,14 @@ export default function Profile() {
                       <button
                         type="button"
                         onClick={() => setEditing(true)}
-                        className="flex-1 rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
+                        className="flex-1 rounded-md bg-black100 py-2.75 text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
                       >
                         Edit Profile
                       </button>
                       <button
                         type="button"
                         onClick={handleShareProfile}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-[6px] bg-[#333333] py-[11px] text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
+                        className="flex flex-1 items-center justify-center gap-2 rounded-md bg-black100 py-2.75 text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
                       >
                         <FiShare className="w-4 h-4" />
                         Share
@@ -623,8 +623,8 @@ export default function Profile() {
 
         {/* Tabs */}
         {!loadingProfile && (
-          <div className="mt-12 w-full border-b border-[#333333]">
-            <div className={`grid gap-0 max-w-[700px] mx-auto ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4"}`}>
+          <div className="mt-12 w-full border-b border-black100">
+            <div className={`grid gap-0 max-w-175 mx-auto ${profileTabs.length === 1 ? "grid-cols-1" : "grid-cols-4"}`}>
               {profileTabs.map((tab) => {
                 const isActive = tab.feed === activeTab;
                 const Icon = tab.icon;
@@ -640,7 +640,7 @@ export default function Profile() {
                         : "text-slate-500 border-transparent hover:text-white"
                     }`}
                   >
-                    {Icon && <Icon className="w-[18px] h-[18px]" />}
+                    {Icon && <Icon className="w-4,5 h-4,5" />}
                     {tab.label}
                   </button>
                 );
