@@ -1,3 +1,4 @@
+import { div } from "motion/react-client";
 import { useState } from "react";
 import { IoIosArrowForward } from "react-icons/io";
 import { PiCameraPlus } from "react-icons/pi";
@@ -12,6 +13,37 @@ const tips = [
 ];
 
 const courseTab = ["All", "Growth", "Content", "Revenue", "Editing"];
+
+const courses = [
+  {
+    category: "Growth",
+    level: "Intermediate",
+    lesson: "12 lessons · 2h 40m",
+    time: 60,
+    title: "Grow to 100K Followers Fast",
+  },
+  {
+    category: "Content",
+    level: "Beginner",
+    lesson: "12 lessons · 2h 40m",
+    time: 0,
+    title: "Hook Writing Masterclass",
+  },
+  {
+    category: "Revenue",
+    level: "Advanced",
+    lesson: "12 lessons · 2h 40m",
+    time: 60,
+    title: "Monetize Your DeyMake Channel",
+  },
+  {
+    category: "Editing",
+    level: "Intermediate",
+    lesson: "12 lessons · 2h 40m",
+    time: 60,
+    title: "Phone Cinematography Pro",
+  },
+];
 
 function AcademyTool() {
   const [activeCourse, setActiveCourse] = useState("All");
@@ -68,11 +100,72 @@ function AcademyTool() {
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
               }`}
-            >{tab}</button>
+            >
+              {tab}
+            </button>
           ))}
         </div>
       </div>
+
+      <div className="flex flex-col gap-6">
+        {courses.map((course) => (
+          <CourseCard key={course.title} {...course} />
+        ))}
+      </div>
     </section>
+  );
+}
+
+function CourseCard({ category, level, lesson, time, title }) {
+  return (
+    <div className="bg-white300 dark:bg-slate250 rounded-4xl p-6 flex flex-col gap-10">
+      <div className="flex flex-col items-end gap-1.25">
+        {time > 0 && (
+          <div className="bg-slate350 dark:bg-slate150 h-1 w-full flex">
+            <div
+              className={` bg-red100 h-full`}
+              style={{ width: `${time}%` }}
+            ></div>
+          </div>
+        )}
+        <span className="font-inter text-xs text-black300 dark:text-white">
+          {lesson}
+        </span>
+      </div>
+      <div className="flex flex-col gap-4 font-inter">
+        <div className="flex items-center gap-3 ">
+          <div
+            className={`px-2 py-1 rounded text-[11px] ${
+              level === "Intermediate"
+                ? "bg-orange600/10 text-orange600"
+                : level === "Beginner"
+                  ? "bg-green300/20 text-green300"
+                  : "bg-red600/10 text-red600"
+            }`}
+          >
+            {level}
+          </div>
+          <span className="text-xs text-black300 dark:text-white">
+            {category}
+          </span>
+        </div>
+        <h5 className="text-base text-black300 dark:text-white font-bold">
+          {title}
+        </h5>
+        <div className="flex items-center gap-2">
+          <div className="bg-slate350 dark:bg-slate150 h-1 w-full flex">
+            <div
+              className={` bg-red100 h-full`}
+              style={{ width: `${time}%` }}
+            ></div>
+          </div>
+          <span className="text-xs text-black300 dark:text-white shrink-0">
+            {time > 0 && time}
+            {time ? "%" : "Not started"}
+          </span>
+        </div>
+      </div>
+    </div>
   );
 }
 
