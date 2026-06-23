@@ -7,6 +7,7 @@ import { LuWallet } from "react-icons/lu";
 import { VscRobot } from "react-icons/vsc";
 import AcademyTool from "./AcademyTool";
 import WalletTool from "./WalletTool";
+import AiStudioTool from "./AiStudioTool";
 
 const tools = [
   { title: "Academy", icon: FaGraduationCap },
@@ -43,6 +44,7 @@ function CreatorTool() {
       </div>
       {activeTool === "Academy" && <AcademyTool />}
       {activeTool === "Wallet" && <WalletTool />}
+      {activeTool === "AI Studio" && <AiStudioTool />}
     </div>
   );
 }

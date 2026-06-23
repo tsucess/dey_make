@@ -42,6 +42,7 @@
   --color-slate450: #7d7171;
   --color-slate550: #878a8c;
   --color-slate650: #d9d9d9;
+  --color-slate750 : #1D1D1D;
   --color-grey: #2e2e2e;
   --color-brown: #3b3208;
   --color-brown100: #312112;
@@ -54,7 +55,11 @@
   --color-red400: #e31c1c;
   --color-red500: #f20000;
   --color-red600: #ff4655;
+  --color-red700: #FF4757;
   --color-pink: #ff6b9d;
+  --color-cyan: #00C0E8;
+  --color-cyan100 : #07DBFA ;
+  --color-blue: #534FEB;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
@@ -72,6 +77,12 @@
 
 .wallet-bg {
   background-image: url("/public/wallet-bg.png");
+  background-size: cover;
+  background-position: center;
+}
+
+.studio-bg{
+  background-image: url("/public/studio-bg.png");
   background-size: cover;
   background-position: center;
 }
