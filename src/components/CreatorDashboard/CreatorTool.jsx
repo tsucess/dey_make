@@ -8,6 +8,7 @@ import { VscRobot } from "react-icons/vsc";
 import AcademyTool from "./AcademyTool";
 import WalletTool from "./WalletTool";
 import AiStudioTool from "./AiStudioTool";
+import VerificationTool from "./VerificationTool";
 
 const tools = [
   { title: "Academy", icon: FaGraduationCap },
@@ -45,6 +46,7 @@ function CreatorTool() {
       {activeTool === "Academy" && <AcademyTool />}
       {activeTool === "Wallet" && <WalletTool />}
       {activeTool === "AI Studio" && <AiStudioTool />}
+      {activeTool === "Verify" && <VerificationTool />}
     </div>
   );
 }
