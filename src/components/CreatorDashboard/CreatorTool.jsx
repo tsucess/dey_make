@@ -9,6 +9,8 @@ import AcademyTool from "./AcademyTool";
 import WalletTool from "./WalletTool";
 import AiStudioTool from "./AiStudioTool";
 import VerificationTool from "./VerificationTool";
+import RevenueTool from "./RevenueTool";
+import MerchTool from "./MerchTool";
 
 const tools = [
   { title: "Academy", icon: FaGraduationCap },
@@ -47,6 +49,8 @@ function CreatorTool() {
       {activeTool === "Wallet" && <WalletTool />}
       {activeTool === "AI Studio" && <AiStudioTool />}
       {activeTool === "Verify" && <VerificationTool />}
+      {activeTool === "Revenue" && <RevenueTool />}
+      {activeTool === "Merch" && <MerchTool />}
     </div>
   );
 }
