@@ -40,7 +40,7 @@ const board = [
   },
 ];
 
-function LeaderboardSection() {
+function LeaderboardSection({ handleChallengeModal }) {
   return (
     <section className="flex flex-col gap-8 px-6">
       <div className="flex gap-6 items-end">
@@ -58,8 +58,10 @@ function LeaderboardSection() {
               </div>
             </div>
             <div className="flex items-center flex-col gap-1 font-inter">
-              <span className="text-xs font-bold text-white">mikedance</span>
-              <span className="text-[10px] font-extralight text-white">
+              <span className="text-xs font-bold text-black dark:text-white">
+                mikedance
+              </span>
+              <span className="text-[10px] font-extralight text-black dark:text-white">
                 1.8M
               </span>
             </div>
@@ -80,7 +82,9 @@ function LeaderboardSection() {
               </div>
             </div>
             <div className="flex items-center flex-col gap-1 font-inter">
-              <span className="text-xs font-bold text-white">alexrivera</span>
+              <span className="text-xs font-bold text-black dark:text-white">
+                alexrivera
+              </span>
               <span className="text-[10px] font-extralight text-orange100">
                 2.10M
               </span>
@@ -102,7 +106,9 @@ function LeaderboardSection() {
               </div>
             </div>
             <div className="flex items-center flex-col gap-1 font-inter">
-              <span className="text-xs font-bold text-white">mikedance</span>
+              <span className="text-xs font-bold text-black dark:text-white">
+                mikedance
+              </span>
               <span className="text-[10px] font-extralight text-orange500">
                 1.8M
               </span>
@@ -114,7 +120,7 @@ function LeaderboardSection() {
 
       <div className="flex flex-col gap-6">
         {board.map(({ img, name, username, points, videoCount }, i) => (
-          <div className="border border-white p-3 flex items-center justify-between rounded-2xl">
+          <div className="border border-black dark:border-white p-3 flex items-center justify-between rounded-2xl">
             <div className="flex items-center gap-4">
               <p className="text-slate450 font-semibold font-bricolage text-base">
                 {i + 4}
@@ -125,15 +131,17 @@ function LeaderboardSection() {
                 className="w-9 h-9 rounded-full object-cover"
               />
               <div className="flex flex-col gap-1.5">
-                <h4 className="text-sm font-inter text-white font-semibold">
+                <h4 className="text-sm font-inter text-black dark:text-white font-semibold">
                   {name}
                 </h4>
                 <div className="flex gap-1 items-center">
-                  <span className="font-thin text-white text-xs">
+                  <span className="font-thin text-black dark:text-white text-xs">
                     {username}
                   </span>
-                  <span className="font-thin text-white text-xs">.</span>
-                  <span className="font-thin text-white text-xs">
+                  <span className="font-thin text-black dark:text-white text-xs">
+                    .
+                  </span>
+                  <span className="font-thin text-black dark:text-white text-xs">
                     {videoCount} {videoCount > 1 ? "videos" : "video"}
                   </span>
                 </div>
@@ -169,7 +177,10 @@ function LeaderboardSection() {
       </div>
 
       <div className="flex gap-4 items-center justify-center">
-        <button className="w-80 h-12 bg-orange100 text-slate100 flex justify-center items-center text-base rounded-sm">
+        <button
+          onClick={handleChallengeModal}
+          className="w-80 h-12 cursor-pointer bg-orange100 text-slate100 flex justify-center items-center text-base rounded-sm"
+        >
           Join Challenge
         </button>
         <button className="text-slate100 border border-white/20 rounded-xl w-12 h-12 flex justify-center items-center">

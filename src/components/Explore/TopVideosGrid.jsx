@@ -60,9 +60,9 @@ const topVideos = [
 
 export default function TopVideosGrid() {
   return (
-    <div className="mb-10">
+    <div className="mb-10 flex flex-col">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-white text-lg font-bricolage font-semibold">Top Videos Right Now</h3>
+        <h3 className="text-black dark:text-white text-lg font-bricolage font-semibold">Top Videos Right Now</h3>
         <button className="text-orange100 text-sm font-medium hover:underline cursor-pointer bg-transparent border-none">
           See all
         </button>
@@ -70,9 +70,9 @@ export default function TopVideosGrid() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
         {topVideos.map((video) => (
-          <div key={video.id} className="relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer group">
+          <div key={video.id} className="relative aspect-2/3 rounded-2xl overflow-hidden cursor-pointer group">
             <img src={video.thumbnail} alt={video.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent"></div>
             
             {/* Top Badge */}
             <div className="absolute top-3 left-3 flex gap-2">
@@ -105,7 +105,7 @@ export default function TopVideosGrid() {
         ))}
       </div>
 
-      <button className="w-full py-4 rounded-xl border border-[#333] text-white font-semibold text-sm hover:bg-white/5 transition-colors cursor-pointer bg-transparent">
+      <button className="self-center max-w-150 w-full py-4 px-4 rounded-xl border border-black/30 dark:border-white/30 text-black dark:text-white font-semibold text-sm hover:bg-white/5 transition-colors cursor-pointer bg-transparent">
         Load more videos
       </button>
     </div>

@@ -8,7 +8,7 @@ function HeroSection({ handleChallengeModal }) {
     <section className="challenge-bg p-5 flex flex-col gap-20">
       <div className="flex items-center justify-between gap-3">
         <Link
-          to="/challenges"
+          to="/challenge"
           className="text-slate100 border border-white/20 rounded-xl w-7.5 h-7.5 flex justify-center items-center"
         >
           {" "}

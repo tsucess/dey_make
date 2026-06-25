@@ -25,10 +25,10 @@ export default function ExploreCategoryTabs({ activeCategory = "Trending", onSel
           <button
             key={category}
             onClick={() => onSelectCategory?.(category)}
-            className={`whitespace-nowrap px-8 py-2.5 rounded-full text-sm font-semibold transition-colors ${
+            className={`whitespace-nowrap px-8 py-2.5 rounded-full text-sm font-semibold transition-colors cursor-pointer ${
               isActive
                 ? "bg-orange100 text-black"
-                : "bg-transparent text-slate-300 hover:text-white"
+                : "bg-transparent text-slate300 hover:text-black100 hover:dark:text-white"
             }`}
           >
             {category}

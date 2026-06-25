@@ -9,7 +9,7 @@ export default function ExplorePage() {
   const [activeCategory, setActiveCategory] = useState("Trending");
 
   return (
-    <div className="min-h-full bg-[#121212]">
+    <div className="min-h-full bg-white dark:bg-black300">
       {/* Category Tabs container matches the padding of the layout */}
       <div className="px-6 md:px-10 pt-4">
         <ExploreCategoryTabs 

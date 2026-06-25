@@ -681,15 +681,15 @@ export default function Messages() {
   }
 
   return (
-    <div className="min-h-full bg-white dark:bg-[#1A1A1A] text-slate-900 dark:text-white">
-      <div className="mx-auto w-full max-w-7xl h-screen md:h-[calc(100vh-64px)] flex flex-col">
+    <div className="min-h-full bg-white dark:bg-black300 text-slate-900 dark:text-white">
+      <div className="mx-auto w-full max-w-7xl h-screen md:h-[calc(100vh-34px)] flex flex-col">
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 m-4 shrink-0">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700 m-4 shrink-0">{feedback}</div> : null}
 
         <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] flex-1 overflow-hidden">
           <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 overflow-hidden">
             <div className="mb-6 px-2 shrink-0">
-              <div className="flex items-center gap-3 rounded-[1rem] bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-3">
+              <div className="flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-3">
                 <HiOutlineSearch className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                 <input
                   type="text"

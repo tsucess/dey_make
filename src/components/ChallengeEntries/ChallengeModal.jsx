@@ -6,8 +6,8 @@ import { RxImage } from "react-icons/rx"
 
 function ChallengeModal({closeModal}) {
   return (
-    <section className="bg-white/10 dark:bg-black400/10 backdrop-blur-md flex items-center justify-center left-67.5 fixed p-4 w-full h-screen">
-      <form className="bg-white dark:bg-black400 p-10 rounded-3xl max-w-125 w-full flex flex-col gap-6 max-h-[90vh] overflow-y-auto mx-auto">
+    <section className="bg-white/20 dark:bg-black400/10 backdrop-blur-md flex items-center justify-center left-67.5 fixed p-4 w-full h-screen">
+      <form className="bg-white dark:bg-black400 shadow p-10 rounded-3xl max-w-125 w-full flex flex-col gap-6 max-h-[90vh] overflow-y-auto mx-auto">
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
                 <p className="text-black dark:text-white font-inter text-base font-bold">Submit Entry</p>

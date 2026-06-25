@@ -32,7 +32,7 @@ function EntriesSection() {
             className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
               activeTab === "trending"
                 ? "bg-orange100 text-black hover:bg-orange200"
-                : "text-white hover:text-slate150 hover:bg-slate250"
+                : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
             }`}
           >
             Trending
@@ -42,7 +42,7 @@ function EntriesSection() {
             className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
               activeTab === "newest"
                 ? "bg-orange100 text-black hover:bg-orange200"
-                : "text-white hover:text-slate150 hover:bg-slate250"
+                : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
             }`}
           >
             Newest
@@ -52,7 +52,7 @@ function EntriesSection() {
             className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
               activeTab === "most liked"
                 ? "bg-orange100 text-black hover:bg-orange200"
-                : "text-white hover:text-slate150 hover:bg-slate250"
+                : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
             }`}
           >
             Most Liked
@@ -60,38 +60,53 @@ function EntriesSection() {
         </menu>
       </div>
 
-
-{/* entries section */}
+      {/* entries section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-        {
-            entriesImg.map((img, i) => <div key={i} className="w-full h-full relative">
-                <img src={img} alt="" className="w-full h-full" />
-                <div className={`flex items-center gap-3 absolute left-4 top-4 right-4 ${i <3 ? 'justify-between' : 'justify-end'}`}>
-                    {i < 3 && <div className={`w-5 h-5 flex justify-center items-center text-xs font-semibold rounded-full ${
-                        i === 0 ? 'bg-orange100 text-black' :
-                        i === 1 ? 'bg-slate350 text-black': 'bg-orange400 text-white'
-                    }`}>{i + 1}</div>}
-                    <FaRegHeart className="w-6 h-6 text-white" />
+        {entriesImg.map((img, i) => (
+          <div key={i} className="w-full h-full relative">
+            <img src={img} alt="" className="w-full h-full" />
+            <div
+              className={`flex items-center gap-3 absolute left-4 top-4 right-4 ${i < 3 ? "justify-between" : "justify-end"}`}
+            >
+              {i < 3 && (
+                <div
+                  className={`w-5 h-5 flex justify-center items-center text-xs font-semibold rounded-full ${
+                    i === 0
+                      ? "bg-orange100 text-black"
+                      : i === 1
+                        ? "bg-slate350 text-black"
+                        : "bg-orange400 text-white"
+                  }`}
+                >
+                  {i + 1}
                 </div>
-                <div className="flex flex-col gap-1 left-4 absolute bottom-4">
-                    <div className="flex items-center gap-1.5">
-                        <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full"/>
-                        <span className="text-white font-inter text-xs">@zara.vibes</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-0.5">
-                            <LuEye className="w-4 h-4 text-white"/>
-                            <span className="text-white font-inter text-[10px]">2.1M</span>
-                        </div>
-                        <div className="flex items-center gap-0.5">
-                            <FaHeart className="w-4 h-4 text-red100"/>
-                            <span className="text-white font-inter text-[10px]">184k</span>
-                        </div>
-                    </div>
+              )}
+              <FaRegHeart className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex flex-col gap-1 left-4 absolute bottom-4">
+              <div className="flex items-center gap-1.5">
+                <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
+                <span className="text-white font-inter text-xs">
+                  @zara.vibes
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-0.5">
+                  <LuEye className="w-4 h-4 text-white" />
+                  <span className="text-white font-inter text-[10px]">
+                    2.1M
+                  </span>
                 </div>
-
-            </div>)
-        }
+                <div className="flex items-center gap-0.5">
+                  <FaHeart className="w-4 h-4 text-red100" />
+                  <span className="text-white font-inter text-[10px]">
+                    184k
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </section>
   );

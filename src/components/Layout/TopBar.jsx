@@ -188,18 +188,18 @@ export default function TopBar({ notificationState = null }) {
         />
       </>
     ) : null}
-    <header className="flex items-center justify-between pl-10 pr-6 h-[74px]
-                       bg-[#1e1e1e] border-t border-b border-orange100
+    <header className="flex items-center justify-between pl-10 pr-6 h-18.5 bg-white
+                       dark:bg-black300 border-t border-b border-orange100
                        sticky top-0 z-10 shrink-0">
 
       {/* Search */}
       <div ref={lookupRef} className="relative w-70">
         <form
           onSubmit={handleSubmit}
-          className="flex items-center gap-2 rounded-full bg-[#333333] px-4 py-2.5"
+          className="flex items-center gap-2 rounded-full bg-slate150 dark:bg-black100 px-4 py-2.5"
         >
           <button type="submit" className="shrink-0 border-none bg-transparent p-0 flex items-center justify-center" aria-label={t("topbar.submitSearch")}>
-            <HiSearch className="h-4 w-4 text-slate-300" />
+            <HiSearch className="h-4 w-4 text-slate300" />
           </button>
           <input
             type="text"
@@ -211,7 +211,7 @@ export default function TopBar({ notificationState = null }) {
             onKeyDown={handleInputKeyDown}
             placeholder={t("topbar.searchPlaceholder")}
             aria-label={t("topbar.searchAriaLabel")}
-            className="w-full border-none bg-transparent text-sm font-inter text-white outline-none placeholder-slate-400"
+            className="w-full border-none bg-transparent text-sm font-inter text-slate300 dark:text-white outline-none placeholder-slate300"
           />
         </form>
 
@@ -324,11 +324,11 @@ export default function TopBar({ notificationState = null }) {
                 onClick={openNotification}
                 ariaLabel={t("common.notifications")}
                 unreadCount={0}
-                className="flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent cursor-pointer transition-colors hover:bg-white/10 text-slate-300 hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent cursor-pointer transition-colors hover:bg-white/10 text-slate300 hover:text-black100 dark:text-slate150 hover:dark:text-white"
                 iconClassName="h-5 w-5"
               />
               {/* Blue dot indicator for notifications */}
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 border border-[#1e1e1e]"></span>
+              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 border border-black300"></span>
             </div>
             
             {/* Avatar */}

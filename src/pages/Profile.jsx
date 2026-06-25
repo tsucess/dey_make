@@ -451,14 +451,14 @@ export default function Profile() {
   const totalLikes = profile?.totalLikes ? formatCompactNumber(profile.totalLikes) : "2.4M";
 
   return (
-    <div className="min-h-full bg-[#121212] pb-20">
+    <div className="min-h-full bg-white dark:bg-black100 pb-20">
       <div className="relative">
         <img src="/header_profile.png" alt="" className="h-48 w-full object-cover md:h-72" />
         <div className="absolute top-4 right-4 flex items-center gap-3">
-          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+          <button className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiBell className="w-5 h-5" />
           </button>
-          <button onClick={() => navigate("/coins-wallet")} className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+          <button onClick={() => navigate("/coins-wallet")} className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiMoreHorizontal className="w-5 h-5" />
           </button>
         </div>
@@ -535,7 +535,7 @@ export default function Profile() {
                 </div>
               ) : (
                 <div className="mt-4 flex flex-col items-center text-center space-y-1.5">
-                  <h1 className="text-[22px] md:text-[26px] font-semibold font-inter text-white">
+                  <h1 className="text-[22px] md:text-[26px] font-semibold font-inter text-black dark:text-white">
                     {getProfileName(displayProfile) || "Zara Vibes"}
                   </h1>
                   <p className="text-[13px] md:text-[14px] font-medium font-inter text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
@@ -547,15 +547,15 @@ export default function Profile() {
               {/* Stats */}
               <div className="mt-6 flex items-center justify-center gap-10 md:gap-16">
                 <div className="flex flex-col items-center">
-                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{videosCount}</span>
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-black dark:text-white">{videosCount}</span>
                   <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Videos</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{followersCount}</span>
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-black dark:text-white">{followersCount}</span>
                   <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Followers</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-white">{followingCount}</span>
+                  <span className="text-[18px] md:text-[20px] font-bold font-inter text-black dark:text-white">{followingCount}</span>
                   <span className="text-[11px] font-medium font-inter text-slate-500 mt-0.5">Following</span>
                 </div>
               </div>

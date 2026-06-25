@@ -46,14 +46,14 @@ export default function Sidebar() {
   return (
     <aside
       className="flex flex-col w-67.5 min-h-screen
-                      bg-[#1e1e1e] border-r border-orange100 shrink-0"
+                      bg-white dark:bg-black300 border-r border-orange100 shrink-0"
     >
-      <div className="flex flex-col justify-center px-8 h-[74px] bg-orange100 border-t border-b border-orange100 shrink-0">
+      <div className="flex flex-col justify-center px-8 h-18.5 bg-orange100 border-t border-b border-orange100 shrink-0">
         <Link to="/home" className="flex flex-col items-start">
           <img
             src="/DEYMAKE LOGO with Tagline Black.svg"
             alt={t("app.name")}
-            className="w-[140px] h-auto object-contain"
+            className="w-35 h-auto object-contain"
           />
         </Link>
       </div>
@@ -76,7 +76,7 @@ export default function Sidebar() {
               `flex items-center gap-4 px-8 py-3 text-[15px]
                font-medium transition-colors duration-150 font-inter
                ${
-                 isActive ? "text-orange100" : "text-slate-300 hover:text-white"
+                 isActive ? "text-orange100 hover:text-orange500" : "text-black500 dark:text-slate150 hover:text-orange200 hover:dark:text-white"
                }`
             }
           >
@@ -99,8 +99,8 @@ export default function Sidebar() {
 
       <button
         className="flex items-center gap-4 px-8 py-6 mb-4
-                         text-slate-300 font-medium text-[15px]
-                         hover:text-white font-inter transition-colors
+                         text-black500 dark:text-slate150 hover:text-orange200 hover:dark:text-white font-medium text-[15px]
+                          font-inter transition-colors
                          bg-transparent border-none cursor-pointer
                          w-full text-left mt-auto"
         onClick={logout}

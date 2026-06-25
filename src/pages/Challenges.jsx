@@ -139,7 +139,7 @@ export default function Challenges() {
   const [activeCategory, setActiveCategory] = useState("all");
 
   return (
-    <div className="min-h-full bg-[#121212] px-4 pb-24 pt-6 md:px-8 md:py-8 text-white">
+    <div className="min-h-full bg-white dark:bg-black300 px-4 pb-24 pt-6 md:px-8 md:py-8 text-black dark:text-white">
       <div className="mx-auto w-full max-w-6xl space-y-8">
         {/* Header Section */}
         <div className="flex items-center justify-between">
@@ -242,7 +242,7 @@ export default function Challenges() {
                   alt={challenge.title}
                   className="absolute inset-0 h-full w-full object-cover opacity-60"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-[#111111] via-[#111111]/80 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black400 via-black400/80 to-transparent" />
 
                 {/* Top Badges */}
                 <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -312,7 +312,7 @@ export default function Challenges() {
           </div>
           <Link
             to="/challenge-entries"
-            className="rounded bg-orange100 px-4 py-1.5 text-xs font-bold text-black hover:bg-orange-500"
+            className="rounded bg-orange100 px-4 py-1.5 text-xs font-bold text-black hover:bg-orange500"
           >
             {t("challenges.viewAction")}
           </Link>
@@ -333,14 +333,14 @@ export default function Challenges() {
             {PAST_CHALLENGES.map((challenge) => (
               <div
                 key={challenge.id}
-                className="relative flex h-32 w-full overflow-hidden rounded-2xl bg-[#1A1A1A] group cursor-pointer"
+                className="relative flex h-32 w-full overflow-hidden rounded-2xl bg-slate100 group cursor-pointer"
               >
                 <img
                   src={challenge.image}
                   alt={challenge.title}
                   className="absolute inset-0 h-full w-full object-cover opacity-40 transition-opacity group-hover:opacity-50"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-[#111111] via-[#111111]/60 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black400 via-black400/60 to-transparent" />
 
                 <div className="absolute right-3 top-3">
                   <span className="rounded border border-white/20 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
