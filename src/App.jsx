@@ -44,6 +44,7 @@ const Connection = lazy(() => import("./pages/Connections"));
 const Mutual = lazy(() => import("./pages/Mutual"));
 const ChallengeEntries = lazy(() => import("./pages/ChallengeEntries"));
 const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
+const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -175,6 +176,9 @@ export default function App() {
               path="/creator-dashboard"
               element={renderLazyRoute(CreatorDashboard)}
             />
+            <Route
+              path="/coins-wallet"
+              element={renderLazyRoute(CoinsWallet)}/>
 
             <Route
               path="/challenge-entries"

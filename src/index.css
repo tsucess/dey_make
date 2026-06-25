@@ -72,19 +72,19 @@
 }
 
 .challenge-bg {
-  background-image: url("/public/challenge_entries.png");
+  background-image: url("/challenge_entries.png");
   background-size: cover;
   background-position: center right;
 }
 
 .wallet-bg {
-  background-image: url("/public/wallet-bg.png");
+  background-image: url("/wallet-bg.png");
   background-size: cover;
   background-position: center;
 }
 
 .studio-bg{
-  background-image: url("/public/studio-bg.png");
+  background-image: url("/studio-bg.png");
   background-size: cover;
   background-position: center;
 }

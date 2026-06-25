@@ -458,7 +458,7 @@ export default function Profile() {
           <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiBell className="w-5 h-5" />
           </button>
-          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+          <button onClick={() => navigate("/coins-wallet")} className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiMoreHorizontal className="w-5 h-5" />
           </button>
         </div>
