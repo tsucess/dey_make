@@ -4,6 +4,7 @@ import { FiGift } from "react-icons/fi";
 import { GiTwoCoins } from "react-icons/gi";
 import CoinsSection from "./CoinsSection";
 import HistoryTab from "./HistoryTab";
+import GiftTab from "./GiftTab";
 
 function CoinTabSection() {
   const [activeTab, setActiveTab] = useState("coins");
@@ -48,6 +49,7 @@ function CoinTabSection() {
 
       {activeTab === "coins" && <CoinsSection />}
       {activeTab === "history" && <HistoryTab />}
+      {activeTab === "gift" && <GiftTab />}
     </div>
   );
 }
