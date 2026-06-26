@@ -107,7 +107,9 @@ export default function AppLayout() {
         {/* TopBar — desktop only */}
         {!location.pathname.startsWith("/messages") &&
           !location.pathname.startsWith("/challenge") &&
-          !location.pathname.startsWith("/coins-wallet") && (
+          !location.pathname.startsWith("/coins-wallet") &&
+          !location.pathname.startsWith("/live") &&
+          !location.pathname.startsWith("/live-preview") && (
             <div className="hidden md:block">
               <TopBar notificationState={notificationState} />
             </div>

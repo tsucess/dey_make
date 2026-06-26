@@ -49,7 +49,7 @@ export default function Notifications() {
   } = useNotifications({ enabled: true });
 
   return (
-    <div className="min-h-full bg-[#121212] text-white pb-20 md:pb-0">
+    <div className="min-h-full bg-white dark:bg-black300 text-black dark:text-white pb-20 md:pb-0">
       <div className="w-full px-4 py-8 md:px-8 md:py-12">
         <div className="mb-6 flex flex-wrap items-center gap-2 md:gap-8 overflow-x-auto no-scrollbar">
           {TABS.map((tab) => (
@@ -60,7 +60,7 @@ export default function Notifications() {
               className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === tab
                   ? "bg-orange100 text-black"
-                  : "text-white hover:bg-white/5"
+                  : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-white/5"
               }`}
             >
               {tab}
@@ -84,7 +84,7 @@ export default function Notifications() {
             </button>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] bg-[#333333] min-h-[65vh] text-center px-4 w-full">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] bg-black100 min-h-[65vh] text-center px-4 w-full">
             <IoNotificationsOffOutline className="h-28 w-28 text-white mb-2" strokeWidth={1} />
             <div className="space-y-3">
               <h2 className="text-[22px] font-semibold font-inter text-white">
@@ -96,10 +96,10 @@ export default function Notifications() {
             </div>
           </div>
         ) : (
-          <div className="rounded-[20px] bg-[#333333] p-4 md:p-8 w-full min-h-[65vh]">
+          <div className="rounded-[20px] bg-white300 dark:bg-black100 p-4 md:p-8 w-full min-h-[65vh]">
             {groupNotifications(notifications).map(([groupName, groupItems]) => (
               <div key={groupName} className="mb-8 last:mb-0">
-                <h3 className="text-[20px] font-medium font-inter text-white mb-4">
+                <h3 className="text-[20px] font-medium font-inter text-black dark:text-white mb-4">
                   {groupName}
                 </h3>
                 <div className="flex flex-col gap-2">
@@ -131,7 +131,7 @@ export default function Notifications() {
                         </div>
                         
                         <div className="flex-1 mt-2.5">
-                          <p className="text-[15.5px] font-inter text-slate-200 leading-relaxed pr-4">
+                          <p className="text-[15.5px] font-inter text-black dark:text-white leading-relaxed pr-4">
                             {notification.title}
                             {notification.body && <span className="ml-1">{notification.body}</span>}
                             <span className="text-slate-500 ml-2">{formatRelativeTime(notification.createdAt)}</span>
@@ -148,7 +148,7 @@ export default function Notifications() {
 
                         {hasThumbnail && (
                           <div className="shrink-0 pt-1">
-                            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=80&q=80" alt="Thumbnail" className="w-[52px] h-[52px] rounded-lg object-cover" />
+                            <img src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=80&q=80" alt="Thumbnail" className="w-13 h-13 rounded-lg object-cover" />
                           </div>
                         )}
                       </button>

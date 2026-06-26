@@ -45,6 +45,8 @@ const Mutual = lazy(() => import("./pages/Mutual"));
 const ChallengeEntries = lazy(() => import("./pages/ChallengeEntries"));
 const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
 const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
+const Notification = lazy(() => import("./pages/Notifications"));
+const LivePreview = lazy(() => import("./pages/LivePreview"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -178,12 +180,21 @@ export default function App() {
             />
             <Route
               path="/coins-wallet"
-              element={renderLazyRoute(CoinsWallet)}/>
-
+              element={renderLazyRoute(CoinsWallet)}
+            />
             <Route
               path="/challenge-entries"
               element={renderLazyRoute(ChallengeEntries)}
             />
+            <Route
+              path="/notification"
+              element={renderLazyRoute(Notification)}
+            />
+            <Route
+              path="/live-preview"
+              element={renderLazyRoute(LivePreview)}
+            />
+            
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>

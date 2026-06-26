@@ -5,6 +5,7 @@ import SectionState from "../components/Layout/SectionState";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
+import LiveVideos from "../components/Live/LiveVideos";
 
 export default function LivePage() {
   const { t } = useLanguage();
@@ -23,9 +24,16 @@ export default function LivePage() {
       try {
         const response = await api.getLiveVideos();
 
-        if (!ignore) setLiveVideos(filterActiveLiveVideos(response?.data?.videos || []));
+        if (!ignore)
+          setLiveVideos(filterActiveLiveVideos(response?.data?.videos || []));
       } catch (nextError) {
-        if (!ignore) setError(firstError(nextError.errors, nextError.message || t("livePage.unableToLoad")));
+        if (!ignore)
+          setError(
+            firstError(
+              nextError.errors,
+              nextError.message || t("livePage.unableToLoad"),
+            ),
+          );
       } finally {
         if (!ignore) setLoading(false);
       }
@@ -39,8 +47,8 @@ export default function LivePage() {
   }, [t]);
 
   return (
-    <div className="min-h-full w-full bg-white px-4 pb-24 pt-4 dark:bg-slate100 md:px-6 md:py-5">
-      <section className="rounded-4xl bg-linear-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
+    <div className="min-h-full w-full bg-white px-4 pb-24 pt-4 dark:bg-black300 md:px-6 md:py-5">
+      {/* <section className="rounded-4xl bg-linear-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
         <p className="text-sm font-medium uppercase tracking-[0.3em] text-white/70">{t("common.live")}</p>
         <h1 className="mt-3 text-3xl font-semibold font-bricolage">{t("livePage.title")}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-white/80 md:text-base">{t("livePage.description")}</p>
@@ -80,7 +88,9 @@ export default function LivePage() {
             actionClassName="mt-5 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black"
           />
         )}
-      </section>
+      </section> */}
+
+      <LiveVideos />
     </div>
   );
 }
