@@ -1,5 +1,5 @@
 import { BsFillBarChartFill } from "react-icons/bs";
-import { FaEye, FaMicrophone, FaRegComment } from "react-icons/fa";
+import { FaCrown, FaEye, FaMicrophone, FaRegComment } from "react-icons/fa";
 import { GiStarKey } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { PiCoinFill } from "react-icons/pi";
@@ -87,9 +87,54 @@ function LiveNew() {
           </div>
         ))}
       </div>
+      <div className="flex flex-col gap-4 bottom-20 left-4 absolute">
+        <div className="px-2 flex items-center gap-3">
+          <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
+          <div className="bg-orange100/10 border border-orange100/50 p-2 flex items-center gap-2 rounded-full">
+            <span className="text-[10px] text-orange800">lila.movess sent</span>
+            <FaCrown className="w-4 h-4 text-orange600" />
+            <span className="text-[10px] font-semibold text-white">Crown </span>
+            <span className="text-white text-[8px]">x500</span>
+          </div>
+        </div>
+        <div className="px-2 flex items-center gap-3">
+          <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
+          <span className="text-[10px] text-white">
+            boby_kkai joined the stream
+          </span>
+        </div>
+        <div className="px-2 flex items-center gap-3">
+          <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
+          <span className="text-[10px] text-white">
+            boby_kkai joined the stream
+          </span>
+        </div>
+        <div className="px-2 flex items-center gap-3">
+          <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
+          <div className="bg-orange100/10 border border-orange100/50 p-2 flex items-center gap-2 rounded-full">
+            <span className="text-[10px] text-orange800">lila.movess sent</span>
+            <FaCrown className="w-4 h-4 text-orange600" />
+            <span className="text-[10px] font-semibold text-white">Crown </span>
+            <span className="text-white text-[8px]">x500</span>
+          </div>
+        </div>
+        <div className="p-2 border-red100/10 bg-red100/50 flex items-center gap-2 rounded-full">
+          <FaCrown className="w-4 h-4 text-orange600" />
+          <span className="text-[10px] font-semibold text-white">
+          500 viewers watching right now!
+        </span>
+        </div>
+        
+      </div>
       <div className="right-4 left-4 bottom-7 bg-black100 border border-slate700 px-4 py-3 flex items-center gap-3 absolute rounded-full">
-        <FaRegComment className="w-5 h-5 text-white shrink-0"/>
-        <input type="text" name="" id="" placeholder="Say something..." className="text-xs text-white font-medium flex-1"/>
+        <FaRegComment className="w-5 h-5 text-white shrink-0" />
+        <input
+          type="text"
+          name=""
+          id=""
+          placeholder="Say something..."
+          className="text-xs text-white font-medium flex-1"
+        />
       </div>
     </div>
   );
