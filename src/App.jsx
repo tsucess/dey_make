@@ -47,6 +47,7 @@ const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
 const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
 const Notification = lazy(() => import("./pages/Notifications"));
 const LivePreview = lazy(() => import("./pages/LivePreview"));
+const Live = lazy(() => import("./pages/LiveNew"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -190,11 +191,12 @@ export default function App() {
               path="/notification"
               element={renderLazyRoute(Notification)}
             />
+            <Route path="/lives" element={renderLazyRoute(Live)} />
             <Route
               path="/live-preview"
               element={renderLazyRoute(LivePreview)}
             />
-            
+
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={renderLazyRoute(AdminUsers)} />
             </Route>

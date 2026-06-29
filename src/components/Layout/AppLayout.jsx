@@ -109,7 +109,8 @@ export default function AppLayout() {
           !location.pathname.startsWith("/challenge") &&
           !location.pathname.startsWith("/coins-wallet") &&
           !location.pathname.startsWith("/live") &&
-          !location.pathname.startsWith("/live-preview") && (
+          !location.pathname.startsWith("/live-preview") &&
+          !location.pathname.startsWith("/lives") && (
             <div className="hidden md:block">
               <TopBar notificationState={notificationState} />
             </div>

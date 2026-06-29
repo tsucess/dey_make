@@ -6,6 +6,7 @@ import { IoMdClose } from "react-icons/io";
 import { LuDot } from "react-icons/lu";
 import { PiBasketballLight } from "react-icons/pi";
 import { TbCamera, TbHearts } from "react-icons/tb";
+import { useNavigate } from "react-router-dom";
 
 const categoryTab = [
   "Dance",
@@ -71,6 +72,7 @@ const settings = [
 ];
 
 function LivePreview() {
+  const navigate = useNavigate()
   const [activeCategory, setActiveCategorye] = useState("Dance");
 
   function handleActiveCategoryChange(value) {
@@ -163,7 +165,10 @@ function LivePreview() {
                     }</div>
             </div>)
             }</div>
+            <button onClick={()=> navigate('/lives')} className="bg-orange100 py-3 px-30 font-medium rounded-md text-sm text-black self-center">Go Live Now</button>
       </div>
+
+      
     </section>
   );
 }
