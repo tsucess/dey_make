@@ -61,7 +61,7 @@ const transactions = [
 function WalletTool() {
   return (
     <section className="flex flex-col gap-8">
-      <div className="wallet-bg px-7.5 py-12.5 rounded-4xl  flex flex-col gap-3.5 border border-white/30">
+      <div className="wallet-bg px-5 md:px-7.5 py-7 md:py-12.5 rounded-4xl  flex flex-col gap-3.5 border border-white/30">
         {/* <div className="bg-black/80 dark:bg-black/80 absolute inset-0 w-full h-full z-0"></div> */}
         <div className="flex flex-col gap-1 font-inter">
           <h2 className="uppercase text-slate700 dark:text-slate700 text-sm">
@@ -86,7 +86,7 @@ function WalletTool() {
       </div>
 
       <div className="flex flex-col gap-7">
-        <h3 className="font-semibold text-black dark:text-white font-inter">
+        <h3 className="font-semibold text-xl md:text-2xl text-black dark:text-white font-inter">
           Recent Transactions
         </h3>
         <div className="flex flex-col gap-6">
@@ -94,7 +94,7 @@ function WalletTool() {
             ({ title, desc, value, isIncome, icon: Icon }, i) => (
               <div
                 key={title - i}
-                className="px-7.5 py-5 hover:bg-slate150 transition-all hover:dark:bg-black500 flex items-center justify-between gap-2 font-inter rounded-xl border border-black/30 dark:border-white/30"
+                className="px-5 md:px-7.5 py-3 md:py-5 hover:bg-slate150 transition-all hover:dark:bg-black500 flex items-center justify-between gap-2 font-inter rounded-xl border border-black/30 dark:border-white/30"
               >
                 <div className="flex items-center gap-3">
                   <div
@@ -139,7 +139,7 @@ function WalletTool() {
             ),
           )}
         </div>
-        <button className="px-7.5 py-8 text-sm hover:bg-slate150 transition-all hover:dark:bg-black500 font-semibold cursor-pointer font-inter border border-black/20 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-black dark:text-white">
+        <button className="px-7.5 py-5 md:py-8 text-sm hover:bg-slate150 transition-all hover:dark:bg-black500 font-semibold cursor-pointer font-inter border border-black/20 dark:border-white/20 rounded-xl flex items-center justify-center gap-2 text-black dark:text-white">
           + Add Payment Method
         </button>
       </div>

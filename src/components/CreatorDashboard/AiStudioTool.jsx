@@ -78,18 +78,18 @@ const toolKits = [
 function AiStudioTool() {
   return (
     <section className="flex flex-col gap-8 ">
-      <div className="studio-bg py-10 rounded-2xl px-8 h-44 flex items-center justify-between">
+      <div className="studio-bg py-10 rounded-2xl px-4 md:px-8 h-44 flex items-center justify-between">
         <div className="flex flex-col gap-3 font-inter">
           <h2 className="text-white text-2xl font-bold">AI Studio Pro</h2>
           <span className="text-white text-xs">
             Unlock all tools · 200 AI credits/mo
           </span>
         </div>
-        <button className="bg-orange100 text-slate100 text-base px-6 py-3 rounded-md">
+        <button className="bg-orange100 text-slate100 text-base px-4 md:px-6 py-2 md:py-3 rounded-md">
           Upgrade
         </button>
       </div>
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-4 md:gap-6">
         <h3 className="text-black dark:text-white text-xl font-semibold">
           Your AI Toolkit
         </h3>
@@ -98,12 +98,12 @@ function AiStudioTool() {
             ({ name, desc, icon: Icon, level, price, isLocked }, i) => (
               <div
                 key={name - i}
-                className="flex flex-col gap-12.5 px-7.5 py-12.5 rounded-2xl border border-black/20 dark:border-white/20 bg-white300 dark:bg-black400"
+                className="flex flex-col gap-7 md:gap-12.5 px-5 md:px-7.5 py-8 md:py-12.5 rounded-2xl border border-black/20 dark:border-white/20 bg-white300 dark:bg-black400"
               >
                 <div className="flex justify-between items-start gap-3">
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-3 md:gap-6">
                     <div
-                      className={`w-12 h-12 rounded-md flex items-center justify-center border border-black/20 dark:border-white/20 ${
+                      className={`w-9 md:w-12 h-9 md:h-12 rounded-md flex items-center justify-center border border-black/20 dark:border-white/20 ${
                         i === 0
                           ? "bg-black500/5 dark:bg-black500 text-red700"
                           : i === 1
@@ -124,7 +124,7 @@ function AiStudioTool() {
                       <Icon className="w-6 h-6" />
                     </div>
                     <div className="flex flex-col gap-1 font-inter">
-                      <h6 className="text-base font-bold text-black dark:text-white">
+                      <h6 className="text-sm md:text-base font-bold text-black dark:text-white">
                         {name}
                       </h6>
                       <span className="text-xs text-black dark:text-white">

@@ -44,23 +44,23 @@ function VerificationTool() {
   ).length;
   return (
     <section className="flex flex-col gap-8">
-      <div className="bg-white300 dark:bg-black400 px-8 py-15 rounded-3xl flex flex-col gap-4">
+      <div className="bg-white300 dark:bg-black400 px-4 md:px-8 py-10 md:py-15 rounded-3xl flex flex-col gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded flex items-center justify-center bg-red500/10">
+          <div className="w-12 h-12 rounded flex items-center justify-center bg-red500/10 shrink-0">
             <ShieldCheck className="w-6 h-6 text-red500" />
           </div>
           <div className="flex flex-col gap-0.5 font-inter">
-            <h2 className="text-2xl font-bold text-black dark:text-white">
+            <h2 className="text-xl md:text-2xl font-bold text-black dark:text-white">
               Verification
             </h2>
-            <p className="text-base text-black dark:text-white">
+            <p className="text-sm md:text-base text-black dark:text-white">
               You meet almost all requirements! Apply now for your verified
               badge.
             </p>
           </div>
         </div>
-        <div className="flex flex-col gap-6">
-          <span>
+        <div className="flex flex-col gap-3 md:gap-6">
+          <span className="text-xs">
             {completedRequirement} of {requirements.length} requirements met
           </span>
           <div className="flex items-center gap-2">
@@ -81,10 +81,10 @@ function VerificationTool() {
 
       {/* requirements */}
       <div className="flex flex-col gap-7 font-inter">
-        <h3 className="text-xl font-semibold text-black dark:text-white">
+        <h3 className="text-lg md:text-xl font-semibold text-black dark:text-white">
           Requirements
         </h3>
-        <div className="flex flex-col gap-5 border border-black/30 dark:border-white/30 rounded-xl px-7.5 py-5">
+        <div className="flex flex-col gap-2 md:gap-5 border border-black/30 dark:border-white/30 rounded-xl px-3 md:px-7.5 py-5">
           {requirements.map(({ title, completed }, i) => (
             <div
               key={title}

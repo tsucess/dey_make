@@ -79,7 +79,7 @@ function AcademyTool() {
                 </div>
               </div>
               <button>
-                <IoIosArrowForward className="w-4 md:w-5 w-4 md:h-5 text-black dark:text-white" />
+                <IoIosArrowForward className="w-4 md:w-5 h-4 md:h-5 text-black dark:text-white" />
               </button>
             </div>
           ))}
@@ -91,12 +91,12 @@ function AcademyTool() {
           Courses
         </h3>
         <div className="overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-        <div className="flex items-center gap-3 w-140">
+        <div className="flex items-center gap-2 md:gap-3 w-140">
           {courseTab.map((tab) => (
             <button
               key={tab}
               onClick={() => handleActiveCourseChange(tab)}
-              className={`transition-all text-sm py-3 px-5 rounded-xl font-semibold flex items-center gap-3 ${
+              className={`transition-all text-sm py-2 md:py-3 px-5 rounded-xl font-semibold flex items-center gap-3 ${
                 activeCourse === tab
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
@@ -120,7 +120,7 @@ function AcademyTool() {
 
 function CourseCard({ category, level, lesson, time, title }) {
   return (
-    <div className="bg-white300 dark:bg-slate250 rounded-4xl p-6 flex flex-col gap-10">
+    <div className="bg-white300 dark:bg-slate250 rounded-4xl p-4 md:p-6 flex flex-col gap-6 md:gap-10">
       <div className="flex flex-col items-end gap-1.25">
         {time > 0 && (
           <div className="bg-slate350 dark:bg-slate150 h-1 w-full flex">
@@ -134,10 +134,10 @@ function CourseCard({ category, level, lesson, time, title }) {
           {lesson}
         </span>
       </div>
-      <div className="flex flex-col gap-4 font-inter">
+      <div className="flex flex-col gap-2 md:gap-4 font-inter">
         <div className="flex items-center gap-3 ">
           <div
-            className={`px-2 py-1 rounded text-[11px] ${
+            className={`px-2 py-0.5 md:py-1 rounded text-[11px] ${
               level === "Intermediate"
                 ? "bg-orange600/10 text-orange600"
                 : level === "Beginner"
@@ -151,7 +151,7 @@ function CourseCard({ category, level, lesson, time, title }) {
             {category}
           </span>
         </div>
-        <h5 className="text-base text-black300 dark:text-white font-bold">
+        <h5 className="text-sm md:text-base text-black300 dark:text-white font-bold">
           {title}
         </h5>
         <div className="flex items-center gap-2">

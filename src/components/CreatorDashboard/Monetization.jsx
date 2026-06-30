@@ -17,11 +17,11 @@ function Monetization() {
 function handleSourceIsonToggle(title){
     setSources(prev =>  prev.map(source => source.title === title ? {...source, isOn: !source.isOn} : source))
 }
-  return <div className="flex flex-col gap-8 font-inter">
-    <h4 className="text-xl font-bold text-black300 dark:text-white ">Monetization Sources</h4>
+  return <div className="flex flex-col gap-5 md:gap-8 font-inter">
+    <h4 className="text-lg md:text-xl font-bold text-black300 dark:text-white ">Monetization Sources</h4>
     <div className="flex flex-col gap-6 p-5 border border-black/30 dark:border-white/30 rounded-3xl">
     {
-        sources.map(({title, desc, isOn, icon: Icon}, i) => <div className="flex p-3 rounded-2xl bg-white300 dark:bg-black400 bordeer border-black/30 dark:border-white/30 justify-between">
+        sources.map(({title, desc, isOn, icon: Icon}, i) => <div className="flex items-center p-3 rounded-2xl bg-white300 dark:bg-black400 bordeer border-black/30 dark:border-white/30 justify-between">
             <div className="flex items-center gap-3 ">
                 <div className={`w-9.5 h-9.5 rounded-md border border-black/30 dark:border-white/30 flex items-center justify-center ${
                     i === 0 ? 'bg-black500/5 dark:bg-black500 text-red500' : 

@@ -143,6 +143,7 @@ export default function TopSectorsChart() {
       <div
         className="
         flex
+        flex-col
         items-center
         gap-10
       "
@@ -179,6 +180,7 @@ export default function TopSectorsChart() {
         <div
           className="
           flex
+          w-full
           flex-col
           gap-7
           flex-1
