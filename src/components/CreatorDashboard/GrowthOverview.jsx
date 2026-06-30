@@ -86,7 +86,7 @@ export default function GrowthOverview() {
   return (
     <div className="text-black dark:text-white rounded-xl border border-black/57 dark:border-white/57 p-5 w-full">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex flex-col gap-3 md:flex-row md:justify-between md:items-start">
         <div>
           <h2 className="font-bold text-lg">Growth Overview</h2>
 
@@ -96,13 +96,13 @@ export default function GrowthOverview() {
         </div>
 
         <div className="flex gap-2 text-sm">
-          <button className="bg-yellow-400 text-black px-5 py-2 rounded-xl font-semibold">
+          <button className="bg-yellow-400 text-black px-3 md:px-5 py-1 md:py-2 rounded-xl font-semibold">
             7D
           </button>
 
-          <button className="px-4">30D</button>
+          <button className="px-3 md:px-5 py-1 md:py-2">30D</button>
 
-          <button className="px-4">90D</button>
+          <button className="px-3 md:px-5 py-1 md:py-2">90D</button>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ export default function GrowthOverview() {
       {/* Stats */}
       <div className="grid grid-cols-3 text-center mt-4">
         <div>
-          <h3 className="font-bold text-lg">5.4M</h3>
+          <h3 className="font-bold text-base md:text-lg">5.4M</h3>
 
           <p className="text-xs text-black300 dark:text-slate400">
             Total Views
@@ -133,13 +133,13 @@ export default function GrowthOverview() {
         </div>
 
         <div>
-          <h3 className="font-bold text-lg">1.4M</h3>
+          <h3 className="font-bold text-base md:text-lg">1.4M</h3>
 
           <p className="text-xs text-black300 dark:text-slate400">Peak(Sat)</p>
         </div>
 
         <div>
-          <h3 className="font-bold text-lg">749K</h3>
+          <h3 className="font-bold text-base md:text-lg">749K</h3>
 
           <p className="text-xs text-black300 dark:text-slate400">Daily Avg.</p>
         </div>

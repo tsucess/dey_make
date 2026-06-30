@@ -12,24 +12,24 @@ const quickActions = [
 function QuickActionOverview() {
   return (
     <div className="flex p-5 flex-col gap-6 border border-black300 dark:border-white rounded-3xl">
-        <h3 className="text-black300 dark:text-white font-bold text-xl">
+        <h3 className="text-black300 dark:text-white font-bold text-lg md:text-xl">
           Quick Actions
         </h3>
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 md:gap-5 md:grid-cols-2">
             {
-                quickActions.map(({title, icon:Icon}, i) => <div key={title} className="border border-black/30 dark:border-white/30 rounded-3xl p-5 flex items-center gap-3 bg-slate150 dark:bg-black400">
-                    <div className={`w-12 h-12 rounded-sm flex items-center justify-center border border-white/20  ${
+                quickActions.map(({title, icon:Icon}, i) => <div key={title} className="border border-black/30 dark:border-white/30 rounded-3xl p-4 md:p-5 flex items-center gap-3 bg-slate150 dark:bg-black400">
+                    <div className={`w-10 md:w-12 h-10 md:h-12 rounded-sm flex items-center justify-center border border-white/20  ${
                         i < 2 ? 'bg-black500/5 dark:bg-black500' :
                         i === 2 ? 'bg-brown500/5 dark:bg-brown500' : 'bg-green400/5 dark:bg-green400'
                     } `}>
-                        <Icon className={`w-6 h-6  ${
+                        <Icon className={`w-5 md:w-6 h-5 md:h-6  ${
                             i === 0 ? 'text-red100' : 
                             i === 1 ? 'text-pink' : 
                             i === 2 ? 'text-orange100' :
                             'text-green100'
                         }`}/>
                     </div>
-                    <p className="font-inter font-medium text-base text-black dark:text-white">{title}</p>
+                    <p className="font-inter font-medium text-sm md:text-base text-black dark:text-white">{title}</p>
                 </div>)
             }
         </div>

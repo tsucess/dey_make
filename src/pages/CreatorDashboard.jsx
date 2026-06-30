@@ -11,7 +11,7 @@ function CreatorDashboard() {
   }
 
   return (
-    <section className="bg-white dark:bg-black300 p-6 flex flex-col gap-9">
+    <section className="bg-white dark:bg-black300 p-4 md:p-6 flex flex-col gap-6 md:gap-9">
       <div className="flex flex-col gap-px font-inter">
         <span className="text-black dark:text-white text-xs">
           Good evening, Steve Stone
@@ -20,10 +20,10 @@ function CreatorDashboard() {
           Creator Dashboard
         </h1>
       </div>
-      <menu className="flex items-center overflow-hidden rounded-xl h-12.5 w-full">
+      <menu className="flex items-center overflow-hidden rounded-xl h-9 md:h-12.5 w-full">
         <button
           onClick={() => handleActiveTab("overview")}
-          className={`flex-1 h-full flex items-center justify-center gap-2 font-semibold text-[15px] transition-all ${
+          className={`flex-1 h-full flex items-center justify-center gap-2 font-semibold text-xs md:text-[15px] transition-all ${
             activeTab === "overview"
               ? "bg-orange100 hover:bg-orange200 text-black"
               : "bg-slate150 dark:bg-black400 hover:bg-slate200 text-slate250"
@@ -34,7 +34,7 @@ function CreatorDashboard() {
         </button>
         <button
           onClick={() => handleActiveTab("creator-tools")}
-          className={`flex-1 h-full flex items-center justify-center gap-2 font-semibold text-[15px] transition-all ${
+          className={`flex-1 h-full flex items-center justify-center gap-2 font-semibold text-xs md:text-[15px] transition-all ${
             activeTab === "creator-tools"
               ? "bg-orange100 hover:bg-orange200 text-black"
               : "bg-slate150 dark:bg-black400 hover:bg-slate200 text-slate250"

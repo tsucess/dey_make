@@ -54,23 +54,23 @@ function AcademyTool() {
   return (
     <section className="flex flex-col gap-7">
       <div className="flex p-5 flex-col gap-6 border border-black300 dark:border-white rounded-3xl">
-        <h3 className="text-black300 dark:text-white font-bold text-xl">
+        <h3 className="text-black300 dark:text-white font-bold text-lg md:text-xl">
           Quick Tips For You
         </h3>
         <div className="flex flex-col gap-4">
           {tips.map(({ title, desc }, i) => (
             <div
               key={title}
-              className="border border-black/30 dark:border-white/30 rounded-3xl p-5 flex items-center justify-between gap-3 bg-slate150 dark:bg-black400"
+              className="border border-black/30 dark:border-white/30 rounded-3xl p-4 md:p-5 flex items-center justify-between gap-3 bg-slate150 dark:bg-black400"
             >
               <div className="flex items-center gap-2">
                 <div
-                  className={`w-12 h-12 rounded-sm flex items-center justify-center border border-white/20 bg-black500/5 dark:bg-black500  `}
+                  className={`w-10 md:w-12 h-10 md:h-12 rounded-sm flex items-center justify-center border border-white/20 bg-black500/5 dark:bg-black500 shrink-0 `}
                 >
-                  <PiCameraPlus className={`w-6 h-6 text-red100`} />
+                  <PiCameraPlus className={`w-5 md:w-6 h-5 md:h-6 text-red100`} />
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="font-inter font-medium text-base text-black dark:text-white">
+                  <p className="font-inter font-medium text-sm md:text-base text-black dark:text-white">
                     {title}
                   </p>
                   <span className="text-slate700 text-[10px] font-inter">
@@ -79,7 +79,7 @@ function AcademyTool() {
                 </div>
               </div>
               <button>
-                <IoIosArrowForward className="w-5 h-5 text-black dark:text-white" />
+                <IoIosArrowForward className="w-4 md:w-5 w-4 md:h-5 text-black dark:text-white" />
               </button>
             </div>
           ))}
@@ -90,7 +90,8 @@ function AcademyTool() {
         <h3 className="text-black dark:text-white text-base font-semibold">
           Courses
         </h3>
-        <div className="flex items-center gap-3 ">
+        <div className="overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="flex items-center gap-3 w-140">
           {courseTab.map((tab) => (
             <button
               key={tab}
@@ -104,6 +105,7 @@ function AcademyTool() {
               {tab}
             </button>
           ))}
+        </div>
         </div>
       </div>
 
