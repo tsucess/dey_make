@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
+import { HiOutlineSquares2X2, HiOutlineTrophy } from "react-icons/hi2";
 
 function LiveNavIcon() {
   return (
@@ -12,38 +13,37 @@ function LiveNavIcon() {
       <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>
     </svg>
   );
-}
+} 
 
 function getNavItems(isAdmin) {
   return [
   {
     to: "/home",
     labelKey: "common.home",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-        <polyline points="9 22 9 12 15 12 15 22"/>
-      </svg>
-    ),
+    icon: <HiOutlineSquares2X2 />
+  },
+  {
+    to: "/challenge",
+    labelKey: "Challenge",
+    icon: <HiOutlineTrophy />,
   },
   {
     to: "/live",
     labelKey: "common.live",
     icon: <LiveNavIcon />,
   },
-  {
-    to: "/leaderboard",
-    labelKey: "common.leaderboard",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-        <line x1="18" y1="20" x2="18" y2="10"/>
-        <line x1="12" y1="20" x2="12" y2="4"/>
-        <line x1="6" y1="20" x2="6" y2="14"/>
-      </svg>
-    ),
-  },
+  // {
+  //   to: "/leaderboard",
+  //   labelKey: "common.leaderboard",
+  //   icon: (
+  //     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+  //       stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+  //       <line x1="18" y1="20" x2="18" y2="10"/>
+  //       <line x1="12" y1="20" x2="12" y2="4"/>
+  //       <line x1="6" y1="20" x2="6" y2="14"/>
+  //     </svg>
+  //   ),
+  // },
   {
     to: "/create",
     labelKey: "common.create",
