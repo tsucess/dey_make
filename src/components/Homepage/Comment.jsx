@@ -43,7 +43,7 @@ const comments = [
 
 function Comment() {
   return (
-    <div className="flex flex-col gap-4 w-full md:w-1/3">
+    <div className="hidden md:flex flex-col gap-4 w-full md:w-1/3 ">
       <div className="border-y border-black dark:border-white py-4 flex items-center justify-between px-4">
         <h3 className="text-xl font-inter text-black dark:text-white">
           90 Comments

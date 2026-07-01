@@ -8,8 +8,8 @@ import { IoLanguage, IoLocationOutline, IoMusicalNotes } from "react-icons/io5";
 function Video() {
   return (
     <section className="w-full md:w-2/3 flex justify-center relative">
-      <div className="max-w-md w-full max-h-215 h-full relative">
-        <img src="/home_img.jpg" alt="" className="rounded-3xl" />
+      <div className="max-w-md w-full h-110 max-h-215 md:h-full relative">
+        <img src="/home_img.jpg" alt="" className="md:rounded-3xl w-full h-full" />
         <div className="flex flex-col gap-2 absolute right-4 bottom-4 items-center">
           <img
             src="/user1.jpg"
@@ -75,7 +75,7 @@ function Video() {
       </div>
 
       {/* next and prev btn */}
-      <div className="flex flex-col gap-3 absolute top-1/2 right-4">
+      <div className="hidden md:flex flex-col gap-3 absolute top-1/2 right-4">
         <button className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full">
           <IoMdArrowDropup className="w-5 h-5 text-black dark:text-white" />
         </button>
