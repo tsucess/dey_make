@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { HiOutlineSquares2X2, HiOutlineTrophy } from "react-icons/hi2";
-import { FaRegCommentDots, FaRegUser } from "react-icons/fa";
+import { FaPlus, FaRegCommentDots, FaRegUser } from "react-icons/fa";
 
 function LiveNavIcon() {
   return (
@@ -27,6 +27,11 @@ function getNavItems(isAdmin) {
     to: "/challenge",
     labelKey: "Challenge",
     icon: <HiOutlineTrophy />,
+  },
+  {
+    to: "/create",
+    labelKey: "Create",
+    icon: <FaPlus />,
   },
   // {
   //   to: "/live",
@@ -88,9 +93,9 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 z-50 flex h-22 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
+      className="fixed bottom-0 left-0 z-50 flex h-18 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
     >
-      {navItems.map(({ to, labelKey, icon }) => {
+      {navItems.map(({ to, labelKey, icon }, i) => {
         const label = t(labelKey);
 
         return (
@@ -101,17 +106,20 @@ export default function BottomNav() {
           className={({ isActive }) => {
             const isCreate = to === "/create";
 
-            return `flex items-center justify-center rounded-full transition-all duration-200 ${
+            return `flex flex-col gap-px items-center justify-center rounded-full transition-all duration-200 ${
               isCreate
-                ? "h-11 w-12 bg-white text-slate900 dark:bg-black100 dark:text-slate200"
+                ? " text-slate900 dark:bg-black100 dark:text-slate200"
                 : isActive
-                  ? "h-10 w-10 bg-white text-orange100 dark:bg-black100"
-                  : "h-10 w-10 bg-white text-slate900 dark:bg-black100 dark:text-slate200"
+                  ? " text-orange100 dark:bg-black100"
+                  : " text-slate900 dark:bg-black100 dark:text-slate200"
+            } ${
+              i === 2 ? 'bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black' : ''
             }`;
           }}
           aria-label={label}
         >
           {icon}
+          {i !== 2 && <span className="text-[10px]">{t(labelKey)}</span>}
         </NavLink>
         );
       })}

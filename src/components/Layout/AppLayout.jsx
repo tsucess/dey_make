@@ -12,6 +12,7 @@ import Notification from "../Notification";
 import NotificationButton from "./NotificationButton";
 import RealtimeNotificationPopup from "./RealtimeNotificationPopup";
 import { useNotifications } from "./useNotifications";
+import { MdLiveTv } from "react-icons/md";
 
 function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/home")) return t("app.name");
@@ -28,7 +29,7 @@ function getMobileTitle(pathname, t) {
 }
 
 const mobileActionClassName =
-  "flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F6F6] text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100";
+  "flex h-9 w-9 items-center justify-center rounded-full text-[#A7A7A7] transition-colors hover:bg-[#EFEFEF] dark:bg-[#2A2A2A] dark:text-[#D5D5D5] dark:hover:bg-black100";
 
 function MobileActionButton({ children, onClick, ariaLabel, title }) {
   return (
@@ -94,6 +95,54 @@ export default function AppLayout() {
     await handleSelectNotification(notification);
   }
 
+  const topBarConfig = {
+    "/home": {
+      isHomepage: true,
+      showSearch: true,
+      showNotifications: true,
+      showSettings: false,
+    },
+    "/connection": {
+      isConnection: true,
+      showSearch: true,
+      showNotifications: true,
+      showSettings: false,
+    },
+
+    "/profile": {
+      hidden: true,
+    },
+    "/creator-dashboard": {
+      title: "Creator Dashboard",
+      showSearch: true,
+      showNotifications: false,
+      showSettings: false,
+    },
+
+    "/wallet": {
+      title: "Wallet",
+      showSearch: false,
+      showNotifications: false,
+      showSettings: false,
+    },
+
+    "/messages": {
+      hidden: true,
+    },
+
+    "/challenge": {
+      hidden: true,
+    },
+  };
+
+  const currentConfig = topBarConfig[location.pathname] || {
+    title: "",
+    showSearch: true,
+    showNotifications: false,
+    showSettings: false,
+  };
+
+
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
       {/* Sidebar — desktop only */}
@@ -136,62 +185,63 @@ export default function AppLayout() {
           onMarkNotificationRead={handleMarkNotificationRead}
           onMarkAllRead={handleMarkAllNotificationsRead}
         />
-        {!location.pathname.startsWith("/messages") &&
-          !location.pathname.startsWith("/challenge") && (
-            <div className="sticky top-0 z-20 flex items-center justify-between bg-white px-4 pb-4 pt-5 dark:bg-[#1A1A1A] md:hidden">
-              {isHomepage ? (
-                <img
-                  src="/DEYMAKE LOGO Yellow.svg"
-                  alt={t("app.name")}
-                  className="h-10 w-auto"
-                />
-              ) : (
-                <h1 className="text-2xl font-bricolage font-semibold text-slate100 dark:text-white">
-                  {mobileTitle}
-                </h1>
+        {!currentConfig.hidden && (
+          <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] md:hidden">
+            {currentConfig.isHomepage || currentConfig.isConnection ? (
+              <div className="flex justify-between items-center w-3/5">
+                <button>
+                  <MdLiveTv className="w-5 h-5 text-black dark:text-white" />
+                </button>
+
+                <div className="flex items-center gap-3">
+                  <button onClick={()=> navigate('/home')} className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ''}`}>
+                    For You
+                  </button>
+                  <button onClick={()=> navigate('/connection')} className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ''}`}>
+                    Friends
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <h1 className="text-base font-bricolage font-semibold text-slate100 dark:text-white">
+                {currentConfig.title}
+              </h1>
+            )}
+
+            <div className="flex items-center gap-3">
+              {currentConfig.showSearch && (
+                <MobileActionButton
+                  onClick={openSearch}
+                  ariaLabel={t("layout.openSearch")}
+                >
+                  <HiOutlineSearch className="h-5 w-5" />
+                </MobileActionButton>
               )}
 
-              <div className="flex items-center gap-3">
-                {isHomepage ? (
-                  <>
-                    <MobileActionButton
-                      onClick={openSearch}
-                      ariaLabel={t("layout.openSearch")}
-                    >
-                      <HiOutlineSearch className="h-5 w-5" />
-                    </MobileActionButton>
-                    {isAuthenticated ? (
-                      <NotificationButton
-                        onClick={openNotification}
-                        ariaLabel={t("common.notifications")}
-                        unreadCount={unreadNotificationCount}
-                        className={mobileActionClassName}
-                        iconClassName="h-5 w-5"
-                      />
-                    ) : null}
-                  </>
-                ) : (
-                  <MobileActionButton
-                    onClick={openSearch}
-                    ariaLabel={t("layout.openSearch")}
-                  >
-                    <HiOutlineSearch className="h-5 w-5" />
-                  </MobileActionButton>
-                )}
-                {isAuthenticated && isProfile ? (
-                  <MobileActionLink
-                    to="/settings"
-                    ariaLabel={t("layout.openSettings")}
-                  >
-                    <IoMdSettings className="h-5 w-5" />
-                  </MobileActionLink>
-                ) : null}
-              </div>
+              {currentConfig.showNotifications && isAuthenticated && (
+                <NotificationButton
+                  onClick={openNotification}
+                  ariaLabel={t("common.notifications")}
+                  unreadCount={unreadNotificationCount}
+                  className={mobileActionClassName}
+                  iconClassName="h-5 w-5"
+                />
+              )}
+
+              {currentConfig.showSettings && isAuthenticated && (
+                <MobileActionLink
+                  to="/settings"
+                  ariaLabel={t("layout.openSettings")}
+                >
+                  <IoMdSettings className="h-5 w-5" />
+                </MobileActionLink>
+              )}
             </div>
-          )}
+          </div>
+        )}
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto pb-27 bg-white dark:bg-slate100 md:pb-0">
+        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate100 md:pb-0">
           <Outlet />
         </main>
 
