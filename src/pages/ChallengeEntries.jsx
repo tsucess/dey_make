@@ -31,7 +31,7 @@ function ChallengeEntries() {
             onClick={() => handleActiveTabChange("entries")}
             className={`text-sm font-bold font-inter flex gap-1.25 items-center w-1/2 justify-center cursor-pointer relative after:content-[''] after:absolute after:-bottom-4 after:w-full after:left-0 after:h-0.5 transition-all ${
               activeTab === "entries"
-                ? "text-black dark:text-white after:bg-red100 hover:text-slate700 hover:dark:text-slate200 hover:after:bg-red700"
+                ? "text-orange100 dark:text-white after:bg-orange100 hover:text-slate700 hover:dark:text-slate200 hover:after:bg-orange200"
                 : "text-slate250 after:bg-slate250 hover:text-slate400 hover:after:bg-slate400"
             }`}
           >
@@ -42,7 +42,7 @@ function ChallengeEntries() {
             onClick={() => handleActiveTabChange("leaderboard")}
             className={`text-sm font-bold font-inter flex gap-1.25 items-center w-1/2 justify-center relative cursor-pointer after:content-[''] after:absolute after:-bottom-4 after:w-full after:left-0 after:h-0.5 transition-all ${
               activeTab === "leaderboard"
-                ? "text-black dark:text-white after:bg-red100 hover:text-slate700 hover:dark:text-slate200 hover:after:bg-red700"
+                ? "text-orange100 dark:text-white after:bg-orange100 hover:text-slate700 hover:dark:text-slate200 hover:after:bg-orange200"
                 : "text-slate250 after:bg-slate250 hover:text-slate400 hover:after:bg-slate400"
             }`}
           >

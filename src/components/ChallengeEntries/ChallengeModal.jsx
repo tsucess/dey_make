@@ -6,8 +6,8 @@ import { RxImage } from "react-icons/rx"
 
 function ChallengeModal({closeModal}) {
   return (
-    <section className="bg-white/20 dark:bg-black400/10 backdrop-blur-md flex items-center justify-center absolute z-40 inset-0 p-4 w-full h-screen">
-      <form className="bg-white dark:bg-black400 shadow p-10 rounded-3xl max-w-125 w-full flex flex-col gap-6 max-h-[90vh] overflow-y-auto mx-auto">
+    <section className="bg-white/20 dark:bg-black400/10 backdrop-blur-md flex items-center justify-center fixed z-100 inset-0 p-4 w-full h-full">
+      <form className="bg-white dark:bg-black400 shadow p-5 md:p-10 rounded-3xl max-w-125 w-full flex flex-col gap-6 max-h-[90vh] overflow-y-auto mx-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-between">
                 <p className="text-black dark:text-white font-inter text-base font-bold">Submit Entry</p>
@@ -18,22 +18,22 @@ function ChallengeModal({closeModal}) {
         <div className="flex flex-col gap-2">
             <label htmlFor="" className="text-black100 dark:text-slate550 font-inter text-[13px]">CHOOSE YOUR VIDEO</label>
             <div className="flex gap-5 items-center">
-                <button className="border border-black100 dark:border-slate250 flex-1 py-6 rounded-3xl flex flex-col gap-3 items-center">
-                    <div className="border border-black/20 dark:border-white/20 rounded-lg w-12.5 h-12.5 flex items-center justify-center bg-brown300/10 dark:bg-brown300">
+                <button className="border border-black100 dark:border-slate250 flex-1 py-4 md:py-6 rounded-3xl flex flex-col gap-3 items-center">
+                    <div className="border border-black/20 dark:border-white/20 rounded-lg w-10 md:w-12.5 h-10 md:h-12.5 flex items-center justify-center bg-brown300/10 dark:bg-brown300">
                     <RiVideoAddLine className="w-6 h-6 text-orange100" />
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                        <h4 className="text-black dark:text-white font-inter text-base font-bold">Record Now</h4>
+                    <div className="flex flex-col gap-1 md:gap-1.5">
+                        <h4 className="text-black dark:text-white font-inter text-sm md:text-base font-bold">Record Now</h4>
                         <span className="text-xs font-extralight text-black dark:text-white">Open camera</span>
                     </div>
                 </button>
 
-                <button className="border border-black100 dark:border-slate250 flex-1 py-6 rounded-3xl flex flex-col gap-3 items-center">
-                    <div className="border border-black/20 dark:border-white/20 rounded-lg w-12.5 h-12.5 flex items-center justify-center bg-brown300/10 dark:bg-brown300">
+                <button className="border border-black100 dark:border-slate250 flex-1 py-4 md:py-6 rounded-3xl flex flex-col gap-3 items-center">
+                    <div className="border border-black/20 dark:border-white/20 rounded-lg w-10 md:w-12.5 h-10 md:h-12.5 flex items-center justify-center bg-brown300/10 dark:bg-brown300">
                     <RxImage className="w-6 h-6 text-black/40 dark:text-white/20" />
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                        <h4 className="text-black dark:text-white font-inter text-base font-bold">From Gallery</h4>
+                    <div className="flex flex-col gap-1 md:gap-1.5">
+                        <h4 className="text-black dark:text-white font-inter text-sm md:text-base font-bold">From Gallery</h4>
                         <span className="text-xs font-extralight text-black dark:text-white">Upload existing</span>
                     </div>
                 </button>

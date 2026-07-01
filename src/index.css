@@ -86,6 +86,12 @@
   background-position: center;
 }
 
+.challenge-hero-bg {
+  background-image: url("/challenge_hero.png");
+  background-size: cover;
+  background-position: center;
+}
+
 .studio-bg{
   background-image: url("/studio-bg.png");
   background-size: cover;

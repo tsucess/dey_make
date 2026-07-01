@@ -121,12 +121,12 @@ function HistoryTab() {
 
   return (
     <div className="flex flex-col gap-7">
-      <menu className="flex items-center gap-3">
+      <menu className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
         {filters.map(({ title, icon: Icon }, i) => (
           <button
             onClick={() => handleActiveFilterChange(title)}
             key={title}
-            className={`transition-all text-sm py-3 px-5 rounded-xl font-semibold flex items-center gap-3 ${
+            className={`transition-all text-sm py-2 md:py-3 px-5 rounded-xl font-semibold flex items-center gap-3 ${
               activeFilter === title
                 ? "bg-orange100 text-black hover:bg-orange200"
                 : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"

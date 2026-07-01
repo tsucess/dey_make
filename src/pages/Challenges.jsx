@@ -139,11 +139,11 @@ export default function Challenges() {
   const [activeCategory, setActiveCategory] = useState("all");
 
   return (
-    <div className="min-h-full bg-white dark:bg-black300 px-4 pb-24 pt-6 md:px-8 md:py-8 text-black dark:text-white">
-      <div className="mx-auto w-full max-w-6xl space-y-8">
+    <div className="min-h-full bg-white font-inter dark:bg-black300 px-4 pb-24 pt-6 md:px-8 md:py-8 text-black dark:text-white">
+      <div className="mx-auto w-full max-w-6xl space-y-5 md:space-y-8">
         {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold font-bricolage">
+        <div className="flex items-center justify-end gap-6 md:justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold font-bricolage">
             {t("challenges.title")}
           </h1>
           <button className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700">
@@ -153,14 +153,15 @@ export default function Challenges() {
         </div>
 
         {/* Hero Section */}
-        <div className="relative overflow-hidden rounded-4xl bg-linear-to-r from-purple-900 to-indigo-900 h-48 md:h-56">
-          <img
+        <div className="relative overflow-hidden rounded-4xl flex items-center challenge-hero-bg h-48 md:h-56">
+          {/* <img
             src="https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&q=80&w=1200"
             alt="Concert Crowd"
             className="absolute inset-0 h-full w-full object-cover opacity-40 mix-blend-overlay"
-          />
-          <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
-          <div className="absolute bottom-0 left-0 flex w-full flex-wrap items-center gap-8 md:gap-16 p-6 md:p-8">
+          /> */}
+          {/* <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" /> */}
+
+          <div className="flex w-full flex-wrap items-center gap-4 md:gap-16 p-6 md:p-8">
             <div>
               <p className="text-2xl md:text-3xl font-bold text-white">
                 {HERO_STATS.activeNow}
@@ -199,7 +200,7 @@ export default function Challenges() {
             />
           </div>
 
-          <div className="flex items-center gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] hide-scrollbar-mobile">
+          <div style={{ scrollbarWidth: "none", msOverflowStyle: "none" }} className="flex items-center gap-2 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] hide-scrollbar-mobile">
             {CATEGORIES.map((category) => (
               <button
                 key={category}
@@ -207,7 +208,7 @@ export default function Challenges() {
                 className={`whitespace-nowrap rounded-full px-6 py-2.5 text-sm font-medium transition-colors ${
                   activeCategory === category
                     ? "bg-orange100 text-black"
-                    : "bg-transparent text-white hover:bg-white/10"
+                    : "bg-transparent text-black dark:text-white hover:bg-white300 hover:dark:bg-white/10"
                 }`}
               >
                 {t(`challenges.categories.${category}`)}
@@ -221,17 +222,17 @@ export default function Challenges() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-orange100" />
-              <h2 className="text-xl font-bold">
+              <h2 className="text-xl font-semibold">
                 {t("challenges.activeChallenges")}{" "}
                 <span className="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-orange100 text-xs text-black">
                   5
                 </span>
               </h2>
             </div>
-            <p className="text-xs text-slate-400">{t("challenges.swipe")}</p>
+            <p className="text-xs text-slate-400 font-semibold">{t("challenges.swipe")}</p>
           </div>
 
-          <div className="flex gap-8 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x">
+          <div style={{ scrollbarWidth: "none", msOverflowStyle: "none" }} className="flex gap-2 md:gap-8 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x">
             {ACTIVE_CHALLENGES.map((challenge) => (
               <div
                 key={challenge.id}
@@ -242,7 +243,7 @@ export default function Challenges() {
                   alt={challenge.title}
                   className="absolute inset-0 h-full w-full object-cover opacity-60"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black400 via-black400/80 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black400/20 dark:from-black400 via-black300/40 dark:via-black400/80 to-transparent" />
 
                 {/* Top Badges */}
                 <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
@@ -298,8 +299,8 @@ export default function Challenges() {
         </div>
 
         {/* Trending Bar */}
-        <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-[#3B1515] to-[#251010] border border-red-900/30 px-5 py-3.5">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between rounded-xl bg-linear-to-r from-[#3B1515] to-[#251010] border border-red-900/30 px-3 md:px-5 py-3.5">
+          <div className="flex items-center gap-2 md:gap-3">
             <span className="text-xl">🔥</span>
             <div>
               <p className="text-sm font-bold text-white">
@@ -312,7 +313,7 @@ export default function Challenges() {
           </div>
           <Link
             to="/challenge-entries"
-            className="rounded bg-orange100 px-4 py-1.5 text-xs font-bold text-black hover:bg-orange500"
+            className="rounded bg-orange100 cursor-pointer px-4 py-1.5 text-xs font-bold text-black hover:bg-orange500"
           >
             {t("challenges.viewAction")}
           </Link>
@@ -377,7 +378,7 @@ export default function Challenges() {
           <p className="text-sm text-slate-400">
             {t("challenges.ideaSubtitle")}
           </p>
-          <button className="mt-2 rounded-md bg-orange100 px-6 py-3 text-sm font-semibold text-black hover:bg-orange-500">
+          <button className="mt-2 rounded-md bg-orange100 px-6 py-3 text-sm font-semibold text-black hover:bg-orange500">
             {t("challenges.suggestAction")}
           </button>
         </div>

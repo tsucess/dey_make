@@ -28,8 +28,8 @@ const stats = [
 
 function StatsSection() {
   return (
-    <section className="flex flex-col px-6 gap-5">
-      <div className="border border-black/27 dark:border-white/27 rounded-3xl px-6 py-5 flex items-center gap-4 justify-between">
+    <section className="flex flex-col px-4 md:px-6 gap-5">
+      <div className="border border-black/27 dark:border-white/27 rounded-3xl px-4 md:px-6 py-5 flex items-center gap-4 justify-between">
         {stats.map(({ icon: Icon, value, name }, i) => (
           <div className="flex items-center flex-col gap-3">
             <Icon

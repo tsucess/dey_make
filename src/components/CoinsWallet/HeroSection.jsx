@@ -5,8 +5,8 @@ import { useNavigate } from "react-router-dom";
 function HeroSection() {
   const navigate = useNavigate();
   return (
-    <div className="flex flex-col gap-7 font-inter">
-      <header className="h-20.75 flex items-center justify-between">
+    <div className="flex flex-col gap-5 md:gap-7 font-inter">
+      <header className="h-15 md:h-20.75 flex items-center justify-between">
         <button
           onClick={() => navigate(-1)}
           className="w-7.5 h-7.5 cursor-pointer rounded-lg flex items-center justify-center border border-black/20 dark:border-white/20"
@@ -21,7 +21,7 @@ function HeroSection() {
         </button>
       </header>
 
-      <div className="px-7.5 py-12.5 rounded-[10px] border-black/81 wallet-bg flex flex-col gap-6">
+      <div className="px-4 md:px-7.5 py-12.5 rounded-[10px] border-black/81 wallet-bg flex flex-col gap-6">
         <div className="flex flex-col gap-3">
           <h2 className="text-orange100 text-sm">COIN BALANCE</h2>
           <h3 className="text-orange100 text-4xl font-bold">2,840</h3>

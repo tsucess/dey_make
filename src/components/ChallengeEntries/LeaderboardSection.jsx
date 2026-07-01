@@ -43,11 +43,11 @@ const board = [
 function LeaderboardSection({ handleChallengeModal }) {
   return (
     <section className="flex flex-col gap-8 px-6">
-      <div className="flex gap-6 items-end">
+      <div className="flex gap-1.5 md:gap-6 items-end">
         {/* second */}
         <div className="flex flex-col items-center gap-4 flex-1">
           <div className="flex flex-col gap-3">
-            <div className="border border-white rounded-full w-15 h-15 relative">
+            <div className="border border-white rounded-full w-12 md:w-15 h-12 md:h-15 relative">
               <img
                 src="/user1.jpg"
                 alt=""
@@ -66,12 +66,12 @@ function LeaderboardSection({ handleChallengeModal }) {
               </span>
             </div>
           </div>
-          <div className="h-16 rounded-t-2xl bg-grey w-full"></div>
+          <div className="h-12 md:h-16 rounded-t-2xl bg-grey w-full"></div>
         </div>
         {/* first */}
         <div className="flex flex-col items-center gap-4 flex-1">
           <div className="flex flex-col gap-3">
-            <div className="border border-orange100 rounded-full w-17.5 h-17.5 relative">
+            <div className="border border-orange100 rounded-full w-14 md:w-17.5 h-14 md:h-17.5 relative">
               <img
                 src="/user1.jpg"
                 alt=""
@@ -90,12 +90,12 @@ function LeaderboardSection({ handleChallengeModal }) {
               </span>
             </div>
           </div>
-          <div className="h-25 rounded-t-2xl bg-brown w-full"></div>
+          <div className="h-20 md:h-25 rounded-t-2xl bg-brown w-full"></div>
         </div>
         {/* third */}
         <div className="flex flex-col items-center gap-4 flex-1">
           <div className="flex flex-col gap-3">
-            <div className="border border-orange500 rounded-full w-15 h-15 relative">
+            <div className="border border-orange500 rounded-full w-12 md:w-15 h-12 md:h-15 relative">
               <img
                 src="/user1.jpg"
                 alt=""
@@ -114,7 +114,7 @@ function LeaderboardSection({ handleChallengeModal }) {
               </span>
             </div>
           </div>
-          <div className="h-12 rounded-t-2xl bg-brown100 w-full"></div>
+          <div className="h-9 md:h-12 rounded-t-2xl bg-brown100 w-full"></div>
         </div>
       </div>
 
@@ -183,8 +183,8 @@ function LeaderboardSection({ handleChallengeModal }) {
         >
           Join Challenge
         </button>
-        <button className="text-slate100 border border-white/20 rounded-xl w-12 h-12 flex justify-center items-center">
-          <IoIosShareAlt className="w-4 h-4 text-white" />
+        <button className="text-slate100 border shrink-0 border-black/20 dark:border-white/20 rounded-xl w-12 h-12 flex justify-center items-center">
+          <IoIosShareAlt className="w-4 h-4 text-black dark:text-white" />
         </button>
       </div>
     </section>

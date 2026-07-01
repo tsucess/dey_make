@@ -30,8 +30,8 @@ function HeroSection({ handleChallengeModal }) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-4 md:gap-6">
+        <div className="flex flex-col gap-3 md:gap-5">
           <div className="border border-white rounded-md w-11 h-6.5 flex items-center justify-center text-[10px] uppercase text-white font-inter">
             DANCE
           </div>
@@ -47,7 +47,7 @@ function HeroSection({ handleChallengeModal }) {
             </h3>
             <button
               onClick={handleChallengeModal}
-              className="w-56.5 h-7.25 bg-orange100 text-slate100 flex justify-center items-center text-base rounded-sm"
+              className="w-30 md:w-56.5 h-9 md:h-7.25 bg-orange100 text-slate100 flex justify-center items-center text-base rounded-sm"
             >
               Join Challenge
             </button>

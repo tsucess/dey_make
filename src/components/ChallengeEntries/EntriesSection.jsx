@@ -21,15 +21,15 @@ function EntriesSection() {
     setActiveTab(value);
   }
   return (
-    <section className="flex flex-col gap-5 px-6">
+    <section className="flex flex-col gap-5 px-4 md:px-6">
       <div className="flex items-center justify-between gap-4">
         <p className="text-slate250 text-sm font-semibold font-inter">
           9 entries
         </p>
-        <menu className="flex items-center gap-3">
+        <menu className="flex items-center gap-2 md:gap-3 overflow-x-auto">
           <button
             onClick={() => handleActiveTabChange("trending")}
-            className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
+            className={`w-20 md:w-25 h-10.5 rounded-full flex items-center justify-center text-xs sm:text-sm font-inter font-semibold transition-all ${
               activeTab === "trending"
                 ? "bg-orange100 text-black hover:bg-orange200"
                 : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
@@ -39,7 +39,7 @@ function EntriesSection() {
           </button>
           <button
             onClick={() => handleActiveTabChange("newest")}
-            className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
+            className={`w-20 md:w-25 h-10.5 rounded-full flex items-center justify-center text-xs sm:text-sm font-inter font-semibold transition-all ${
               activeTab === "newest"
                 ? "bg-orange100 text-black hover:bg-orange200"
                 : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
@@ -49,7 +49,7 @@ function EntriesSection() {
           </button>
           <button
             onClick={() => handleActiveTabChange("most liked")}
-            className={`w-25 h-10.5 rounded-full flex items-center justify-center text-sm font-inter font-semibold transition-all ${
+            className={`w-20 md:w-25 h-10.5 rounded-full flex items-center justify-center text-xs sm:text-sm font-inter font-semibold transition-all ${
               activeTab === "most liked"
                 ? "bg-orange100 text-black hover:bg-orange200"
                 : "text-slate250 dark:text-white hover:text-slate150 hover:bg-slate250"
