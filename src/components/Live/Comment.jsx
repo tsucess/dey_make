@@ -2,7 +2,7 @@ import { LuDot } from "react-icons/lu";
 
 function Comment() {
   return (
-    <div className="flex flex-col gap-7 font-inter w-1/3 h-auto">
+    <div className="hidden md:flex flex-col gap-7 font-inter w-1/3 h-auto">
       <div className="flex flex-col gap-4.25">
         <h3 className="flex items-center gap-1 text-black text-sm font-semibold">
           Viewers <LuDot className="w-3 h-3" /> 10k

@@ -84,13 +84,13 @@ function LivePreview() {
         <img
           src="/preview-img.png"
           alt=""
-          className="w-full h-full object-contain"
+          className="w-full h-full min-h-50 object-fill"
         />
         <div className="flex justify-between items-center gap-2 absolute left-3 right-3 top-4">
-          <button className="bg-slate100 w-7.5 h-7.5 rounded-lg flex items-center justify-center hover:bg-black500/20">
+          <button onClick={()=> navigate(-1)} className="bg-slate100 w-7.5 h-7.5 rounded-lg flex items-center justify-center hover:bg-black500/20">
             <IoMdClose className="w-5 h-5 text-white" />
           </button>
-          <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-black700 text-sm text-white ">
+          <div className="flex items-center gap-2 px-4 py-3 rounded-md bg-black700 text-xs md:text-sm text-white ">
             <div className="w-3 h-3 rounded-full bg-orange100"></div>Camera
             Preview
           </div>
@@ -105,7 +105,7 @@ function LivePreview() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 px-6">
+      <div className="flex flex-col gap-3 md:gap-4 px-6">
         <h3 className="text-xl font-semibold text-black dark:text-white">
           Stream Title*
         </h3>
@@ -125,12 +125,12 @@ function LivePreview() {
         <h3 className="text-black dark:text-white text-base font-semibold">
           Category
         </h3>
-        <div className="flex items-center gap-3 ">
+        <div className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {categoryTab.map((tab) => (
             <button
               key={tab}
               onClick={() => handleActiveCategoryChange(tab)}
-              className={`transition-all text-sm py-3 px-5 rounded-xl font-semibold flex items-center gap-3 ${
+              className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 ${
                 activeCategory === tab
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
@@ -165,7 +165,7 @@ function LivePreview() {
                     }</div>
             </div>)
             }</div>
-            <button onClick={()=> navigate('/lives')} className="bg-orange100 py-3 px-30 font-medium rounded-md text-sm text-black self-center">Go Live Now</button>
+            <button onClick={()=> navigate('/lives')} className="bg-orange100 py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center">Go Live Now</button>
       </div>
 
       

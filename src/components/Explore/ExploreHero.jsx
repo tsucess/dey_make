@@ -10,7 +10,7 @@ export default function ExploreHero() {
       />
       
       {/* Dark overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+      <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/40 to-transparent"></div>
 
       <div className="absolute bottom-6 left-6 right-6">
         <p className="text-orange100 text-xs font-bold uppercase tracking-wider mb-2">

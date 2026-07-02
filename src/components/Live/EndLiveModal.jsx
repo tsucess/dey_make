@@ -4,10 +4,10 @@ import { LuEye } from "react-icons/lu";
 
 function EndLiveModal({ handleEndLive }) {
   return (
-    <div className="absolute bg-black/20 backdrop-blur-sm inset-0 h-full flex items-center justify-center font-inter z-40">
-      <section className="rounded-2xl p-12.5 border border-black/40 dark:border-white/40 flex flex-col gap-10 bg-white300 dark:bg-black400 max-w-111 w-full">
+    <div className="absolute bg-black/20 backdrop-blur-sm inset-0 h-full flex items-center justify-center font-inter z-100 p-6">
+      <section className="rounded-2xl p-6 md:p-12.5 border border-black/40 dark:border-white/40 flex flex-col gap-10 bg-white300 dark:bg-black400 max-w-111 w-full">
         <div className="flex flex-col gap-6 items-center">
-          <div className="flex flex-col gap-1 items-center">
+          <div className="flex flex-col gap-1 md:items-center">
             <h2 className="text-2xl font-bold text-black dark:text-white">
               End Your Stream?
             </h2>
@@ -53,16 +53,16 @@ function EndLiveModal({ handleEndLive }) {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 md:gap-6">
           <button
             onClick={handleEndLive}
-            className="px-6 py-3 rounded-sm bg-black100 border border-white/12 text-white text-sm "
+            className="px-3 md:px-6 py-3 w-full rounded-sm bg-black100 border border-white/12 text-white text-sm "
           >
             Keep Going
           </button>
           <button
             onClick={handleEndLive}
-            className="px-6 py-3 rounded-sm bg-orange100 text-slate100 text-sm "
+            className="px-3 md:px-6 py-3 w-full rounded-sm bg-orange100 text-slate100 text-sm "
           >
             End Stream
           </button>

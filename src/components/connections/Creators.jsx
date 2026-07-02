@@ -5,7 +5,7 @@ const creators = [
 
 function Creators() {
   return (
-    <div className="w-full md:w-1/3 flex flex-col gap-7">
+    <div className="w-full md:w-1/3 md:flex flex-col gap-7 hidden ">
         <div className="flex items-center justify-between">
             <h3 className="font-inter text-sm font-semibold text-black dark:text-white">Creators you may know</h3>
             <button className="font-inter text-sm font-semibold text-orange100">See All</button>

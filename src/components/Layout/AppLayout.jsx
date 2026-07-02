@@ -112,6 +112,15 @@ export default function AppLayout() {
     "/profile": {
       hidden: true,
     },
+    "/live": {
+      hidden: true,
+    },
+    "/live-preview": {
+      hidden: true,
+    },
+    "/lives": {
+      hidden: true,
+    },
     "/creator-dashboard": {
       title: "Creator Dashboard",
       showSearch: true,
@@ -126,8 +135,18 @@ export default function AppLayout() {
       showSettings: false,
     },
 
+    "/explore": {
+      title: "Explore",
+      showSearch: true,
+      showNotifications: true,
+      showSettings: false,
+    },
+
     "/messages": {
-      hidden: true,
+      title: "Messages",
+      showSearch: false,
+      showNotifications: true,
+      showSettings: false,
     },
 
     "/challenge": {
@@ -141,7 +160,6 @@ export default function AppLayout() {
     showNotifications: false,
     showSettings: false,
   };
-
 
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
@@ -189,15 +207,21 @@ export default function AppLayout() {
           <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] md:hidden">
             {currentConfig.isHomepage || currentConfig.isConnection ? (
               <div className="flex justify-between items-center w-3/5">
-                <button>
+                <button onClick={() => navigate("/live")}>
                   <MdLiveTv className="w-5 h-5 text-black dark:text-white" />
                 </button>
 
                 <div className="flex items-center gap-3">
-                  <button onClick={()=> navigate('/home')} className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ''}`}>
+                  <button
+                    onClick={() => navigate("/home")}
+                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ""}`}
+                  >
                     For You
                   </button>
-                  <button onClick={()=> navigate('/connection')} className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ''}`}>
+                  <button
+                    onClick={() => navigate("/connection")}
+                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ""}`}
+                  >
                     Friends
                   </button>
                 </div>
@@ -241,7 +265,13 @@ export default function AppLayout() {
         )}
 
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto bg-white dark:bg-slate100 md:pb-0">
+        <main
+          className={`${
+            location.pathname === "/home" || location.pathname === "/live"
+              ? "pb-0"
+              : "pb-16"
+          } flex-1 overflow-y-auto bg-white dark:bg-slate100 md:pb-0`}
+        >
           <Outlet />
         </main>
 

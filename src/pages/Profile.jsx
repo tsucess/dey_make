@@ -637,7 +637,7 @@ export default function Profile() {
                     className={`flex items-center justify-center gap-2 pb-4 text-[14px] font-semibold font-inter transition-colors border-b-[3px] ${
                       isActive
                         ? "text-red-500 border-red-500"
-                        : "text-slate-500 border-transparent hover:text-white"
+                        : "text-slate-500 border-transparent hover:text-black hover:dark:text-white"
                     }`}
                   >
                     {Icon && <Icon className="w-4,5 h-4,5" />}

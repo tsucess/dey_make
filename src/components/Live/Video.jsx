@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 function Video() {
   const navigate = useNavigate();
   return (
-    <div className="w-full basis-2/3 bg-orange700/20 dark:bg-orange700 rounded-4xl py-15 flex justify-center relative max-h-225 h-full">
+    <div className="w-full md:basis-2/3 bg-orange700/20 dark:bg-orange700 rounded-4xl md:py-15 flex justify-center relative max-h-225 h-full">
       <div className="max-h-192 h-full">
         <img src="/live-img.png" alt="" />
       </div>

@@ -12,7 +12,7 @@ export default function AuthLayout({ children }) {
 
       {/* Right: form */}
       <div className="flex-1 flex items-center justify-center py-8 md:py-12 bg-white dark:bg-slate100 relative">
-        <div className="w-full max-w-[600px] px-6 md:px-12">
+        <div className="w-full max-w-150 px-6 md:px-12">
           <div className="absolute top-0 left-0 right-0">
             <svg
               className="w-full"

@@ -26,14 +26,14 @@ function LiveNew() {
   return (
     <>
       {endLive && <EndLiveModal handleEndLive={handleToggleEndLive} />}
-      <div className="w-full h-full relative font-inter">
+      <div className="w-full h-full min-h-screen relative font-inter">
         <img src="/Live.png" alt="" className="w-full h-full object-fill" />
-        <div className="flex flex-col gap-10.5 absolute top-4 left-4 right-4">
+        <div className="flex flex-col gap-4 md:gap-10.5 absolute top-4 left-4 right-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-5.5">
               <div className="bg-red100 rounded-lg py-2 px-4 flex items-center gap-2">
                 <div className="w-2 h-2 bg-white rounded-full"></div>
-                <p className="text-sm font-semibold uppercase text-white">
+                <p className="text-xs md:text-sm font-semibold uppercase text-white">
                   LIVE
                 </p>
               </div>
@@ -45,14 +45,14 @@ function LiveNew() {
             </div>
             <button
               onClick={handleToggleEndLive}
-              className="bg-red100 rounded-lg py-2 px-4 flex items-center gap-2 text-sm text-white"
+              className="bg-red100 rounded-lg py-2 px-4 flex items-center gap-2 text-xs md:text-sm text-white"
             >
               {" "}
               <IoMdClose className="w-4 h-4" /> End Live
             </button>
           </div>
-          <div className="flex flex-col gap-3">
-            <h2 className="text-2xl font-bold text-white">
+          <div className="flex flex-col gap-2 md:gap-3">
+            <h2 className="text-xl md:text-2xl font-bold text-white">
               Welcome to my Live
             </h2>
             <p className="text-xs text-white">
@@ -62,20 +62,20 @@ function LiveNew() {
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <div className="relative">
+                <div key={i} className="flex flex-col md:flex-row md:items-center gap-2">
+                  <div className="relative w-7 md:w-10 h-7 md:h-10">
                     <img
                       src="/story3.jpg"
                       alt=""
-                      className="w-10 h-10 border border-orange100 rounded-full object-cover"
+                      className="w-7 md:w-10 h-7 md:h-10 border border-orange100 rounded-full object-cover"
                     />
-                    <span className="w-5 h-5 absolute -right-0.5 text-xs font-semibold bottom-1 bg-orange100 text-black rounded-full flex items-center justify-center">
+                    <span className="w-3 md:w-5 h-3 md:h-5 absolute -right-0.5 text-[10px] md:text-xs font-semibold bottom-1 bg-orange100 text-black rounded-full flex items-center justify-center">
                       1
                     </span>
                   </div>
 
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-semibold text-white">
+                  <div className="flex flex-col gap-0.5 md:gap-1">
+                    <span className="text-xs md:text-sm font-semibold text-white">
                       @jayden_x
                     </span>
                     <div className="flex items-center gap-0.5 text-white text-xs">
@@ -86,7 +86,7 @@ function LiveNew() {
                 </div>
               ))}
             </div>
-            <div className="flex items-center gap-1 text-white text-xs border border-white justify-center rounded-md px-3 py-2">
+            <div className="flex items-center gap-1 text-white text-[10px] md:text-xs border border-white justify-center rounded-md px-3 py-2">
               {" "}
               <PiCoinFill className="w-4 h-4 text-orange100" /> Gift to rank
             </div>
