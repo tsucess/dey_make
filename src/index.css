@@ -1,5 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -9,6 +11,8 @@
 
   --font-inter: "Inter", sans-serif;
   --font-bricolage: "Bricolage Grotesque", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-dmSans: "DM Sans", sans-serif;
   --color-slate100: #1a1a1a;
   --color-orange100: #fdb300;
   --color-slate200: #d9d9d9;
@@ -26,14 +30,16 @@
   --color-orange400: #cd7f32;
   --color-orange500: #ff8d28;
   --color-orange600: #f2d208;
-  --color-orange700: #AD9C72;
-  --color-orange800 : #E5BE04;
+  --color-orange700: #ad9c72;
+  --color-orange800: #e5be04;
+  --color-orange900: #FFAE4C;
   --color-slate700: #808080;
   --color-slate800: #a6a6a6;
   --color-green100: #0ea759;
   --color-green200: #152f26;
   --color-green300: #3ad584;
   --color-green400: #14251b;
+  --color-green500: #34C759;
   --color-red100: #de1b1b;
   --color-slate900: #b3b3b3;
   --color-slate50: #999999;
@@ -43,8 +49,8 @@
   --color-slate450: #7d7171;
   --color-slate550: #878a8c;
   --color-slate650: #d9d9d9;
-  --color-slate750 : #1D1D1D;
-  --color-slate850: #3C3C43;
+  --color-slate750: #1d1d1d;
+  --color-slate850: #3c3c43;
   --color-grey: #2e2e2e;
   --color-brown: #3b3208;
   --color-brown100: #312112;
@@ -52,25 +58,31 @@
   --color-brown300: #41371d;
   --color-brown400: #474343;
   --color-brown500: #27230f;
-  --color-zinc50 : #E2E4E9;
-  --color-zinc100:#F6F8FA;
+  --color-brown600 : #CC927A;
+  --color-zinc50: #e2e4e9;
+  --color-zinc100: #f6f8fa;
+  --color-zinc200: #8D9098;
   --color-red200: #b61616;
   --color-red300: #9f1414;
   --color-red400: #e31c1c;
   --color-red500: #f20000;
   --color-red600: #ff4655;
-  --color-red700: #FF4757;
+  --color-red700: #ff4757;
   --color-pink: #ff6b9d;
-  --color-cyan: #00C0E8;
-  --color-cyan100 : #07DBFA ;
-  --color-cyan200: #4FACFE;
-  --color-blue: #534FEB;
+  --color-purple: #CB3CFF;
+  --color-cyan: #00c0e8;
+  --color-cyan100: #07dbfa;
+  --color-cyan200: #4facfe;
+  --color-blue: #534feb;
   --color-blue100: #525866;
+  --color-blue200: #0d141e;
+  --color-blue300: #0C131D;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
   --color-black600: #141516;
-  --color-black700: #0B1011;
+  --color-black700: #0b1011;
+  --color-black800: #0F1721;
   --shadow-toggle: 0 4px 10px 0 #0000000d;
   --shadow-waitlist: 0 4px 40px 0 #00000005;
   --shadow-waitlist-dark: 0 4px 40px 0 #ffffff1a;
@@ -95,7 +107,7 @@
   background-position: center;
 }
 
-.studio-bg{
+.studio-bg {
   background-image: url("/studio-bg.png");
   background-size: cover;
   background-position: center;

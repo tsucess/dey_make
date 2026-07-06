@@ -52,7 +52,7 @@ const bottomNavLinks = [
 
 function Sidebar() {
   return (
-    <aside className="flex flex-col gap-6 w-full max-w-69 border-r border-r-zinc50 bg-black h-screen overflow-y-auto p-4">
+    <aside className="flex flex-col gap-6 w-full max-w-69 shrink-0 border-r border-r-zinc50 bg-black h-screen overflow-y-auto p-4">
       <div className="flex items-center justify-center p-4 border-b border-white">
         <img src="/DEYMAKE LOGO with Tagline Yellow.svg" alt="" />
       </div>
@@ -81,7 +81,7 @@ function Sidebar() {
                       <span className="flex items-center gap-2 text-white text-sm">
                         <linkItem.icon className="w-6 h-6" /> {linkItem.title}
                       </span>{" "}
-                      <MdOutlineArrowForwardIos className="w-4 h-4 text-white" />
+                      <MdOutlineArrowForwardIos className="w-3 h-3 text-white" />
                     </button>
                   ))}
                 </div>
@@ -110,7 +110,7 @@ function Sidebar() {
             <h4 className="text-white text-sm font-medium">Sophia Williams</h4>
             <p className="text-white text-xs">sophia@gmail.com</p>
           </div>
-          <MdArrowForwardIos className="w-5 h-5 text-white" />
+          <MdArrowForwardIos className="w-3 h-3 text-white" />
         </div>
       </div>
     </aside>
