@@ -3,11 +3,11 @@ import Sidebar from "../Layout/Sidebar";
 import TopBar from "../Layout/Topbar";
 
 function AppLayout() {
-  return <div className="flex ">
+  return <div className="flex overflow-hidden">
     <Sidebar/>
     <div className="flex flex-col flex-1">
         <TopBar/>
-        <main className="overflow-y-auto flex-1">
+        <main className="overflow-y-auto flex-1 bg-black300">
             <Outlet/>
         </main>
 

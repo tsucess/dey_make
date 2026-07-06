@@ -52,6 +52,8 @@
   --color-brown300: #41371d;
   --color-brown400: #474343;
   --color-brown500: #27230f;
+  --color-zinc50 : #E2E4E9;
+  --color-zinc100:#F6F8FA;
   --color-red200: #b61616;
   --color-red300: #9f1414;
   --color-red400: #e31c1c;
@@ -63,6 +65,7 @@
   --color-cyan100 : #07DBFA ;
   --color-cyan200: #4FACFE;
   --color-blue: #534FEB;
+  --color-blue100: #525866;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
