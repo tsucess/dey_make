@@ -48,6 +48,8 @@ const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
 const Notification = lazy(() => import("./pages/Notifications"));
 const LivePreview = lazy(() => import("./pages/LivePreview"));
 const Live = lazy(() => import("./pages/LiveNew"));
+const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
+const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -222,8 +224,14 @@ export default function App() {
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
 
+        <Route  element={renderLazyRoute(AppLayoutAdmin)}>
+          <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
+        </Route>
+
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
         <Route path="*" element={<Navigate to="/" replace />} />
+
+        
       </Routes>
     </BrowserRouter>
   );
