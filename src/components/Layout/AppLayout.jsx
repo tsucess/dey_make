@@ -14,6 +14,7 @@ import NotificationButton from "./NotificationButton";
 import RealtimeNotificationPopup from "./RealtimeNotificationPopup";
 import { useNotifications } from "./useNotifications";
 import { MdLiveTv } from "react-icons/md";
+import { useState } from "react";
 
 function getMobileTitle(pathname, t) {
   if (pathname.startsWith("/home")) return t("app.name");

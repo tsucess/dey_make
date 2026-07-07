@@ -54,6 +54,7 @@ const VerificationRequest = lazy(
   () => import("./Admin/Pages/VerificationRequest"),
 );
 const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
+const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -237,6 +238,10 @@ export default function App() {
           <Route
             path="/suspended-account"
             element={renderLazyRoute(SuspendedAccount)}
+          />
+          <Route
+            path="/admin-user"
+            element={renderLazyRoute(UserAdmin)}
           />
         </Route>
 
