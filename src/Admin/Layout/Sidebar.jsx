@@ -61,7 +61,7 @@ function Sidebar() {
           {navLinks.map((nav, i) =>
             nav.isLink ? (
               <button
-                key={nav.title}
+                key={nav.title-i}
                 className="flex items-center justify-between gap-2 px-3 py-2 rounded-md"
               >
                 <span className="flex items-center gap-2 text-white text-sm">
