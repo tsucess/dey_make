@@ -3,6 +3,7 @@ import Stats from "../components/Dashboard/Stats";
 import Header from "../components/Verification/Header";
 import Menu from "../components/Verification/Menu";
 import VerificationTable from "../components/Verification/VerificationTable";
+import VerificationModal from "../components/Verification/VerificationModal";
 
 const stats = [
   {
@@ -33,19 +34,30 @@ const stats = [
 
 function VerificationRequest() {
   const [activeTab, setActiveTab] = useState("Pending Review");
+  const [openModal, setOpenModal] = useState(null);
 
   function handleActiveTabChange(tab) {
     setActiveTab(tab);
   }
+
+  function handleOpenModal(id) {
+    setOpenModal(id);
+  }
+
+  function handleCloseModal() {
+    setOpenModal(null);
+  }
+
   return (
     <div className="space-y-7">
+     {openModal && <VerificationModal handleCloseModal={handleCloseModal}/>} 
       <Header />
       <Stats stats={stats} large />
       <Menu
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
       />
-      <VerificationTable />
+      <VerificationTable modalId={openModal} handleOpenModal={handleOpenModal}  />
     </div>
   );
 }
