@@ -38,16 +38,23 @@ function getNavItems(t, isAdmin, user) {
   ];
 }
 
-export default function Sidebar() {
+export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
   const { logout, user } = useAuth();
   const { t } = useLanguage();
   const navItems = getNavItems(t, Boolean(user?.isAdmin), user);
 
   return (
-    <aside
-      className="flex flex-col w-67.5 min-h-screen
-                      bg-white dark:bg-black300 border-r border-orange100 shrink-0"
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setIsSidebarOpen?.(false)}
+        />
+      )}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-67.5 min-h-screen bg-white dark:bg-black300 border-r border-orange100 shrink-0 transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+      >
       <div className="flex flex-col justify-center px-8 h-18.5 bg-orange100 border-t border-b border-orange100 shrink-0">
         <Link to="/home" className="flex flex-col items-start">
           <img
@@ -71,6 +78,7 @@ export default function Sidebar() {
           <NavLink
             key={to}
             to={to}
+            onClick={() => setIsSidebarOpen?.(false)}
             end={to === "/home"}
             className={({ isActive }) =>
               `flex items-center gap-4 px-8 py-3 text-[15px]
@@ -109,5 +117,6 @@ export default function Sidebar() {
         {t("common.logout") || "Logout"}
       </button>
     </aside>
+    </>
   );
 }

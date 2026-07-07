@@ -23,7 +23,7 @@ function Comment() {
       <div className="flex flex-col gap-3.75 h-full">
         <div className="flex flex-col gap-3.75 max-h-70 overflow-y-auto">
             {
-                [1,2,3,4,5].map(i => <div className="flex items-start gap-3">
+                [1,2,3,4,5].map(i => <div key={i} className="flex items-start gap-3">
                     <img src="/user1.jpg" alt="" className="w-12 h-12 rounded-full" />
                     <div className="flex flex-col gap-1">
                         <span className="text-black dark:text-white text-xs">@SammieNed</span>
