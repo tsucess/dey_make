@@ -50,8 +50,10 @@ const LivePreview = lazy(() => import("./pages/LivePreview"));
 const Live = lazy(() => import("./pages/LiveNew"));
 const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
-const VerificationRequest = lazy(() => import("./Admin/Pages/VerificationRequest"));
-const Users = lazy(() => import("./Admin/Pages/Users"));
+const VerificationRequest = lazy(
+  () => import("./Admin/Pages/VerificationRequest"),
+);
+const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -228,18 +230,18 @@ export default function App() {
 
         <Route element={renderLazyRoute(AppLayoutAdmin)}>
           <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
-          <Route path="/" element={renderLazyRoute(AdminDashboard)} />
           <Route
             path="/verification-request"
             element={renderLazyRoute(VerificationRequest)}
           />
-          <Route path="/users" element={renderLazyRoute(Users)} />
+          <Route
+            path="/suspended-account"
+            element={renderLazyRoute(SuspendedAccount)}
+          />
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
         <Route path="*" element={<Navigate to="/" replace />} />
-
-        
       </Routes>
     </BrowserRouter>
   );

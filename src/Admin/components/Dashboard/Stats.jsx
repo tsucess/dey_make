@@ -1,24 +1,11 @@
 import { FaArrowUp } from "react-icons/fa";
 import AnalyticsChart from "./StatsChart";
 
-const stats = [
-  {
-    title: "Daily Active Users",
-    value: "125.6M",
-    date: "12.5% vs last 7 days",
-  },
-  { title: "New Signups", value: "7.23M", date: "12.5% vs last 7 days" },
-  { title: "View Uploaded", value: "8.64M", date: "12.5% vs last 7 days" },
-  { title: "Live Streams", value: "1,100", date: "12.5% vs last 7 days" },
-  { title: "Watch Time", value: "1.2B hrs", date: "12.5% vs last 7 days" },
-  { title: "Active Challenges", value: "100", date: "12.5% vs last 7 days" },
-  { title: "Revenue", value: "80.64M", date: "12.5% vs last 7 days" },
-  { title: "Creator Earning", value: "1,100", date: "12.5% vs last 7 days" },
-];
 
-function Stats() {
+
+function Stats( {stats, large}) {
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className={`grid grid-cols-4 gap-3 ${large ? 'grid-cols-5' : 'grid-cols-4'}`}>
       {stats.map((stat, i) => (
         <Stat key={i} {...stat} />
       ))}
@@ -26,7 +13,7 @@ function Stats() {
   );
 }
 
-function Stat({ title, value, date }) {
+function Stat({ title, value, date, color }) {
   return (
     <div className="flex flex-col gap-3 bg-blue200 p-5 rounded-2xl">
       <div className="flex flex-col gap-1 font-roboto">
@@ -37,7 +24,7 @@ function Stat({ title, value, date }) {
           {date}
         </div>
       </div>
-      <AnalyticsChart />
+      <AnalyticsChart borderColor={color} />
     </div>
   );
 }

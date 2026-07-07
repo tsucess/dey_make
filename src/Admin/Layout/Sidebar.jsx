@@ -110,11 +110,8 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
             const isActive = nav.isLink && (pathname === nav.link || (nav.link !== "/" && pathname.startsWith(nav.link)));
             return nav.isLink ? (
               <button
-                key={nav.title}
-                onClick={() => handleNavigation(nav.link)}
-                className={`flex items-center justify-between gap-2 px-3 py-3 rounded-md relative transition-colors ${
-                  isActive ? "bg-[#252525]" : "hover:bg-[#1A1A1A]"
-                }`}
+                key={nav.title-i}
+                className="flex items-center justify-between gap-2 px-3 py-2 rounded-md"
               >
                 {isActive && (
                   <div className="absolute -left-4 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange100 rounded-r-md"></div>
