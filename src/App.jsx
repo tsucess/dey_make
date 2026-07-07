@@ -235,7 +235,7 @@ export default function App() {
             element={renderLazyRoute(VerificationRequest)}
           />
           <Route
-            path="/suspended-acoount"
+            path="/suspended-account"
             element={renderLazyRoute(SuspendedAccount)}
           />
         </Route>
