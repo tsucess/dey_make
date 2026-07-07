@@ -20,7 +20,7 @@ function Comment() {
         <div className="h-full flex flex-col gap-8">
             <div className="flex flex-col gap-6 overflow-y-auto max-h-120" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
                 {
-                    comments.map(({img, name, time, desc, likes, dislikes, replies }, i) => <div className="flex gap-4 items-start">
+                    comments.map(({img, name, time, desc, likes, dislikes, replies }, i) => <div key={i} className="flex gap-4 items-start">
                         <img src={img} alt={name} className="w-12.5 h-12.5 rounded-full" />
                         <div className="flex flex-col gap-2">
                             <div className="flex items-center gap-2">

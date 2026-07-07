@@ -56,7 +56,7 @@ function Comment() {
         <div className="flex flex-col gap-6 overflow-y-auto max-h-120">
           {comments.map(
             ({ img, name, time, desc, likes, dislikes, replies }, i) => (
-              <div className="flex gap-4 items-start">
+              <div key={i} className="flex gap-4 items-start">
                 <img
                   src={img}
                   alt={name}

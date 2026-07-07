@@ -3,6 +3,7 @@ import TopBar from "./TopBar";
 import BottomNav from "./BottomNav";
 import { Link, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { HiOutlineSearch } from "react-icons/hi";
+import { FiMenu } from "react-icons/fi";
 import { IoMdSettings } from "react-icons/io";
 import { useTheme } from "../../context/ThemeContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -59,6 +60,7 @@ function MobileActionLink({ children, to, ariaLabel, title }) {
 }
 
 export default function AppLayout() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
@@ -163,10 +165,10 @@ export default function AppLayout() {
 
   return (
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
-      {/* Sidebar — desktop only */}
+      {/* Sidebar — desktop and mobile */}
       {isAuthenticated ? (
-        <div className="hidden md:flex">
-          <Sidebar />
+        <div className="md:flex">
+          <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         </div>
       ) : null}
 
@@ -207,6 +209,9 @@ export default function AppLayout() {
           <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] md:hidden">
             {currentConfig.isHomepage || currentConfig.isConnection ? (
               <div className="flex justify-between items-center w-3/5">
+                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 md:hidden">
+                  <FiMenu className="w-6 h-6 text-black dark:text-white" />
+                </button>
                 <button onClick={() => navigate("/live")}>
                   <MdLiveTv className="w-5 h-5 text-black dark:text-white" />
                 </button>
@@ -227,9 +232,14 @@ export default function AppLayout() {
                 </div>
               </div>
             ) : (
-              <h1 className="text-base font-bricolage font-semibold text-slate100 dark:text-white">
-                {currentConfig.title}
-              </h1>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 md:hidden">
+                  <FiMenu className="w-6 h-6 text-black dark:text-white" />
+                </button>
+                <h1 className="text-base font-bricolage font-semibold text-slate100 dark:text-white">
+                  {currentConfig.title}
+                </h1>
+              </div>
             )}
 
             <div className="flex items-center gap-3">
