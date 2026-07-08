@@ -5,7 +5,7 @@ import AnalyticsChart from "./StatsChart";
 
 function Stats( {stats, large}) {
   return (
-    <div className={`grid grid-cols-4 gap-3 ${large ? 'grid-cols-5' : 'grid-cols-4'}`}>
+    <div className={`grid grid-cols-3 gap-3 ${large ? ' md:grid-cols-5' : 'md:grid-cols-4'}`}>
       {stats.map((stat, i) => (
         <Stat key={i} {...stat} />
       ))}

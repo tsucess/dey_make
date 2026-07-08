@@ -3,6 +3,7 @@ import Header from "../components/SuspendedAcoount/Header";
 import Menu from "../components/SuspendedAcoount/Menu";
 import Stats from "../components/SuspendedAcoount/Stats";
 import SuspendedTable from "../components/SuspendedAcoount/SuspendedTable";
+import SuspendedModal from "../components/SuspendedAcoount/SuspendedModal";
 
 function SuspendedAccount() {
   const [activeTab, setActiveTab] = useState("All Suspended");
@@ -20,14 +21,19 @@ function SuspendedAccount() {
     setActiveTab(tab);
   }
   return (
-    <div className="space-y-7">
+    <div className="space-y-7 w-full">
+      {openModal && <SuspendedModal handleCloseModal={handleCloseModal} />}
       <Header />
       <Stats />
       <Menu
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
       />
-      <SuspendedTable modalId={openModal} handleOpenModal={handleOpenModal} />
+      <SuspendedTable
+        modalId={openModal}
+        handleOpenModal={handleOpenModal}
+        handleCloseModal={handleCloseModal}
+      />
     </div>
   );
 }

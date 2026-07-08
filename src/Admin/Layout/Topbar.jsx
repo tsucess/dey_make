@@ -3,7 +3,7 @@ import { RiNotification3Line } from "react-icons/ri";
 import { FiMenu } from "react-icons/fi";
 
 function Topbar({ setIsSidebarOpen }) {
-  return <div className="flex items-center justify-between h-22 bg-blue100 px-4 md:px-8 py-5">
+  return <div className="flex items-center justify-between h-22 bg-blue100 px-4 md:px-8 py-5 w-full">
     <div className="flex gap-3.5 items-center">
         <button className="md:hidden text-white" onClick={() => setIsSidebarOpen(true)}>
           <FiMenu className="w-6 h-6" />

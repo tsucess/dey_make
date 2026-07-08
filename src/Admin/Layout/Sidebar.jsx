@@ -100,7 +100,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
           onClick={() => setIsSidebarOpen(false)} 
         />
       )}
-      <aside className={`fixed md:static inset-y-0 left-0 z-50 flex flex-col gap-6 w-69 shrink-0 border-r border-r-zinc50 bg-black h-screen overflow-y-auto p-4 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
+      <aside className={`fixed md:static inset-y-0 left-0 z-50 flex flex-col gap-6 w-64 shrink-0 border-r border-r-zinc-50 bg-black h-screen overflow-y-auto p-4 transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
       <div className="flex items-center justify-center p-4 border-b border-white h-22 shrink-0">
         <img src="/DEYMAKE LOGO with Tagline Yellow.svg" alt="" className="max-h-full" />
       </div>

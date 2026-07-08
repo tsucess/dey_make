@@ -57,7 +57,7 @@ function VerificationRequest() {
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
       />
-      <VerificationTable modalId={openModal} handleOpenModal={handleOpenModal}  />
+      <VerificationTable modalId={openModal} handleOpenModal={handleOpenModal} handleCloseModal={handleCloseModal} />
     </div>
   );
 }
