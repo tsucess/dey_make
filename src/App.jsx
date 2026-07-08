@@ -52,6 +52,7 @@ const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
 const VerificationRequest = lazy(() => import("./Admin/Pages/VerificationRequest"));
 const Users = lazy(() => import("./Admin/Pages/Users"));
+const Comments = lazy(() => import("./Admin/Pages/Comments"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -234,6 +235,7 @@ export default function App() {
             element={renderLazyRoute(VerificationRequest)}
           />
           <Route path="/users" element={renderLazyRoute(Users)} />
+          <Route path="/comments" element={renderLazyRoute(Comments)} />
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />

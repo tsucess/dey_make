@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { FiX, FiEye, FiSend, FiDownload, FiXCircle } from "react-icons/fi";
 import { FaHeart } from "react-icons/fa";
 import { MdVerified } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 
 export default function UserDetailsSidebar({ user, onClose }) {
+  const [activeTab, setActiveTab] = useState("All Users");
+  
   if (!user) return null;
 
   return (
@@ -13,7 +15,7 @@ export default function UserDetailsSidebar({ user, onClose }) {
         className="fixed inset-0 bg-black/50 z-40 transition-opacity"
         onClick={onClose}
       />
-      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[450px] bg-blue200 border-l border-zinc-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
+      <div className="fixed inset-y-0 right-0 z-50 w-full max-w-[450px] bg-blue400 border-l border-zinc-800 shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out translate-x-0">
         
         {/* Header */}
         <div className="flex justify-end p-4 shrink-0">
@@ -63,8 +65,25 @@ export default function UserDetailsSidebar({ user, onClose }) {
             </div>
           </div>
 
+          {/* Tabs */}
+          <div className="flex border-b border-zinc-800/50 mb-6">
+            {["All Users", "Active Users", "Suspended Users"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 pb-3 text-sm font-medium transition-colors border-b-2 -mb-[1px] ${
+                  activeTab === tab 
+                    ? "border-red-500 text-white" 
+                    : "border-transparent text-slate-400 hover:text-slate-200"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
           {/* User Information */}
-          <div className="bg-[#131313] rounded-xl p-5 mb-5 border border-zinc-800/50">
+          <div className="bg-blue300 rounded-xl p-5 mb-5 border border-zinc-800/50">
             <h3 className="text-sm font-medium text-white mb-2">User Information</h3>
             <div className="flex flex-col">
               <div className="flex justify-between items-center py-4 border-b border-zinc-800">
@@ -99,7 +118,7 @@ export default function UserDetailsSidebar({ user, onClose }) {
           </div>
 
           {/* Account Status */}
-          <div className="bg-[#131313] rounded-xl p-5 mb-5 border border-zinc-800/50">
+          <div className="bg-blue300 rounded-xl p-5 mb-5 border border-zinc-800/50">
             <h3 className="text-sm font-medium text-white mb-2">Account Status</h3>
             <div className="flex flex-col">
               <div className="flex justify-between items-center py-4 border-b border-zinc-800">
@@ -124,7 +143,7 @@ export default function UserDetailsSidebar({ user, onClose }) {
           </div>
 
           {/* Account Actions */}
-          <div className="bg-[#131313] rounded-xl p-5 pb-6 border border-zinc-800/50">
+          <div className="bg-blue300 rounded-xl p-5 pb-6 border border-zinc-800/50">
             <h3 className="text-sm font-medium text-white mb-4">Account Status</h3>
             
             <div className="grid grid-cols-2 gap-3 mb-3">
