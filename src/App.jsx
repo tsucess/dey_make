@@ -55,6 +55,7 @@ const VerificationRequest = lazy(
 );
 const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
 const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
+const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -239,10 +240,8 @@ export default function App() {
             path="/suspended-account"
             element={renderLazyRoute(SuspendedAccount)}
           />
-          <Route
-            path="/admin-user"
-            element={renderLazyRoute(UserAdmin)}
-          />
+          <Route path="/admin-user" element={renderLazyRoute(UserAdmin)} />
+          <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
