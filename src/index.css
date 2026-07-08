@@ -2,6 +2,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -13,6 +14,7 @@
   --font-bricolage: "Bricolage Grotesque", sans-serif;
   --font-roboto: "Roboto", sans-serif;
   --font-dmSans: "DM Sans", sans-serif;
+  --font-lexend: "Lexend", sans-serif;
   --color-slate100: #1a1a1a;
   --color-orange100: #fdb300;
   --color-slate200: #d9d9d9;
@@ -62,6 +64,7 @@
   --color-zinc50: #e2e4e9;
   --color-zinc100: #f6f8fa;
   --color-zinc200: #8D9098;
+  --color-zinc300: #868C98;
   --color-red200: #b61616;
   --color-red300: #9f1414;
   --color-red400: #e31c1c;
@@ -84,6 +87,7 @@
   --color-black600: #141516;
   --color-black700: #0b1011;
   --color-black800: #0F1721;
+  --color-black900: #010710;
   --shadow-toggle: 0 4px 10px 0 #0000000d;
   --shadow-waitlist: 0 4px 40px 0 #00000005;
   --shadow-waitlist-dark: 0 4px 40px 0 #ffffff1a;
