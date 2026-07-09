@@ -1,14 +1,8 @@
 import { IoMdArrowRoundUp } from "react-icons/io"
 
-const stats = [
-    {title : 'Total Suspended', value : '320', sub: 'All time', hasArrow: false},
-    {title : 'Suspended This Month ', value : '45', sub: '12.5% vs last 7 days', hasArrow: true},
-    {title : 'Banned Permanently', value : '210', sub: '12.5% of total', hasArrow: true},
-    {title : 'Temporary Suspensions', value : '110', sub: '12.5% of total', hasArrow: true},
-    {title : 'Appeals Received', value : '28', sub: 'This month', hasArrow: false},
-]
 
-function Stats() {
+
+function Stats({stats}) {
   return (
     <div className="flex gap-3 items-center">{
         stats.map(stat => <Stat key={stat.title} {...stat}/>)

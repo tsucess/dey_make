@@ -1,7 +1,7 @@
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 
-function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
+function VideoTable({ modalId, handleOpenModal, handleCloseModal }) {
   return (
     <section className="bg-blue300 p-6 rounded-3xl flex flex-col gap-7.5 font-lexend">
       <div className="overflow-x-auto w-full">
@@ -12,12 +12,15 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
                 {" "}
                 <span className="w-4 h-4 border block border-zinc50 rounded-sm"></span>
               </th>
+              <th className="p-4 text-sm text-white">Video</th>
+
               <th className="p-4 text-sm text-white">Creator</th>
-              <th className="p-4 text-sm text-white">Suspension Type</th>
-              <th className="p-4 text-sm text-white">Reason</th>
-              <th className="p-4 text-sm text-white">Suspended On</th>
-              <th className="p-4 text-sm text-white">Duration </th>
+              <th className="p-4 text-sm text-white">Views</th>
+              <th className="p-4 text-sm text-white">Likes</th>
+              <th className="p-4 text-sm text-white">Comments</th>
+
               <th className="p-4 text-sm text-white">Status</th>
+              <th className="p-4 text-sm text-white">Uploaded</th>
               <th className="p-4 text-sm text-white">Actions</th>
             </tr>
           </thead>
@@ -43,44 +46,46 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
                 </td>
                 <td className="p-4 ">
                   <div className="flex items-center gap-1">
+                    <div className="w-7.5 h-7.5 bg-white"></div>
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm text-white font-light">
+                        Weekend Vibe
+                      </h5>
+                      <p className="text-[10px] text-white font-light">
+                        ID: VID-2024-1234511
+                      </p>
+                    </div>
+                  </div>
+                </td>
+                <td className="p-4 ">
+                  <div className="flex items-center gap-1">
                     <img
-                    src="/aisha.png"
-                    alt=""
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <h5 className="text-sm text-white font-light">Aisha Doe</h5>
-                    <p className="text-[10px] text-white font-light">
-                      @aishadoe
-                    </p>
-                  </div>
-                  </div>
-                  
-                </td>
-                <td className="p-4">
-                  <span className="px-2 py-1 bg-orange500/24 rounded-md text-orange500 text-xs font-light">
-                    Banned Permanently
-                  </span>
-                </td>
-                <td className=" p-4">
-                  <div className="flex flex-col gap-1">
-                    <p className="text-sm font-light text-white">
-                      Community Guidelines
-                    </p>
-                    <span className="text-[10px] text-white font-light">
-                      Hate Speech
-                    </span>
+                      src="/aisha.png"
+                      alt=""
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm text-white font-light">
+                        Aisha Doe
+                      </h5>
+                      <p className="text-[10px] text-white font-light">
+                        @aishadoe
+                      </p>
+                    </div>
                   </div>
                 </td>
-                <td className="text-sm font-light text-white p-4">
-                  May 25, 2024
-                </td>
-                <td className="text-sm font-light text-white p-4">Permanent</td>
+                <td className="p-4 text-sm font-light text-white">1.2M</td>
+                <td className="text-sm font-light text-white p-4">96.4K</td>
+                <td className="text-sm font-light text-white p-4">2.3K</td>
                 <td className="p-4">
                   <span className="px-2 py-1 bg-red100/24 rounded-md text-red100 text-xs font-light">
-                    Banned
+                    Reported
                   </span>
                 </td>
+                <td className="text-sm font-light text-white p-4">
+                  May 26, 2024
+                </td>
+
                 <td className="p-4">
                   <button>
                     <FaEllipsisVertical className="w-4 h-4 text-white" />
@@ -105,4 +110,4 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
   );
 }
 
-export default SuspendedTable;
+export default VideoTable;

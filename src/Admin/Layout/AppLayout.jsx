@@ -7,11 +7,11 @@ function AppLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="flex overflow-hidden relative">
+    <div className="flex w-full">
       <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      <div className="flex flex-col flex-1 max-h-screen">
+      <div className="flex flex-col flex-1 w-full max-h-screen min-h-0">
         <TopBar setIsSidebarOpen={setIsSidebarOpen} />
-        <main className="overflow-y-auto flex-1 bg-black p-5">
+        <main className="overflow-y-auto flex-1 bg-black p-5 w-full">
             <Outlet/>
         </main>
       </div>
