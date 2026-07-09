@@ -50,9 +50,9 @@ const LivePreview = lazy(() => import("./pages/LivePreview"));
 const Live = lazy(() => import("./pages/LiveNew"));
 const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
-const VerificationRequest = lazy(
-  () => import("./Admin/Pages/VerificationRequest"),
-);
+const VerificationRequest = lazy(() => import("./Admin/Pages/VerificationRequest"));
+const Users = lazy(() => import("./Admin/Pages/Users"));
+const Comments = lazy(() => import("./Admin/Pages/Comments"));
 const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
 const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
 const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
@@ -237,6 +237,8 @@ export default function App() {
             path="/verification-request"
             element={renderLazyRoute(VerificationRequest)}
           />
+          <Route path="/users" element={renderLazyRoute(Users)} />
+          <Route path="/comments" element={renderLazyRoute(Comments)} />
           <Route
             path="/suspended-account"
             element={renderLazyRoute(SuspendedAccount)}

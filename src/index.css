@@ -80,7 +80,7 @@
   --color-blue100: #525866;
   --color-blue200: #0d141e;
   --color-blue300: #0C131D;
-  --color-blue400 : #0088FF;
+  --color-blue400: #010710;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
@@ -116,4 +116,15 @@
   background-image: url("/studio-bg.png");
   background-size: cover;
   background-position: center;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }
