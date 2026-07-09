@@ -83,13 +83,13 @@ export default function Comments() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex flex-col">
           <h1 className="text-2xl font-semibold">Comments</h1>
-          <p className="text-sm text-slate-400 mt-1">Review and manage comments across DeyMake.</p>
+          <p className="text-sm text-slate400 mt-1">Review and manage comments across DeyMake.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-transparent border border-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors">
+          <button className="flex items-center gap-2 px-4 py-2 bg-transparent border border-slate700 rounded-md text-sm font-medium hover:bg-black300 transition-colors">
             <FiUpload /> Export
           </button>
-          <button className="bg-orange100 text-black px-6 py-2 rounded-md text-sm font-semibold hover:bg-orange-500 transition-colors">
+          <button className="bg-orange100 text-black px-6 py-2 rounded-md text-sm font-semibold hover:bg-orange500 transition-colors">
             Add Creator
           </button>
         </div>
@@ -98,10 +98,10 @@ export default function Comments() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
-          <div key={i} className="bg-blue200 rounded-xl p-5 flex flex-col gap-2 border border-zinc-800/50">
-            <h3 className="text-xs text-slate-400 font-medium">{stat.title}</h3>
+          <div key={i} className="bg-blue200 rounded-xl p-5 flex flex-col gap-2 border border-black300/50">
+            <h3 className="text-xs text-slate400 font-medium">{stat.title}</h3>
             <span className="text-2xl font-semibold mt-1">{stat.value}</span>
-            <div className={`flex items-center gap-1 text-xs font-medium ${stat.trendUp ? 'text-green-500' : 'text-red-500'}`}>
+            <div className={`flex items-center gap-1 text-xs font-medium ${stat.trendUp ? 'text-green500' : 'text-red500'}`}>
               <FiArrowUp className={`w-3 h-3 ${!stat.trendUp && 'rotate-180'}`} />
               <span>{stat.trend} vs last 7 days</span>
             </div>
@@ -110,15 +110,15 @@ export default function Comments() {
       </div>
 
       {/* Tabs */}
-      <div className="flex flex-wrap items-center border-b border-zinc-800/50">
+      <div className="flex flex-wrap items-center border-b border-black300/50">
         {tabs.map((tab, i) => (
           <button
             key={i}
             onClick={() => setActiveTab(tab.name)}
             className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors border-b-2 -mb-[1px] ${
               activeTab === tab.name
-                ? "border-red-500 text-white"
-                : "border-transparent text-slate-400 hover:text-slate-200"
+                ? "border-red500 text-white"
+                : "border-transparent text-slate400 hover:text-slate-200"
             }`}
           >
             {tab.name} {tab.count && `(${tab.count})`}
@@ -128,29 +128,29 @@ export default function Comments() {
 
       {/* Filters & Search */}
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-transparent border border-zinc-800 rounded-lg flex-1 min-w-[250px] max-w-[350px]">
-          <FiSearch className="text-zinc-500 w-4 h-4" />
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-transparent border border-black300 rounded-lg flex-1 min-w-[250px] max-w-[350px]">
+          <FiSearch className="text-slate500 w-4 h-4" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by username, ID or email"
-            className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-zinc-500"
+            className="bg-transparent border-none outline-none text-sm w-full text-white placeholder-slate500"
           />
         </div>
         
         {Object.keys(filterOptions).map((filter) => (
           <div key={filter} className="relative flex-1 min-w-[150px] max-w-[200px]">
-            <div className="text-xs text-slate-400 mb-1.5">{filter}</div>
+            <div className="text-xs text-slate400 mb-1.5">{filter}</div>
             <button 
               onClick={() => setOpenDropdown(openDropdown === filter ? null : filter)}
-              className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-transparent border border-zinc-800 rounded-lg text-sm text-slate-300"
+              className="w-full flex items-center justify-between gap-3 px-4 py-2.5 bg-transparent border border-black300 rounded-lg text-sm text-slate300"
             >
               <span className="truncate">{filters[filter]}</span>
-              <IoIosArrowDown className={`text-zinc-400 w-3 h-3 shrink-0 transition-transform ${openDropdown === filter ? 'rotate-180' : ''}`} />
+              <IoIosArrowDown className={`text-slate400 w-3 h-3 shrink-0 transition-transform ${openDropdown === filter ? 'rotate-180' : ''}`} />
             </button>
             {openDropdown === filter && (
-              <div className="absolute top-full left-0 mt-2 w-full bg-[#131313] border border-zinc-800 rounded-lg shadow-xl z-10 py-1">
+              <div className="absolute top-full left-0 mt-2 w-full bg-black600 border border-black300 rounded-lg shadow-xl z-10 py-1">
                 {filterOptions[filter].map(opt => (
                   <button 
                     key={opt}
@@ -158,7 +158,7 @@ export default function Comments() {
                       setFilters(prev => ({ ...prev, [filter]: opt }));
                       setOpenDropdown(null);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-800 transition-colors ${filters[filter] === opt ? 'text-white bg-zinc-800/50' : 'text-slate-300'}`}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-black300 transition-colors ${filters[filter] === opt ? 'text-white bg-black300/50' : 'text-slate300'}`}
                   >
                     {opt}
                   </button>
@@ -169,26 +169,26 @@ export default function Comments() {
         ))}
         
         <div className="flex-1 min-w-[100px] max-w-[120px] self-end">
-            <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border border-zinc-800 rounded-lg text-sm text-slate-300 hover:bg-zinc-800 transition-colors">
+            <button className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-transparent border border-black300 rounded-lg text-sm text-slate300 hover:bg-black300 transition-colors">
               <FiUpload /> Export
             </button>
         </div>
       </div>
 
       {/* Table & Mobile View */}
-      <div className="bg-blue400 border border-zinc-800/50 rounded-xl overflow-x-auto mt-2 shadow-sm">
+      <div className="bg-blue400 border border-black300/50 rounded-xl overflow-x-auto mt-2 shadow-sm">
         {/* Desktop Table */}
         <table className="hidden md:table w-full text-left border-collapse min-w-[900px]">
           <thead>
-            <tr className="border-b border-zinc-800 bg-transparent">
-              <th className="p-4 pl-6 w-12"><input type="checkbox" className="w-4 h-4 rounded border-zinc-600 bg-transparent accent-orange100" /></th>
-              <th className="p-4 text-xs font-medium text-slate-300">Comments</th>
-              <th className="p-4 text-xs font-medium text-slate-300">User</th>
-              <th className="p-4 text-xs font-medium text-slate-300">Video / Content</th>
-              <th className="p-4 text-xs font-medium text-slate-300">Status</th>
-              <th className="p-4 text-xs font-medium text-slate-300">Reported By</th>
-              <th className="p-4 text-xs font-medium text-slate-300">Date</th>
-              <th className="p-4 text-xs font-medium text-slate-300 text-center">Actions</th>
+            <tr className="border-b border-black300 bg-transparent">
+              <th className="p-4 pl-6 w-12"><input type="checkbox" className="w-4 h-4 rounded border-slate600 bg-transparent accent-orange100" /></th>
+              <th className="p-4 text-xs font-medium text-slate300">Comments</th>
+              <th className="p-4 text-xs font-medium text-slate300">User</th>
+              <th className="p-4 text-xs font-medium text-slate300">Video / Content</th>
+              <th className="p-4 text-xs font-medium text-slate300">Status</th>
+              <th className="p-4 text-xs font-medium text-slate300">Reported By</th>
+              <th className="p-4 text-xs font-medium text-slate300">Date</th>
+              <th className="p-4 text-xs font-medium text-slate300 text-center">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -196,17 +196,17 @@ export default function Comments() {
               <tr 
                 key={i} 
                 onClick={() => setSelectedComment(comment)}
-                className="border-b border-zinc-800/50 hover:bg-zinc-800/30 transition-colors cursor-pointer"
+                className="border-b border-black300/50 hover:bg-black300/30 transition-colors cursor-pointer"
               >
                 <td className="p-4 pl-6" onClick={(e) => e.stopPropagation()}>
-                  <input type="checkbox" className="w-4 h-4 rounded border-zinc-600 bg-transparent accent-orange100 cursor-pointer" />
+                  <input type="checkbox" className="w-4 h-4 rounded border-slate600 bg-transparent accent-orange100 cursor-pointer" />
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3 max-w-[200px]">
                     <img src={comment.user.avatar} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
                     <div className="flex flex-col overflow-hidden">
                       <span className="text-sm font-medium text-white truncate">You peo...</span>
-                      <span className="text-xs text-slate-400 truncate">{comment.user.username}</span>
+                      <span className="text-xs text-slate400 truncate">{comment.user.username}</span>
                     </div>
                   </div>
                 </td>
@@ -216,36 +216,36 @@ export default function Comments() {
                     <div className="flex flex-col">
                       <div className="flex items-center gap-1">
                         <span className="text-sm font-medium text-white">{comment.user.name}</span>
-                        {comment.user.verified && <MdVerified className="text-blue-500 w-3.5 h-3.5" />}
+                        {comment.user.verified && <MdVerified className="text-cyan200 w-3.5 h-3.5" />}
                       </div>
-                      <span className="text-xs text-slate-400">{comment.user.followers}</span>
+                      <span className="text-xs text-slate400">{comment.user.followers}</span>
                     </div>
                   </div>
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-zinc-800 rounded shrink-0 overflow-hidden">
+                    <div className="w-8 h-8 bg-black300 rounded shrink-0 overflow-hidden">
                         <img src="/story3.jpg" className="w-full h-full object-cover" alt="" />
                     </div>
                     <div className="flex flex-col">
                       <span className="text-sm font-medium text-white">{comment.video.title}</span>
-                      <span className="text-xs text-slate-400">{comment.video.id}</span>
+                      <span className="text-xs text-slate400">{comment.video.id}</span>
                     </div>
                   </div>
                 </td>
                 <td className="p-4">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium border ${
-                    comment.status === 'Approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                    comment.status === 'Pending Review' ? 'bg-[#3b210e] text-orange-500 border-orange-500/20' :
-                    'bg-red-500/10 text-red-500 border-red-500/20'
+                    comment.status === 'Approved' ? 'bg-green500/10 text-green500 border-green500/20' :
+                    comment.status === 'Pending Review' ? 'bg-brown100 text-orange500 border-orange500/20' :
+                    'bg-red500/10 text-red500 border-red500/20'
                   }`}>
                     {comment.status}
                   </span>
                 </td>
-                <td className="p-4 text-sm text-slate-300">{comment.reportedBy}</td>
-                <td className="p-4 text-sm text-slate-300">{comment.date}</td>
+                <td className="p-4 text-sm text-slate300">{comment.reportedBy}</td>
+                <td className="p-4 text-sm text-slate300">{comment.date}</td>
                 <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                  <button className="text-slate-400 hover:text-white transition-colors cursor-pointer p-1">
+                  <button className="text-slate400 hover:text-white transition-colors cursor-pointer p-1">
                     <FiMoreVertical className="w-4 h-4 mx-auto" />
                   </button>
                 </td>
@@ -260,7 +260,7 @@ export default function Comments() {
             <div 
               key={i} 
               onClick={() => setSelectedComment(comment)}
-              className="bg-blue300 border border-zinc-800 rounded-xl p-4 flex flex-col gap-4 cursor-pointer hover:bg-zinc-800/30 transition-colors"
+              className="bg-blue300 border border-black300 rounded-xl p-4 flex flex-col gap-4 cursor-pointer hover:bg-black300/30 transition-colors"
             >
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
@@ -268,37 +268,37 @@ export default function Comments() {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1">
                       <span className="text-sm font-medium text-white">{comment.user.name}</span>
-                      {comment.user.verified && <MdVerified className="text-blue-500 w-3.5 h-3.5" />}
+                      {comment.user.verified && <MdVerified className="text-cyan200 w-3.5 h-3.5" />}
                     </div>
-                    <span className="text-xs text-slate-400">{comment.commentText.substring(0, 20)}...</span>
+                    <span className="text-xs text-slate400">{comment.commentText.substring(0, 20)}...</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium border ${
-                    comment.status === 'Approved' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                    comment.status === 'Pending Review' ? 'bg-[#3b210e] text-orange-500 border-orange-500/20' :
-                    'bg-red-500/10 text-red-500 border-red-500/20'
+                    comment.status === 'Approved' ? 'bg-green500/10 text-green500 border-green500/20' :
+                    comment.status === 'Pending Review' ? 'bg-brown100 text-orange500 border-orange500/20' :
+                    'bg-red500/10 text-red500 border-red500/20'
                   }`}>
                     {comment.status}
                   </span>
-                  <button className="text-slate-400 hover:text-white transition-colors cursor-pointer" onClick={(e) => e.stopPropagation()}>
+                  <button className="text-slate400 hover:text-white transition-colors cursor-pointer" onClick={(e) => e.stopPropagation()}>
                     <FiMoreVertical className="w-5 h-5" />
                   </button>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-y-3 gap-x-2 pt-3 border-t border-zinc-800">
+              <div className="grid grid-cols-2 gap-y-3 gap-x-2 pt-3 border-t border-black300">
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Video</span>
-                  <span className="text-xs text-slate-300">{comment.video.title}</span>
+                  <span className="text-[10px] text-slate500 font-semibold uppercase tracking-wider">Video</span>
+                  <span className="text-xs text-slate300">{comment.video.title}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Reported By</span>
-                  <span className="text-xs text-slate-300">{comment.reportedBy || "None"}</span>
+                  <span className="text-[10px] text-slate500 font-semibold uppercase tracking-wider">Reported By</span>
+                  <span className="text-xs text-slate300">{comment.reportedBy || "None"}</span>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Date</span>
-                  <span className="text-xs text-slate-300">{comment.date}</span>
+                  <span className="text-[10px] text-slate500 font-semibold uppercase tracking-wider">Date</span>
+                  <span className="text-xs text-slate300">{comment.date}</span>
                 </div>
               </div>
             </div>
@@ -306,12 +306,12 @@ export default function Comments() {
         </div>
         
         {/* Pagination */}
-        <div className="p-4 px-6 flex items-center justify-between border-t border-zinc-800/50 bg-transparent">
+        <div className="p-4 px-6 flex items-center justify-between border-t border-black300/50 bg-transparent">
           <button className="px-6 py-2 border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors">
             Back
           </button>
-          <span className="text-sm text-slate-400">Step 2 of 5</span>
-          <button className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange-400 transition-colors">
+          <span className="text-sm text-slate400">Step 2 of 5</span>
+          <button className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors">
             Next
           </button>
         </div>

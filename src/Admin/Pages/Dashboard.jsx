@@ -33,8 +33,8 @@ function Dashboard() {
       <div className="grid gap-4 grid-cols-11">
         <div className="col-span-5 w-full flex flex-col gap-4">
           <ContentModeration />
-          <ModerationAlert />
-          <CreatorGrowth />
+          <ModerationAlert />   
+          <CreatorGrowth />      
           <SystemStatus />
         </div>
         <div className="col-span-6 w-full flex flex-col gap-4">
