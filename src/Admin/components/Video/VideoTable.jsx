@@ -30,7 +30,7 @@ function VideoTable({ modalId, handleOpenModal, handleCloseModal }) {
                 key={i}
                 onClick={() => handleOpenModal(i)}
                 className={` px-2 py-2 ${
-                  modalId === i ? "border border-blue400 rounded-xl" : ""
+                  modalId === i ? "border border-blue rounded-xl" : ""
                 }`}
               >
                 <td className="p-4">

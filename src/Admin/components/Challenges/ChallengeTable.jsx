@@ -1,21 +1,24 @@
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 
-function LivestreamTable({ modalId, handleOpenModal }) {
+function ChallengeTable({ modalId, handleOpenModal, handleCloseModal }) {
   return (
     <section className="bg-blue300 p-6 rounded-3xl flex flex-col gap-7.5 font-lexend">
       <div className="overflow-x-auto w-full">
         <table className="min-w-220 whitespace-nowrap">
           <thead>
             <tr>
-              <th className="p-4 text-sm text-white">Stream</th>
-              <th className="p-4 text-sm text-white">Streamer</th>
-
+              <th className="p-4">
+                {" "}
+                <span className="w-4 h-4 border block border-zinc50 rounded-sm"></span>
+              </th>
+              <th className="p-4 text-sm text-white">Challenge</th>
               <th className="p-4 text-sm text-white">Category</th>
-              <th className="p-4 text-sm text-white">Viewers</th>
-              <th className="p-4 text-sm text-white">Duration</th>
+              <th className="p-4 text-sm text-white">Participants</th>
+              <th className="p-4 text-sm text-white">Submissions</th>
+
               <th className="p-4 text-sm text-white">Status</th>
-              <th className="p-4 text-sm text-white">Started At</th>
+              <th className="p-4 text-sm text-white">Period </th>
               <th className="p-4 text-sm text-white">Actions</th>
             </tr>
           </thead>
@@ -28,48 +31,41 @@ function LivestreamTable({ modalId, handleOpenModal }) {
                   modalId === i ? "border border-blue rounded-xl" : ""
                 }`}
               >
+                <td className="p-4">
+                  <input
+                    type="checkbox"
+                    name=""
+                    id=""
+                    onChange={() =>
+                      modalId === i ? handleCloseModal() : handleOpenModal(i)
+                    }
+                    checked={modalId === i}
+                  />
+                </td>
                 <td className="p-4 ">
                   <div className="flex items-center gap-2">
-                    <div className="w-12 h-10.5 bg-white"></div>
+                    <div className="w-7.5 h-7.5 bg-white"></div>
                     <div className="flex flex-col gap-1">
                       <h5 className="text-sm text-white font-light">
-                        Weekend Vibe
+                        #DeyMakeDanceChallenge
                       </h5>
                       <p className="text-[10px] text-white font-light">
-                        ID: VID-2024-1234511
+                        ID: CHL-2024-0001
                       </p>
                     </div>
                   </div>
                 </td>
-                <td className="p-4 ">
-                  <div className="flex items-center gap-1">
-                    <img
-                      src="/aisha.png"
-                      alt=""
-                      className="w-10 h-10 rounded-full object-contain"
-                    />
-                    <div className="flex flex-col gap-1">
-                      <h5 className="text-sm text-white font-light">
-                        Aisha Doe
-                      </h5>
-                      <p className="text-[10px] text-white font-light">
-                        @aishadoe
-                      </p>
-                    </div>
-                  </div>
-                </td>
-                <td className="p-4 text-sm font-light text-white">Music</td>
-                <td className="text-sm font-light text-white p-4">96.4K</td>
-                <td className="text-sm font-light text-white p-4">01:23:45</td>
+                <td className="p-4 text-sm font-light text-white">Dance</td>
+                <td className="text-sm font-light text-white p-4">45.2K</td>
+                <td className="text-sm font-light text-white p-4">98.3K</td>
                 <td className="p-4">
                   <span className="px-2 py-1 bg-green100/24 rounded-md text-green100 text-xs font-light">
-                    Live
+                    Active
                   </span>
                 </td>
                 <td className="text-sm font-light text-white p-4">
-                  May 26, 2024 (08:30 PM)
+                  May 26, 2024
                 </td>
-
                 <td className="p-4">
                   <button>
                     <FaEllipsisVertical className="w-4 h-4 text-white" />
@@ -94,4 +90,4 @@ function LivestreamTable({ modalId, handleOpenModal }) {
   );
 }
 
-export default LivestreamTable;
+export default ChallengeTable;
