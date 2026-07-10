@@ -36,8 +36,8 @@ const stats = [
 const tabs = [
   "All Suspended",
   "Banned Permanently",
-  "Temporary Suspensions",
-  "Appeal in Progress",
+  "Temporary",
+  "Appeal",
 ];
 const reasons = [
   "Hate Speech",
@@ -73,7 +73,7 @@ const verificationData = Array(10)
     ...v,
     id: v.id.slice(0, -1) + i,
     status: i % 3 === 0 ? "Banned" : i % 3 === 1 ? "Active" : "Expired",
-    suspensionTypes: suspensionTypes[i % suspensionTypes.length],
+    suspensionType: suspensionTypes[i % suspensionTypes.length],
     reason: reasons[i % reasons.length],
     reasonTitle : reasonTitle[i % reasonTitle.length],
     duration: i % 3 === 0 ? "Permanent" : i % 3 === 1 ? "7 days" : "Ended",
@@ -110,10 +110,6 @@ function SuspendedAccount() {
     setOpenModal(null);
   }
 
-  function handleActiveTabChange(tab) {
-    setActiveTab(tab);
-  }
-
   const filteredData = verificationData.filter((user) => {
     // Tab filter
     // if (activeTab === "Pending Review" && user.status !== "Pending Review")
@@ -122,7 +118,7 @@ function SuspendedAccount() {
     //   return false;
     // if (activeTab === "Rejected" && user.status !== "Rejected")
     //   return false;
-    if (activeTab !== "All" && user.status !== activeTab) {
+    if (activeTab !== "All Suspended" && user.suspensionType !== activeTab) {
       return false;
     }
 
@@ -157,8 +153,17 @@ function SuspendedAccount() {
         tabs={tabs}
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
+        searchQuery={searchQuery}
+        suspensionTypes={suspensionTypes}
+        reasonTypes={reasons}
+        reasonType={reasonType}
+        suspendedType={suspendedType}
+        handleSearchQueryChange={handleSearchQueryChange}
+        handleReasonTypeChange={handleReasonTypeChange}
+        handleSuspendedTypeChange={handleSuspendedTypeChange}
       />
       <SuspendedTable
+       filteredData={filteredData}
         modalId={openModal}
         handleOpenModal={handleOpenModal}
         handleCloseModal={handleCloseModal}

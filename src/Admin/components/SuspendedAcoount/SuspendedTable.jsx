@@ -1,13 +1,18 @@
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 
-function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
+function SuspendedTable({
+  modalId,
+  handleOpenModal,
+  handleCloseModal,
+  filteredData,
+}) {
   return (
     <section className="bg-blue300 p-6 rounded-3xl flex flex-col gap-7.5 font-lexend">
       <div className="overflow-x-auto w-full">
         <table className="min-w-220 whitespace-nowrap">
           <thead>
-            <tr> 
+            <tr>
               <th className="p-4">
                 {" "}
                 <span className="w-4 h-4 border block border-zinc50 rounded-sm"></span>
@@ -22,12 +27,12 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
             </tr>
           </thead>
           <tbody>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {filteredData.map((data) => (
               <tr
-                key={i}
-                onClick={() => handleOpenModal(i)}
+                key={data.id}
+                onClick={() => handleOpenModal(data.id)}
                 className={` px-2 py-2 ${
-                  modalId === i ? "border border-blue400 rounded-xl" : ""
+                  modalId === data.id ? "border border-blue rounded-xl" : ""
                 }`}
               >
                 <td className="p-4">
@@ -36,49 +41,57 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
                     name=""
                     id=""
                     onChange={() =>
-                      modalId === i ? handleCloseModal() : handleOpenModal(i)
+                      modalId === data.id
+                        ? handleCloseModal()
+                        : handleOpenModal(data.id)
                     }
-                    checked={modalId === i}
+                    checked={modalId === data.id}
                   />
                 </td>
                 <td className="p-4 ">
                   <div className="flex items-center gap-1">
                     <img
-                    src="/aisha.png"
-                    alt=""
-                    className="w-10 h-10 rounded-full object-contain"
-                  />
-                  <div className="flex flex-col gap-1">
-                    <h5 className="text-sm text-white font-light">Aisha Doe</h5>
-                    <p className="text-[10px] text-white font-light">
-                      @aishadoe
-                    </p>
+                      src="/aisha.png"
+                      alt=""
+                      className="w-10 h-10 rounded-full object-contain"
+                    />
+                    <div className="flex flex-col gap-1">
+                      <h5 className="text-sm text-white font-light">
+                        {data.name}
+                      </h5>
+                      <p className="text-[10px] text-white font-light">
+                        {data.username}
+                      </p>
+                    </div>
                   </div>
-                  </div>
-                  
                 </td>
                 <td className="p-4">
                   <span className="px-2 py-1 bg-orange500/24 rounded-md text-orange500 text-xs font-light">
-                    Banned Permanently
+                    {data.suspensionType}
                   </span>
                 </td>
                 <td className=" p-4">
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-light text-white">
-                      Community Guidelines
+                      {data.reasonTitle}
                     </p>
                     <span className="text-[10px] text-white font-light">
-                      Hate Speech
+                      {data.reason}
                     </span>
                   </div>
                 </td>
                 <td className="text-sm font-light text-white p-4">
-                  May 25, 2024
+                  {data.suspendedDate}
                 </td>
-                <td className="text-sm font-light text-white p-4">Permanent</td>
+                <td className="text-sm font-light text-white p-4">
+                  {data.duration}
+                </td>
                 <td className="p-4">
-                  <span className="px-2 py-1 bg-red100/24 rounded-md text-red100 text-xs font-light">
-                    Banned
+                  <span className={`px-2 py-1  rounded-md  text-xs font-light ${
+                    data.status === 'Banned' ? 'text-red100 bg-red100/24' : 
+                    data.status === 'Active' ? 'text-green100 bg-green100/24' : 'bg-slate50 text-slate150'
+                  }`}>
+                    {data.status}
                   </span>
                 </td>
                 <td className="p-4">
