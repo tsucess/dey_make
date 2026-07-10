@@ -7,7 +7,7 @@ function SuspendedTable({ modalId, handleOpenModal, handleCloseModal }) {
       <div className="overflow-x-auto w-full">
         <table className="min-w-220 whitespace-nowrap">
           <thead>
-            <tr>
+            <tr> 
               <th className="p-4">
                 {" "}
                 <span className="w-4 h-4 border block border-zinc50 rounded-sm"></span>
