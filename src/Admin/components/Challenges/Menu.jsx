@@ -5,14 +5,14 @@ function Menu({
   activeTab,
   handleActiveTabChange,
   tabs,
-  status,
-  categories,
+  searchQuery,
   currentStatus,
   category,
+  categories,
+  status,
+  handleSearchQueryChange,
   handleCategoryChange,
   handleStatusChange,
-  handleSearchQueryChange,
-  searchQuery,
 }) {
   return (
     <div className="flex flex-col gap-5  w-full">
@@ -35,11 +35,11 @@ function Menu({
         <div className="flex-1 p-2.5 rounded-xl border border-zinc50 gap-4 flex items-center">
           <CiSearch className="w-5 h-5 text-blue100" />
           <input
-          value={searchQuery}
-          onChange={(e)=>handleSearchQueryChange(e.target.value)}
             type="search"
             name=""
             id=""
+            value={searchQuery}
+            onChange={(e) => handleSearchQueryChange(e.target.value)}
             placeholder="Search by username, ID or email"
             className="text-xs text-blue100 font-medium flex-1 py-1 outline-none"
           />
@@ -49,14 +49,16 @@ function Menu({
           <select
             name=""
             id=""
-            value={category}
-            onChange={(e)=> handleCategoryChange(e.target.value)}
+            onChange={category}
+            onChange={(e) => handleCategoryChange(e.target.value)}
             className="px-2.5 py-3.5 rounded-xl border border-zinc50 text-xs text-blue100"
           >
             <option value="">All Category</option>
-            {
-              categories.map(cat => <option key={cat} value={cat}>{cat}</option>)
-            }
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex-1 flex flex-col gap-1.5 font-roboto">
@@ -69,19 +71,21 @@ function Menu({
             className="px-2.5 py-3.5 rounded-xl border border-zinc50 text-xs text-blue100"
           >
             <option value="">Status type</option>
-            {
-              status.map(s => <option key={s} value={s}>{s}</option>)
-            }
+            {status.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
           </select>
         </div>
         <div className="flex-1 flex flex-col gap-1.5 font-roboto">
-          <h3 className="text-blue100 text-base ">Monetization</h3>
+          <h3 className="text-blue100 text-base ">Reasons</h3>
           <select
             name=""
             id=""
             className="px-2.5 py-3.5 rounded-xl border border-zinc50 text-xs text-blue100"
           >
-            <option value="">All</option>
+            <option value="">Reasons type</option>
           </select>
         </div>
         <div className="flex-1 flex flex-col gap-1.5 font-roboto">

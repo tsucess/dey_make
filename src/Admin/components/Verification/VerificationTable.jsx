@@ -1,7 +1,13 @@
 import { FaEllipsisVertical } from "react-icons/fa6";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
 
-function VerificationTable({ modalId, handleOpenModal, handleCloseModal }) {
+function VerificationTable({
+  modalId,
+  handleOpenModal,
+  handleCloseModal,
+  filteredData,
+}) {
+
   return (
     <section className="bg-blue300 p-6 rounded-3xl flex flex-col gap-7.5 font-lexend">
       <div className="overflow-x-auto w-full">
@@ -22,12 +28,12 @@ function VerificationTable({ modalId, handleOpenModal, handleCloseModal }) {
             </tr>
           </thead>
           <tbody>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+            {filteredData.map((data) => (
               <tr
-                key={i}
-                onClick={() => handleOpenModal(i)}
+                key={data.id}
+                onClick={() => handleOpenModal(data.id)}
                 className={` px-2 py-2 ${
-                  modalId === i ? "border border-blue400 rounded-xl" : ""
+                  modalId === data.id ? "border border-blue400 rounded-xl" : ""
                 }`}
               >
                 <td className="p-4">
@@ -36,9 +42,11 @@ function VerificationTable({ modalId, handleOpenModal, handleCloseModal }) {
                     name=""
                     id=""
                     onChange={() =>
-                      modalId === i ? handleCloseModal() : handleOpenModal(i)
+                      modalId === data.id
+                        ? handleCloseModal()
+                        : handleOpenModal(data.id)
                     }
-                    checked={modalId === i}
+                    checked={modalId === data.id}
                   />
                 </td>
                 <td className="p-4 flex items-center gap-1">
@@ -50,28 +58,37 @@ function VerificationTable({ modalId, handleOpenModal, handleCloseModal }) {
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-3">
                       <h5 className="text-sm text-white font-light">
-                        Aisha Doe
+                        {data.name}
                       </h5>
-                      <RiVerifiedBadgeFill className="w-4 h-4 text-blue400" />
+                      {data.verified && (
+                        <RiVerifiedBadgeFill className="w-4 h-4 text-blue400" />
+                      )}
                     </div>
                     <p className="text-[10px] text-white font-light">
-                      @aishadoe
+                      {data.username}
                     </p>
                   </div>
                 </td>
                 <td className="p-4">
-                  <span className="px-2 py-1 bg-blue400/24 rounded-md text-blue400 text-xs font-light">
-                    Blue Check
+                  <span className="px-2 py-1 bg-blue/24 rounded-md text-blue text-xs font-light">
+                    {data.verificationType}
                   </span>
                 </td>
-                <td className="text-sm font-light text-white p-4">Lifestyle</td>
-                <td className="text-sm font-light text-white p-4">2.4M</td>
                 <td className="text-sm font-light text-white p-4">
-                  2 hours ago
+                  {data.category}
+                </td>
+                <td className="text-sm font-light text-white p-4">
+                  {data.followers}
+                </td>
+                <td className="text-sm font-light text-white p-4">
+                  {data.requestedDate}
                 </td>
                 <td className="p-4">
-                  <span className="px-2 py-1 bg-orange500/24 rounded-md text-orange500 text-xs font-light">
-                    Pending
+                  <span className={`px-2 py-1  rounded-md  text-xs font-light ${
+                    data.status === 'Pending Review' ? 'bg-orange500/24 text-orange500' : 
+                    data.status === 'Rejected' ? 'bg-red100/24 text-red100' : 'bg-green300/24 text-green300'
+                  }`}>
+                    {data.status}
                   </span>
                 </td>
                 <td className="p-4">

@@ -1,45 +1,45 @@
 import { useState } from "react";
+import Header from "../components/Challenges/Header";
 import Stats from "../components/SuspendedAcoount/Stats";
-import Header from "../components/Video/Header";
-import Menu from "../components/Video/Menu";
-import VideoTable from "../components/Video/VideoTable";
-import VideoModal from "../components/Video/VideoModal";
+import Menu from "../components/Challenges/Menu";
+import ChallengeTable from "../components/Challenges/ChallengeTable";
+import ChallengeModal from "../components/Challenges/ChallengeModal";
 
 const stats = [
   {
-    title: "Total Videos",
-    value: "125,430",
+    title: "Total Challenges",
+    value: "128",
     sub: "12.5% vs last 7 days",
     hasArrow: true,
   },
   {
-    title: "Uploaded Today",
-    value: "1,248",
+    title: "Active Challenges",
+    value: "32",
     sub: "12.5% vs last 7 days",
     hasArrow: true,
   },
   {
-    title: "Total Views",
-    value: "245.6M",
+    title: "Total Participants",
+    value: "245.6K",
     sub: "12.5% vs last 7 days",
     hasArrow: true,
   },
   {
-    title: "Total Likes",
-    value: "18.6M",
+    title: "Total Submissions",
+    value: "512.3K",
     sub: "12.5% vs last 7 days",
     hasArrow: true,
   },
   {
-    title: "Reported Videos",
-    value: "842",
+    title: "Total Rewards",
+    value: "24.8M",
     sub: "12.5% vs last 7 days",
     hasArrow: true,
   },
 ];
 
-const tabs = ["All Videos", "Published", "Under Review", "Reported", "Removed"];
-const status = ["Published", "Under Review", "Reported", "Removed"];
+const tabs = ["All Challenges", "Active", "Upcoming", "Ended", "Draft"];
+const status = ["Active", "Upcoming", "Ended", "Draft"];
 const categories = [
   "Lifestyle",
   "Fashion",
@@ -52,31 +52,33 @@ const categories = [
   "Technology",
 ];
 
-const videoData = Array(15)
+const challengesData = Array(10)
   .fill({
-    name: "Aisha Doe",
-    username: "@aishadoe",
     id: "1234567890",
-    uploadedDate: "May 26, 2026",
-    videoTitle: "Weekend Vibe",
-    videoId: "VID-2024-1234511",
+    startedAt: "May 26, 2024 (08:30 PM)",
+    challengeTitle: "#DeyMakeDanceChallenge",
+    challengeId: "ID: CHL-2024-0001",
   })
   .map((v, i) => ({
     ...v,
     id: v.id.slice(0, -1) + i,
     status: status[i % status.length],
-    view: "1.2M",
-    likes: "96.4K",
-    comments: "2.3K",
     category: categories[i % categories.length],
+    participant: "45.2K",
+    period: "May 26, 2024",
+    submission: "98.3K",
   }));
 
-function Video() {
-  const [activeTab, setActiveTab] = useState("All Videos");
+function Challenges() {
+  const [activeTab, setActiveTab] = useState("All Challenges");
   const [openModal, setOpenModal] = useState(null);
   const [currentStatus, setCurrentStatus] = useState("");
   const [category, setCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+
+  function handleSearchQueryChange(query) {
+    setSearchQuery(query.trim());
+  }
 
   function handleStatusChange(status) {
     setCurrentStatus(status);
@@ -84,10 +86,6 @@ function Video() {
 
   function handleCategoryChange(category) {
     setCategory(category);
-  }
-
-  function handleSearchQueryChange(query) {
-    setSearchQuery(query);
   }
 
   function handleOpenModal(id) {
@@ -102,7 +100,7 @@ function Video() {
     setActiveTab(tab);
   }
 
-  const filteredData = videoData.filter((user) => {
+  const filteredData = challengesData.filter((user) => {
     // Tab filter
     // if (activeTab === "Pending Review" && user.status !== "Pending Review")
     //   return false;
@@ -110,7 +108,7 @@ function Video() {
     //   return false;
     // if (activeTab === "Rejected" && user.status !== "Rejected")
     //   return false;
-    if (activeTab !== "All Videos" && user.status !== activeTab) {
+    if (activeTab !== "All Challenges" && user.status !== activeTab) {
       return false;
     }
 
@@ -127,40 +125,41 @@ function Video() {
       }
     }
 
-    // category Type
-    if (category && user.category !== category) return false;
-
-    // status
+    // status Type
     if (currentStatus && user.status !== currentStatus) return false;
+
+    // category
+    if (category && user.category !== category) return false;
 
     return true;
   });
+
   return (
     <div className="space-y-7">
       <Header />
       <Stats stats={stats} />
       <Menu
-        tabs={tabs}
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
-        categories={categories}
-        category={category}
-        handleCategoryChange={handleCategoryChange}
-        status={status}
-        currentStatus={currentStatus}
-        handleStatusChange={handleStatusChange}
+        tabs={tabs}
         searchQuery={searchQuery}
+        currentStatus={currentStatus}
+        category={category}
+        categories={categories}
+        status={status}
         handleSearchQueryChange={handleSearchQueryChange}
+        handleCategoryChange={handleCategoryChange}
+        handleStatusChange={handleStatusChange}
       />
-      <VideoTable
+      <ChallengeTable
         filteredData={filteredData}
         modalId={openModal}
         handleOpenModal={handleOpenModal}
         handleCloseModal={handleCloseModal}
       />
-      {openModal && <VideoModal handleCloseModal={handleCloseModal} />}
+      {openModal && <ChallengeModal handleCloseModal={handleCloseModal} />}
     </div>
   );
 }
 
-export default Video;
+export default Challenges;
