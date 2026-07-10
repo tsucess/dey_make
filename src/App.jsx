@@ -57,6 +57,7 @@ const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
 const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
 const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
 const LivestreamAdmin = lazy(() => import("./Admin/Pages/LiveStream"));
+const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -246,6 +247,7 @@ export default function App() {
           <Route path="/admin-user" element={renderLazyRoute(UserAdmin)} />
           <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
           <Route path="/admin-livestream" element={renderLazyRoute(LivestreamAdmin)} />
+          <Route path="/creator" element={renderLazyRoute(CreatorEcosystem)} />
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
