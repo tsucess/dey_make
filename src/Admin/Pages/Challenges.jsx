@@ -38,9 +38,55 @@ const stats = [
   },
 ];
 
+const tabs = ["All Challenges", "Active", "Upcoming", "Ended", "Draft"];
+const status = ["Active", "Upcoming", "Ended", "Draft"];
+const categories = [
+  "Lifestyle",
+  "Fashion",
+  "Beauty",
+  "Fitness",
+  "Health & Wellness",
+  "Food & Cooking",
+  "Travel",
+  "Education",
+  "Technology",
+];
+
+const challengesData = Array(10)
+  .fill({
+    id: "1234567890",
+    startedAt: "May 26, 2024 (08:30 PM)",
+    challengeTitle: "#DeyMakeDanceChallenge",
+    challengeId: "ID: CHL-2024-0001",
+  })
+  .map((v, i) => ({
+    ...v,
+    id: v.id.slice(0, -1) + i,
+    status: status[i % status.length],
+    category: categories[i % categories.length],
+    participant: "45.2K",
+    period: "May 26, 2024",
+    submission: "98.3K",
+  }));
+
 function Challenges() {
   const [activeTab, setActiveTab] = useState("All Challenges");
   const [openModal, setOpenModal] = useState(null);
+  const [currentStatus, setCurrentStatus] = useState("");
+  const [category, setCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  function handleSearchQueryChange(query) {
+    setSearchQuery(query.trim());
+  }
+
+  function handleStatusChange(status) {
+    setCurrentStatus(status);
+  }
+
+  function handleCategoryChange(category) {
+    setCategory(category);
+  }
 
   function handleOpenModal(id) {
     setOpenModal(id);
@@ -53,6 +99,41 @@ function Challenges() {
   function handleActiveTabChange(tab) {
     setActiveTab(tab);
   }
+
+  const filteredData = challengesData.filter((user) => {
+    // Tab filter
+    // if (activeTab === "Pending Review" && user.status !== "Pending Review")
+    //   return false;
+    // if (activeTab === "Approved" && user.status !== "Approved")
+    //   return false;
+    // if (activeTab === "Rejected" && user.status !== "Rejected")
+    //   return false;
+    if (activeTab !== "All Challenges" && user.status !== activeTab) {
+      return false;
+    }
+
+    // Search filter
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+
+      if (
+        !user.name.toLowerCase().includes(q) &&
+        !user.username.toLowerCase().includes(q) &&
+        !user.id.includes(q)
+      ) {
+        return false;
+      }
+    }
+
+    // status Type
+    if (currentStatus && user.status !== currentStatus) return false;
+
+    // category
+    if (category && user.category !== category) return false;
+
+    return true;
+  });
+
   return (
     <div className="space-y-7">
       <Header />
@@ -60,13 +141,23 @@ function Challenges() {
       <Menu
         activeTab={activeTab}
         handleActiveTabChange={handleActiveTabChange}
+        tabs={tabs}
+        searchQuery={searchQuery}
+        currentStatus={currentStatus}
+        category={category}
+        categories={categories}
+        status={status}
+        handleSearchQueryChange={handleSearchQueryChange}
+        handleCategoryChange={handleCategoryChange}
+        handleStatusChange={handleStatusChange}
       />
       <ChallengeTable
+        filteredData={filteredData}
         modalId={openModal}
         handleOpenModal={handleOpenModal}
         handleCloseModal={handleCloseModal}
       />
-      {openModal && <ChallengeModal handleCloseModal={handleCloseModal}/>}
+      {openModal && <ChallengeModal handleCloseModal={handleCloseModal} />}
     </div>
   );
 }
