@@ -1,50 +1,22 @@
 import { CiSearch } from "react-icons/ci";
 import { PiExport } from "react-icons/pi";
 
-function Menu({ activeTab, handleActiveTabChange }) {
+function Menu({ activeTab, handleActiveTabChange, tabs }) {
   return (
     <div className="flex flex-col gap-5  w-full">
       <menu className="flex items-center font-roboto max-w-210 w-full">
-        <button
-          onClick={() => handleActiveTabChange("All Suspended")}
+        {
+          tabs.map(tab => <button
+          onClick={() => handleActiveTabChange(tab)}
           className={`py-3 px-3 border-b-2 flex-1 text-sm ${
-            activeTab === "All Suspended"
+            activeTab === tab
               ? "border-b-red100 text-white"
               : "border-b-zinc300 text-zinc300"
           }`}
         >
-          All Suspended
-        </button>
-        <button
-          onClick={() => handleActiveTabChange("Banned Permanently")}
-          className={`py-3 px-3 border-b-2 flex-1 text-sm ${
-            activeTab === "Banned Permanently"
-              ? "border-b-red100 text-white"
-              : "border-b-zinc300 text-zinc300"
-          }`}
-        >
-          Banned Permanently
-        </button>
-        <button
-          onClick={() => handleActiveTabChange("Temporary Suspensions")}
-          className={`py-3 px-3 border-b-2 flex-1 text-sm ${
-            activeTab === "Temporary Suspensions"
-              ? "border-b-red100 text-white"
-              : "border-b-zinc300 text-zinc300"
-          }`}
-        >
-          Temporary Suspensions
-        </button>
-        <button
-          onClick={() => handleActiveTabChange("Appeal in Progress")}
-          className={`py-3 px-3 border-b-2 flex-1 text-sm ${
-            activeTab === "Appeal in Progress"
-              ? "border-b-red100 text-white"
-              : "border-b-zinc300 text-zinc300"
-          }`}
-        >
-          Appeal in Progress
-        </button>
+          {tab}
+        </button>)
+        }
       </menu>
       <div className="flex items-end gap-2">
         <div className="flex-1 p-2.5 rounded-xl border border-zinc50 gap-4 flex items-center">
