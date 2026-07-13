@@ -47,7 +47,7 @@ export default function LivePage() {
   }, [t]);
 
   return (
-    <div className="min-h-full w-full bg-white  md:pb-24 md:pt-4 dark:bg-black300 md:px-6 md:py-5">
+    <div className="w-full bg-white  md:pb-24 md:pt-4 dark:bg-black300 md:px-6 md:py-5">
       {/* <section className="rounded-4xl bg-linear-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
         <p className="text-sm font-medium uppercase tracking-[0.3em] text-white/70">{t("common.live")}</p>
         <h1 className="mt-3 text-3xl font-semibold font-bricolage">{t("livePage.title")}</h1>
