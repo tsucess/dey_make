@@ -58,6 +58,7 @@ const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
 const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
 const LivestreamAdmin = lazy(() => import("./Admin/Pages/LiveStream"));
 const ChallengesAdmin = lazy(() => import("./Admin/Pages/Challenges"));
+const WatchLive = lazy(() => import("./pages/WatchLive"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -180,6 +181,7 @@ export default function App() {
             <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
             <Route path="/live" element={renderLazyRoute(LivePage)} />
             {/* <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} /> */}
+            <Route path="/watch-live" element={renderLazyRoute(WatchLive)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
