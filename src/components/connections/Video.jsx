@@ -56,7 +56,7 @@ function Video() {
             <IoLocationOutline className="text-white w-4 h-4" />
             <span className="text-xs font-inter text-white">Location</span>
           </div>
-          <p className="text-base font-inter text-white">Name and Last name</p>
+          <p className="text-base font-inter text-white">username/name</p>
           <span className="text-sm font-inter text-white max-w-[20ch]">
             Caption of the post 😉 #fyp
           </span>

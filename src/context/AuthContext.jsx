@@ -194,6 +194,36 @@ export function AuthProvider({ children }) {
 
       return response.data;
     },
+    async sendPhoneCode(payload) {
+      const response = await api.sendPhoneCode(payload);
+      return response.data;
+    },
+    async sendPhoneLoginCode(payload) {
+      const response = await api.sendPhoneLoginCode(payload);
+      return response.data;
+    },
+    async loginWithPhone(payload) {
+      const response = await api.loginWithPhone(payload);
+
+      setStoredToken(response.data.token);
+      syncPendingVerification(null);
+      setUser(response.data.user);
+      touchAuthActivity();
+      return response.data.user;
+    },
+    async verifyPhoneCode(payload) {
+      const response = await api.verifyPhoneCode(payload);
+      return response.data;
+    },
+    async registerWithPhone(payload) {
+      const response = await api.registerWithPhone(payload);
+
+      setStoredToken(response.data.token);
+      syncPendingVerification(null);
+      setUser(response.data.user);
+      touchAuthActivity();
+      return response.data.user;
+    },
     async authenticateWithToken(token) {
       setStoredToken(token);
 

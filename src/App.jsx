@@ -21,7 +21,6 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
-const LivePage = lazy(() => import("./pages/LivePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const CreateUpload = lazy(() => import("./pages/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
