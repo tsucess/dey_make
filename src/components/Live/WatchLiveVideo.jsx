@@ -6,9 +6,9 @@ import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 function WatchLiveVideo() {
   return (
-    <div className="w-full flex items-center gap-6">
-      <img src="/live-img.jpg" alt="" className="rounded-t-4xl h-full" />
-      <img src="" alt="" />
+    <div className="w-full flex items-center gap-6 col-span-3">
+      <img src="/live-img.jpg" alt="" className="rounded-t-4xl h-full w-100" />
+      
       {/* next and prev btn */}
       <div className="hidden md:flex flex-col gap-3 ">
         <button className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full">

@@ -1,9 +1,11 @@
+import { CiFaceSmile } from "react-icons/ci";
 import { FaHeart } from "react-icons/fa";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { RiShareForwardLine } from "react-icons/ri";
+import { TbSend2 } from "react-icons/tb";
 
 function LiveChat() {
-  return <div className="flex flex-col gap-8 font-inter">
+  return <div className="flex flex-col gap-8 font-inter col-span-2">
     <div className="flex items-center gap-3">
         <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150">
         <div className="flex items-center gap-2">
@@ -28,9 +30,17 @@ function LiveChat() {
                 {
                     [1,2, 3,4].map(i => <div key={i} className="flex items-start gap-2">
                         <img src="/user1.jpg" alt="" className="w-12 h-12 rounded-full"/>
-                        <div className="flex flex-col gap-1"></div>
+                        <div className="flex flex-col gap-1">
+                            <p className="text-black dark:text-white text-base">@SammieNed</p>
+                            <span className="text-black dark:text-white text-sm">You are so amazing, and I really love your contents. 10:21 PM</span>
+                        </div>
                     </div>)
                 }
+            </div>
+            <div className="py-6 px-4 flex gap-2 items-center bg-slate150 dark:bg-slate300 rounded-full">
+                <input type="text" name="" id="" placeholder="Add a comment..." className="text-base font-medium outline-none w-50"/>
+                <button><CiFaceSmile className="text-black dark:text-white w-6 h-6" /></button>
+                <button className="bg-orange100 py-3 px-3 rounded-full flex items-center justify-center shrink-0"><TbSend2 className="w-6 h-6 text-black" /></button>
             </div>
         </div>
     </div>
