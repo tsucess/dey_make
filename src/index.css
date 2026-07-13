@@ -118,6 +118,12 @@
   background-position: center;
 }
 
+.live-hover-bg{
+  background-image: url('/live-bg.png');
+  background-size: cover;
+  background-position: center;
+}
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
