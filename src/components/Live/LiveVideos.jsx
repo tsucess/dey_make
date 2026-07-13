@@ -1,11 +1,11 @@
-import Comment from "./Comment";
-import Video from "./Video";
+import OtherLive from "./OtherLive";
+import TopVideo from "./TopVideo";
 
 function LiveVideos() {
   return (
-    <div className="flex gap-5">
-      <Video />
-      <Comment />
+    <div className="flex flex-col gap-5">
+      <TopVideo />
+      <OtherLive/>
     </div>
   );
 }

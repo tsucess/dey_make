@@ -1,0 +1,96 @@
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import VideoCard from "../components/VideoCard";
+import SectionState from "../components/Layout/SectionState";
+import { useLanguage } from "../context/LanguageContext";
+import { api, firstError } from "../services/api";
+import { filterActiveLiveVideos, mapVideoToCardProps } from "../utils/content";
+import LiveVideos from "../components/Live/LiveVideos";
+
+export default function LivePage() {
+  const { t } = useLanguage();
+  const navigate = useNavigate();
+  const [liveVideos, setLiveVideos] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadLiveVideos() {
+      setLoading(true);
+      setError("");
+
+      try {
+        const response = await api.getLiveVideos();
+
+        if (!ignore)
+          setLiveVideos(filterActiveLiveVideos(response?.data?.videos || []));
+      } catch (nextError) {
+        if (!ignore)
+          setError(
+            firstError(
+              nextError.errors,
+              nextError.message || t("livePage.unableToLoad"),
+            ),
+          );
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    }
+
+    loadLiveVideos();
+
+    return () => {
+      ignore = true;
+    };
+  }, [t]);
+
+  return (
+    <div className="w-full bg-white  md:pb-24 md:pt-4 dark:bg-black300 md:px-6 md:py-5">
+      {/* <section className="rounded-4xl bg-linear-to-r from-[#151515] via-[#1f2937] to-[#111827] px-6 py-8 text-white">
+        <p className="text-sm font-medium uppercase tracking-[0.3em] text-white/70">{t("common.live")}</p>
+        <h1 className="mt-3 text-3xl font-semibold font-bricolage">{t("livePage.title")}</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-white/80 md:text-base">{t("livePage.description")}</p>
+        {!loading ? <p className="mt-4 text-sm font-medium text-orange-200">{t("livePage.activeStreams", { count: liveVideos.length })}</p> : null}
+        <button
+          type="button"
+          onClick={() => navigate("/create-live")}
+          className="mt-5 inline-flex rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black md:hidden"
+        >
+          {t("common.createLive")}
+        </button>
+      </section>
+
+      {error ? <div className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
+
+      <section className="mt-6">
+        {loading ? (
+          <SectionState
+            title={t("common.live")}
+            message={t("livePage.loading")}
+            loading
+            className="rounded-4xl px-6 py-10"
+          />
+        ) : liveVideos.length ? (
+          <div className="grid w-full grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            {liveVideos.map((video) => (
+              <VideoCard key={video.id} {...mapVideoToCardProps(video)} />
+            ))}
+          </div>
+        ) : (
+          <SectionState
+            title={t("livePage.noLiveTitle")}
+            message={t("livePage.noLiveBody")}
+            actionLabel={t("livePage.goHome")}
+            onAction={() => navigate("/home")}
+            className="rounded-4xl px-6 py-10"
+            actionClassName="mt-5 rounded-full bg-orange100 px-5 py-2 text-sm font-medium text-black"
+          />
+        )}
+      </section> */}
+
+      <LiveVideos />
+    </div>
+  );
+}
