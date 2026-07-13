@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 import Logo from "../components/Logo";
 import NetworkIllustration from "../components/NetworkIllustration";
@@ -28,11 +28,14 @@ function EyeOffIcon() {
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t } = useLanguage();
   const pendingReset = useMemo(() => getPendingPasswordReset(), []);
+  const queryToken = searchParams.get("token") || "";
+  const queryEmail = searchParams.get("email") || "";
   const [form, setForm] = useState(() => ({
-    email: pendingReset?.email || "",
-    token: pendingReset?.token || "",
+    email: queryEmail || pendingReset?.email || "",
+    token: queryToken || pendingReset?.token || "",
     password: "",
     confirmPassword: "",
   }));

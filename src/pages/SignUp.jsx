@@ -120,19 +120,46 @@ function SocialOptionBtn({ provider, icon, label, onClick }) {
   );
 }
 
-const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
+function buildDateOfBirth({ dobMonth, dobDay, dobYear }) {
+  if (!dobMonth || !dobDay || !dobYear) return null;
+  const month = String(dobMonth).padStart(2, "0");
+  const day = String(dobDay).padStart(2, "0");
+  return `${dobYear}-${month}-${day}`;
+}
+
+function deriveUsernameFromEmail(email) {
+  const base = email.split("@")[0].toLowerCase().replace(/[^a-z0-9._]/g, "");
+  return base.length >= 3 ? base.slice(0, 30) : `${base}${Math.floor(Math.random() * 1000)}`;
+}
+
+function deriveUsernameFromPhone(phone) {
+  const digits = phone.replace(/\D/g, "");
+  return `u${digits.slice(-8) || Math.floor(Math.random() * 1_000_000)}`;
+}
 
 export default function SignUp({ onNavigateToLogin, onSuccess }) {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const { register, sendPhoneCode, registerWithPhone } = useAuth();
   const { t } = useLanguage();
-  
-  const [form, setForm] = useState({ identifier: "", password: "", phone: "" });
+
+  const [form, setForm] = useState({
+    identifier: "",
+    password: "",
+    phone: "",
+    fullName: "",
+    code: "",
+    dobMonth: "",
+    dobDay: "",
+    dobYear: "",
+  });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+  const [isSendingCode, setIsSendingCode] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [countryCode] = useState("+234");
+
   // "default", "phone", "email"
   const [authMode, setAuthMode] = useState("default");
 
@@ -161,15 +188,45 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
     if (!form.phone.trim()) {
       newErrors.phone = t("auth.validation.identifierRequired");
     }
+    if (!form.password) {
+      newErrors.password = t("auth.validation.passwordRequired");
+    } else if (form.password.length < 8) {
+      newErrors.password = t("auth.validation.passwordMin");
+    }
+    if (!form.code.trim() || form.code.trim().length !== 4) {
+      newErrors.code = t("auth.validation.identifierRequired");
+    }
     return newErrors;
   };
 
   const navigateToLogin = onNavigateToLogin ?? (() => navigate("/login"));
 
+  const handleSendCode = async () => {
+    if (!form.phone.trim()) {
+      setErrors((prev) => ({ ...prev, phone: t("auth.validation.identifierRequired") }));
+      return;
+    }
+    setIsSendingCode(true);
+    setSubmitError("");
+    try {
+      await sendPhoneCode({ phone: form.phone.trim(), countryCode });
+      setCodeSent(true);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrors((prev) => ({ ...prev, phone: error.errors?.phone?.[0] || "" }));
+        setSubmitError(firstError(error.errors, error.message));
+      } else {
+        setSubmitError(t("auth.unableToCreateAccount"));
+      }
+    } finally {
+      setIsSendingCode(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = authMode === "email" ? validateEmail() : validatePhone();
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -178,13 +235,31 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
     setIsSubmitting(true);
     setSubmitError("");
 
-    try {
-      // In a real implementation this would map the correct payload based on phone vs email
-      const payload = authMode === "email" 
-         ? { email: form.identifier.trim(), password: form.password, fullName: "New User", username: form.identifier.trim().split('@')[0] } 
-         : { phone: form.phone.trim(), password: "mockPassword123!", fullName: "New User", username: "user" + Math.floor(Math.random()*1000) };
+    const dateOfBirth = buildDateOfBirth(form);
+    const fullName = form.fullName.trim() || "New User";
 
-      const result = await register(payload);
+    try {
+      let result;
+      if (authMode === "email") {
+        const identifier = form.identifier.trim();
+        result = await register({
+          email: identifier,
+          password: form.password,
+          fullName,
+          username: deriveUsernameFromEmail(identifier),
+          dateOfBirth,
+        });
+      } else {
+        result = await registerWithPhone({
+          phone: form.phone.trim(),
+          countryCode,
+          code: form.code.trim(),
+          password: form.password,
+          fullName,
+          username: deriveUsernameFromPhone(form.phone),
+          dateOfBirth,
+        });
+      }
 
       if (result?.verification?.required) {
         navigate("/verify-email", { replace: true });
@@ -199,6 +274,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
           identifier: error.errors?.email?.[0] || error.errors?.username?.[0] || "",
           password: error.errors?.password?.[0] || "",
           phone: error.errors?.phone?.[0] || "",
+          code: error.errors?.code?.[0] || "",
         });
         setSubmitError(firstError(error.errors, error.message));
       } else {
@@ -226,6 +302,18 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
               </p>
             )}
 
+            {/* Full name */}
+            <div className="mb-4">
+              <input
+                type="text"
+                name="fullName"
+                placeholder="Full name"
+                value={form.fullName}
+                onChange={handleChange}
+                className="w-full bg-white dark:bg-[#1c1c1c] border border-gray-300 dark:border-gray-700 rounded-md outline-none px-4 py-3 text-black200 dark:text-white text-sm font-inter placeholder-gray-400 dark:placeholder-gray-600"
+              />
+            </div>
+
             {/* Date of Birth Selection */}
             <div className="mb-2">
               <span className="text-[15px] text-slate-500 dark:text-slate-300 font-inter mb-2 block">Enter your date of birth</span>
@@ -234,7 +322,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                     <div className="absolute left-3 pointer-events-none">
                        <CalendarIcon />
                     </div>
-                    <select defaultValue="" className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
+                    <select name="dobMonth" value={form.dobMonth} onChange={handleChange} className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
                       <option value="" disabled>Month</option>
                       <option value="1">January</option>
                       <option value="2">February</option>
@@ -255,7 +343,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                     <div className="absolute left-3 pointer-events-none">
                        <CalendarIcon />
                     </div>
-                    <select defaultValue="" className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
+                    <select name="dobDay" value={form.dobDay} onChange={handleChange} className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
                       <option value="" disabled>Day</option>
                       {Array.from({ length: 31 }, (_, i) => (
                         <option key={i + 1} value={i + 1}>{i + 1}</option>
@@ -267,7 +355,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                     <div className="absolute left-3 pointer-events-none">
                        <CalendarIcon />
                     </div>
-                    <select defaultValue="" className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
+                    <select name="dobYear" value={form.dobYear} onChange={handleChange} className="w-full bg-transparent outline-none appearance-none pl-9 pr-8 py-3 text-slate-500 text-sm font-inter cursor-pointer">
                       <option value="" disabled>Year</option>
                       {Array.from({ length: 100 }, (_, i) => {
                         const year = new Date().getFullYear() - i;
@@ -288,25 +376,44 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
               <>
                 <div className="flex justify-between items-end mb-2">
                    <span className="text-[13px] text-slate-500 dark:text-slate-300 font-inter font-medium">Phone number</span>
-                   <button type="button" onClick={() => setAuthMode("email")} className="text-[13px] text-orange100 hover:text-orange200 bg-transparent border-none cursor-pointer p-0 font-medium">Log in with email</button>
+                   <button type="button" onClick={() => setAuthMode("email")} className="text-[13px] text-orange100 hover:text-orange200 bg-transparent border-none cursor-pointer p-0 font-medium">Sign up with email</button>
                 </div>
 
                 <div className="flex w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] mb-4">
                    <div className="flex items-center gap-2 px-3 py-3 border-r border-gray-300 dark:border-gray-700 cursor-pointer">
-                  
-                      <span className="text-black200 dark:text-white text-sm font-inter">NG +234</span>
+                      <span className="text-black200 dark:text-white text-sm font-inter">NG {countryCode}</span>
                       <span className="text-slate-400 text-xs">▼</span>
                    </div>
-                   <input 
-                      type="text" 
+                   <input
+                      type="text"
                       name="phone"
                       value={form.phone}
                       onChange={handleChange}
-                      placeholder="Phone number" 
+                      placeholder="Phone number"
                       className={`flex-1 bg-transparent border-none outline-none px-3 text-black200 dark:text-white text-sm font-inter placeholder-gray-400 dark:placeholder-gray-600
                                   ${errors.phone ? "border border-red-400" : ""}`} />
                 </div>
                 {errors.phone && <p className="text-red-500 text-[0.75rem] mt-[-10px] mb-3 ml-1">{errors.phone}</p>}
+
+                <div className="flex w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] mb-4 relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    placeholder="Password"
+                    value={form.password}
+                    onChange={handleChange}
+                    className={`w-full bg-transparent border-none outline-none px-4 py-3 pr-12 text-black200 dark:text-white text-sm font-inter placeholder-gray-400 dark:placeholder-gray-600
+                                ${errors.password ? "border border-red-400" : ""}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500 bg-transparent border-none cursor-pointer p-0"
+                  >
+                    {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                  </button>
+                </div>
+                {errors.password && <p className="text-red-500 text-[0.75rem] mt-[-10px] mb-3 ml-1">{errors.password}</p>}
               </>
             ) : (
               <>
@@ -352,17 +459,41 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
               </>
             )}
 
-            <div className="flex w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] mb-6">
-               <input type="text" placeholder="Enter 4-digit code" className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-black200 dark:text-white text-sm font-inter placeholder-gray-400 dark:placeholder-gray-600" />
-               <button type="button" className="px-4 py-3 border-l border-gray-300 dark:border-gray-700 text-orange100 hover:text-orange200 bg-transparent cursor-pointer font-medium text-sm">Send Code</button>
-            </div>
+            {authMode === "phone" && (
+              <>
+                <div className={`flex w-full border rounded-md bg-white dark:bg-[#1c1c1c] mb-2 ${errors.code ? "border-red-400" : "border-gray-300 dark:border-gray-700"}`}>
+                   <input
+                     type="text"
+                     name="code"
+                     inputMode="numeric"
+                     maxLength={4}
+                     value={form.code}
+                     onChange={handleChange}
+                     placeholder="Enter 4-digit code"
+                     className="flex-1 bg-transparent border-none outline-none px-4 py-3 text-black200 dark:text-white text-sm font-inter placeholder-gray-400 dark:placeholder-gray-600"
+                   />
+                   <button
+                     type="button"
+                     onClick={handleSendCode}
+                     disabled={isSendingCode}
+                     className="px-4 py-3 border-l border-gray-300 dark:border-gray-700 text-orange100 hover:text-orange200 bg-transparent cursor-pointer font-medium text-sm disabled:opacity-60"
+                   >
+                     {isSendingCode ? "Sending..." : codeSent ? "Resend Code" : "Send Code"}
+                   </button>
+                </div>
+                {errors.code && <p className="text-red-500 text-[0.75rem] mb-3 ml-1">{errors.code}</p>}
+                {codeSent && !errors.code && (
+                  <p className="text-slate-500 text-[0.75rem] mb-3 ml-1">A 4-digit code has been sent to your phone.</p>
+                )}
+              </>
+            )}
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-[#a4916a] text-black200 font-inter font-bold text-[15px] rounded-md transition-colors cursor-pointer border-none disabled:cursor-not-allowed mb-8"
+              className="w-full py-3 bg-[#a4916a] text-black200 font-inter font-bold text-[15px] rounded-md transition-colors cursor-pointer border-none disabled:cursor-not-allowed mb-8 mt-4"
             >
-              Log in
+              {isSubmitting ? "Creating account..." : "Sign up"}
             </button>
 
             <button type="button" onClick={() => setAuthMode("default")} className="w-full text-center text-[15px] font-medium text-black200 dark:text-white hover:text-slate-500 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer flex items-center justify-center gap-2 mb-10">

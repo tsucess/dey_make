@@ -14,6 +14,7 @@ export default function ForgotPassword() {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   const handleChange = (event) => {
     setEmail(event.target.value);
@@ -54,7 +55,11 @@ export default function ForgotPassword() {
         expiresInMinutes: response?.data?.expiresInMinutes ?? 60,
       });
 
-      navigate("/reset-password", { replace: true });
+      setSubmittedEmail(response?.data?.email || email.trim());
+
+      if (response?.data?.resetToken) {
+        navigate("/reset-password", { replace: true });
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors({ email: error.errors?.email?.[0] || "" });
@@ -66,6 +71,35 @@ export default function ForgotPassword() {
       setIsSubmitting(false);
     }
   };
+
+  if (submittedEmail) {
+    return (
+      <AuthLayout>
+        <Logo />
+        <NetworkIllustration />
+
+        <div className="pt-8">
+          <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
+            {t("auth.forgotPasswordEyebrow")}
+          </p>
+          <h1 className="text-3xl font-semibold text-black200 md:text-[2.5rem] dark:text-white">
+            {t("auth.checkYourEmailTitle")}
+          </h1>
+          <p className="mt-3 max-w-md text-sm leading-6 text-slate400 dark:text-slate200">
+            {t("auth.checkYourEmailDescription", { email: submittedEmail })}
+          </p>
+
+          <button
+            type="button"
+            onClick={() => navigate("/login")}
+            className="mt-8 w-full rounded-md bg-orange100 py-3 text-sm font-semibold text-slate100 transition-colors hover:bg-[#e09510]"
+          >
+            {t("auth.backToLogin")}
+          </button>
+        </div>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout>

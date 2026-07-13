@@ -21,7 +21,6 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
-const LivePage = lazy(() => import("./pages/LivePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const CreateUpload = lazy(() => import("./pages/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
@@ -35,7 +34,6 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const VideoDetails = lazy(() => import("./pages/VideoDetails"));
-const LiveRoom = lazy(() => import("./pages/LiveRoom"));
 const PostLiveAnalytics = lazy(() => import("./pages/PostLiveAnalytics"));
 const CreatorLiveDashboard = lazy(() => import("./pages/CreatorLiveDashboard"));
 const CreateLive = lazy(() => import("./components/CreateLive"));
@@ -178,8 +176,8 @@ export default function App() {
           <Route element={renderLazyRoute(AppLayout)}>
             <Route path="/home" element={renderLazyRoute(Homepage)} />
             <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
-            <Route path="/live" element={renderLazyRoute(LivePage)} />
-            <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} />
+            <Route path="/live" element={renderLazyRoute(Live)} />
+            <Route path="/live/:id" element={renderLazyRoute(Live)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
