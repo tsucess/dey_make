@@ -1,13 +1,23 @@
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
-import { FaRegCommentDots, FaRegHeart } from "react-icons/fa";
+import { FaRegCommentDots, FaRegEye, FaRegHeart } from "react-icons/fa";
 import { FaEllipsis } from "react-icons/fa6";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 function WatchLiveVideo() {
   return (
-    <div className="w-full flex items-center gap-6 col-span-3">
+    <div className="w-full flex items-center gap-6 col-span-3 relative">
       <img src="/live-img.jpg" alt="" className="rounded-t-4xl h-full w-100" />
+      <div className="flex items-center gap-3 absolute top-1 right-8">
+        <div className="w-10.5 h-5.5 bg-red100 flex items-center gap-1 justify-center rounded-md">
+          <span className="w-2 h-2 rounded-full bg-white"></span>
+          <span className="text-[8px] text-white font-bold uppercase">live</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <FaRegEye className="w-5 h-5 text-black dark:text-white" />
+          <span className="text-[10px] dark:text-white text-black">2.1M</span>
+        </div>
+      </div>
       
       {/* next and prev btn */}
       <div className="hidden md:flex flex-col gap-3 ">
