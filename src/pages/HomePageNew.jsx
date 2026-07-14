@@ -12,6 +12,7 @@ function HomePageNew() {
   const [videos, setVideos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [comments, setComments] = useState([]);
+  const [repliesByComment, setRepliesByComment] = useState({});
   const [isCommentVisible, setIsCommentVisible] = useState(false)
 
   useEffect(() => {
@@ -32,8 +33,9 @@ function HomePageNew() {
   const currentId = current ? getVideoRouteId(current) : null;
 
   useEffect(() => {
-    if (!currentId) { setComments([]); return; }
+    if (!currentId) { setComments([]); setRepliesByComment({}); return; }
     let cancelled = false;
+    setRepliesByComment({});
     api.getVideoComments(currentId)
       .then((response) => {
         if (cancelled) return;
@@ -63,6 +65,22 @@ function HomePageNew() {
     });
     try {
       const response = liked ? await api.unlikeVideo(currentId) : await api.likeVideo(currentId);
+      if (response?.data?.video) patchCurrent(response.data.video);
+    } catch { patchCurrent(prev); }
+  }, [current, currentId, patchCurrent, requireAuth]);
+
+  const handleToggleRepost = useCallback(async () => {
+    if (!current || !requireAuth()) return;
+    const isOwner = Boolean(current.isOwner || current.currentUserState?.isOwner);
+    if (isOwner) return;
+    const reposted = current.currentUserState?.reposted;
+    const prev = current;
+    patchCurrent({
+      reposts: Math.max(0, (current.reposts || 0) + (reposted ? -1 : 1)),
+      currentUserState: { ...(current.currentUserState || {}), reposted: !reposted },
+    });
+    try {
+      const response = reposted ? await api.unrepostVideo(currentId) : await api.repostVideo(currentId);
       if (response?.data?.video) patchCurrent(response.data.video);
     } catch { patchCurrent(prev); }
   }, [current, currentId, patchCurrent, requireAuth]);
@@ -103,6 +121,76 @@ function HomePageNew() {
     } catch { /* ignored */ }
   }, [current, currentId, patchCurrent, requireAuth]);
 
+  const patchComment = useCallback((commentId, patch) => {
+    setComments((prev) => prev.map((c) => (c.id === commentId ? { ...c, ...patch } : c)));
+  }, []);
+
+  const handleToggleCommentLike = useCallback(async (commentId, liked) => {
+    if (!requireAuth()) return;
+    const target = comments.find((c) => c.id === commentId);
+    if (!target) return;
+    const prevState = target.currentUserState || {};
+    const wasDisliked = Boolean(prevState.disliked);
+    patchComment(commentId, {
+      likes: (target.likes || 0) + (liked ? -1 : 1),
+      dislikes: Math.max(0, (target.dislikes || 0) - (wasDisliked && !liked ? 1 : 0)),
+      currentUserState: { ...prevState, liked: !liked, disliked: liked ? prevState.disliked : false },
+    });
+    try {
+      const response = liked ? await api.unlikeComment(commentId) : await api.likeComment(commentId);
+      const updated = response?.data?.comment;
+      if (updated) patchComment(commentId, updated);
+    } catch {
+      patchComment(commentId, target);
+    }
+  }, [comments, patchComment, requireAuth]);
+
+  const handleToggleCommentDislike = useCallback(async (commentId, disliked) => {
+    if (!requireAuth()) return;
+    const target = comments.find((c) => c.id === commentId);
+    if (!target) return;
+    const prevState = target.currentUserState || {};
+    const wasLiked = Boolean(prevState.liked);
+    patchComment(commentId, {
+      dislikes: (target.dislikes || 0) + (disliked ? -1 : 1),
+      likes: Math.max(0, (target.likes || 0) - (wasLiked && !disliked ? 1 : 0)),
+      currentUserState: { ...prevState, disliked: !disliked, liked: disliked ? prevState.liked : false },
+    });
+    try {
+      const response = disliked ? await api.undislikeComment(commentId) : await api.dislikeComment(commentId);
+      const updated = response?.data?.comment;
+      if (updated) patchComment(commentId, updated);
+    } catch {
+      patchComment(commentId, target);
+    }
+  }, [comments, patchComment, requireAuth]);
+
+  const handleLoadReplies = useCallback(async (commentId) => {
+    if (repliesByComment[commentId]) return;
+    try {
+      const response = await api.getCommentReplies(commentId);
+      const replies = response?.data?.replies ?? response?.data ?? [];
+      setRepliesByComment((prev) => ({ ...prev, [commentId]: replies }));
+    } catch { /* ignored */ }
+  }, [repliesByComment]);
+
+  const handlePostReply = useCallback(async (commentId, body) => {
+    if (!requireAuth()) return;
+    try {
+      const response = await api.replyToComment(commentId, body);
+      const created = response?.data?.reply ?? response?.data?.comment ?? response?.data;
+      if (created) {
+        setRepliesByComment((prev) => ({
+          ...prev,
+          [commentId]: [created, ...(prev[commentId] || [])],
+        }));
+        patchComment(commentId, {
+          repliesCount: (comments.find((c) => c.id === commentId)?.repliesCount || 0) + 1,
+        });
+      }
+    } catch { /* ignored */ }
+  }, [comments, patchComment, requireAuth]);
+
   const currentUserAvatar = useMemo(() => (user ? getProfileAvatar(user) : undefined), [user]);
 
   return (
@@ -116,6 +204,8 @@ function HomePageNew() {
           onToggleLike={handleToggleLike}
           onOpenComments={handleOpenComments}
           onShare={handleShare}
+          onToggleRepost={handleToggleRepost}
+          isOwner={Boolean(current?.isOwner || current?.currentUserState?.isOwner)}
         />
         {isCommentVisible && <Comment
           comments={comments}
@@ -123,6 +213,11 @@ function HomePageNew() {
           currentUserAvatar={currentUserAvatar}
           onPost={handlePostComment}
           onClose={handleHideComment}
+          onToggleLike={handleToggleCommentLike}
+          onToggleDislike={handleToggleCommentDislike}
+          onLoadReplies={handleLoadReplies}
+          onPostReply={handlePostReply}
+          repliesByComment={repliesByComment}
         />}
     </div>
   );

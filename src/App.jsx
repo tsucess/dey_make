@@ -178,7 +178,7 @@ export default function App() {
           <Route element={renderLazyRoute(AppLayout)}>
             <Route path="/home" element={renderLazyRoute(Homepage)} />
             <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
-            <Route path="/live" element={renderLazyRoute(LivePage)} />
+            <Route path="/live" element={renderLazyRoute(Live)} />
             {/* <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} /> */}
             <Route path="/watch-live" element={renderLazyRoute(WatchLive)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />

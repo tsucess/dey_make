@@ -25,7 +25,9 @@ function pickObjectFit(naturalWidth, naturalHeight) {
 
 function MediaFit({ src, poster, type, alt }) {
   const [fit, setFit] = useState("object-cover");
-  const isVideo = type === "video" || (typeof src === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(src));
+  const hasVideoExt = typeof src === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(src);
+  const looksLikeImage = typeof src === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(src);
+  const isVideo = (type === "video" || hasVideoExt) && !looksLikeImage;
 
   if (isVideo && src) {
     return (
@@ -34,6 +36,7 @@ function MediaFit({ src, poster, type, alt }) {
         poster={poster || undefined}
         controls
         playsInline
+        preload="metadata"
         onLoadedMetadata={(event) => setFit(pickObjectFit(event.currentTarget.videoWidth, event.currentTarget.videoHeight))}
         className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
       />
@@ -42,7 +45,7 @@ function MediaFit({ src, poster, type, alt }) {
 
   return (
     <img
-      src={src || poster || "/home_img.jpg"}
+      src={(!isVideo && src) || poster || "/home_img.jpg"}
       alt={alt || ""}
       onLoad={(event) => setFit(pickObjectFit(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
       className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
@@ -59,6 +62,8 @@ function Video({
   onToggleLike,
   onOpenComments,
   onShare,
+  onToggleRepost,
+  isOwner = false,
 }) {
   const creator = video?.creator || video?.author || null;
   const state = video?.currentUserState || {};
@@ -110,7 +115,14 @@ function Video({
             </span>
           </div>
           <div className="flex flex-col gap-1 items-center">
-            <AiOutlineRetweet className={`text-white w-6 h-6`} />
+            <button
+              onClick={onToggleRepost}
+              disabled={isOwner}
+              title={isOwner ? "You can't repost your own video" : undefined}
+              className={isOwner ? "opacity-40 cursor-not-allowed" : undefined}
+            >
+              <AiOutlineRetweet className={`w-6 h-6 ${state.reposted ? "text-green-400" : "text-white"}`} />
+            </button>
             <span className="font-inter text-xs font-semibold text-white">
               {repostsText}
             </span>
