@@ -16,7 +16,7 @@ function TopVideo() {
       {!isHovered ? (
         <div
           onMouseEnter={handleToggleHovered}
-          className="w-full flex items-center justify-center relative"
+          className="w-full flex items-center justify-center relative transition-all"
         >
           <img src="/live-img.jpg" alt="" className="max-w-80 w-full h-100" />
 
@@ -38,7 +38,7 @@ function TopVideo() {
           <img
             src="/live-img.jpg"
             alt=""
-            className="max-w-80 w-full h-110 object-auto"
+            className="max-w-80 w-full h-110 object-auto bg-black/10 mix-blend-overlay"
           />
 
           {/* next and previous btn */}

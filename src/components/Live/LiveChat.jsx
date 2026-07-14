@@ -1,13 +1,17 @@
 import { CiFaceSmile } from "react-icons/ci";
 import { FaHeart } from "react-icons/fa";
+import { FaArrowLeftLong } from "react-icons/fa6";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { RiShareForwardLine } from "react-icons/ri";
 import { TbSend2 } from "react-icons/tb";
+import { useNavigate } from "react-router-dom";
 
 function LiveChat() {
+    const navigate = useNavigate()
   return <div className="flex flex-col gap-8 font-inter col-span-2">
+    <button onClick={()=> navigate('/live')} className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-5 h-5" /></button>
     <div className="flex items-center gap-3">
-        <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150">
+        <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150 flex-1">
         <div className="flex items-center gap-2">
             <img src="/story5.jpg" alt="" className="w-7.5 h-7.5 rounded-full object-cover"/>
         <div className="flex flex-col gap-1">
@@ -15,9 +19,9 @@ function LiveChat() {
             <div className="flex items-end gap-1"> <FaHeart className="text-red100 w-5 h-5" /> <span className="text-[10px] text-black dark:text-white">184k</span></div>
         </div>
         </div>
-        <button className="w-20 h-8 rounded-full bg-orange100 text-black font-semibold text-xs">Connect</button>
+        <button className="w-25 h-8 rounded-full bg-orange100 text-black font-semibold text-xs">Connect</button>
         </div>
-        <button className="border border-black/10 dark:border-white/10 rounded-2xl w-13 h-15 flex items-center justify-center bg-white300 dark:bg-slate150"><RiShareForwardLine className="text-black dark:text-white w-7 h-7" /></button>
+        <button className="border border-black/10 dark:border-white/10 rounded-2xl w-13 h-15 flex items-center justify-center bg-white300 dark:bg-slate150 shrink-0"><RiShareForwardLine className="text-black dark:text-white w-7 h-7" /></button>
     </div>
 
     <div className="flex flex-col bg-white300 p-6 gap-10 rounded-2xl dark:bg-slate100">
