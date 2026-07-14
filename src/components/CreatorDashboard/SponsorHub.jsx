@@ -2,6 +2,7 @@ import { useState } from "react";
 import { MdBarChart, MdOutlineCampaign } from "react-icons/md";
 import Campaigns from "./Campaigns";
 import Campaign from "./Campaign";
+import PerformanceSection from "./PerformanceSection";
 
 const hubTab = [
   { title: "Campaign", icon: MdOutlineCampaign },
@@ -57,19 +58,19 @@ const campaings = [
     appliedCreator: 48,
     tab: "Draft",
   },
-  ,
+  
 ];
 
 function SponsorHub() {
   const [activeTab, setActiveTab] = useState("Campaign");
-  const [selectedCampaign, setSelectedCampaign] = useState(null)
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   function handleActiveTabChange(tab) {
     setActiveTab(tab);
   }
 
-  function handleSelectedCampaignChange(id){
-    setSelectedCampaign(id)
+  function handleSelectedCampaignChange(id) {
+    setSelectedCampaign(id);
   }
 
   return (
@@ -90,7 +91,15 @@ function SponsorHub() {
           </button>
         ))}
       </div>
-      {selectedCampaign ? <Campaign/> : <Campaigns handleSelectedCampaignChange={handleSelectedCampaignChange} campaings={campaings} />}
+      {activeTab === "Campaign" && (selectedCampaign ? (
+        <Campaign campaign={selectedCampaign} />
+      ) : (
+        <Campaigns
+          handleSelectedCampaignChange={handleSelectedCampaignChange}
+          campaings={campaings}
+        />
+      ))}
+      {activeTab === "Performance" && <PerformanceSection />}
     </section>
   );
 }
