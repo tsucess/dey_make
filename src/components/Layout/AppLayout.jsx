@@ -174,12 +174,13 @@ export default function AppLayout() {
       ) : null}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* TopBar — desktop only */}
+        {/* TopBar — desktop only */} 
         {!location.pathname.startsWith("/messages") &&
           !location.pathname.startsWith("/challenge") &&
           !location.pathname.startsWith("/coins-wallet") &&
           !location.pathname.startsWith("/live") &&
           !location.pathname.startsWith("/live-preview") &&
+          !location.pathname.startsWith("/create-campaign") &&
           !location.pathname.startsWith("/lives") && (
             <div className="hidden md:block">
               <TopBar notificationState={notificationState} />

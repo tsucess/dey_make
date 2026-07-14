@@ -58,6 +58,8 @@ const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
 const LivestreamAdmin = lazy(() => import("./Admin/Pages/LiveStream"));
 const ChallengesAdmin = lazy(() => import("./Admin/Pages/Challenges"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
+const LivePage = lazy(() => import("./pages/LivePage"));
+const CreateCampaign = lazy(() => import("./components/CreatorDashboard/CreateCampaign"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -197,6 +199,10 @@ export default function App() {
             <Route
               path="/challenge-entries"
               element={renderLazyRoute(ChallengeEntries)}
+            />
+            <Route
+              path="/create-campaign"
+              element={renderLazyRoute(CreateCampaign)}
             />
             <Route
               path="/notification"
