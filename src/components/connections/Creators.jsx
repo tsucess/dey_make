@@ -1,9 +1,11 @@
-const creators = [
-    {name: 'Name Name', username: '@name', avatar: '/user1.jpg'},
-    {name: 'Name Name', username: '@name', avatar: '/user1.jpg'},
+const FALLBACK_CREATORS = [
+    {id: null, fullName: 'Name Name', username: '@name', avatarUrl: '/user1.jpg'},
+    {id: null, fullName: 'Name Name', username: '@name', avatarUrl: '/user1.jpg'},
 ]
 
-function Creators() {
+function Creators({ creators, onToggleConnect }) {
+  const list = Array.isArray(creators) && creators.length > 0 ? creators : FALLBACK_CREATORS;
+
   return (
     <div className="w-full md:w-1/3 md:flex flex-col gap-7 hidden ">
         <div className="flex items-center justify-between">
@@ -12,19 +14,34 @@ function Creators() {
         </div>
         <div className="flex flex-col gap-5">
             {
-                creators.map(({name, username, avatar}, i) => <div key={i} className="flex items-center gap-2 justify-between">
-                    <div className="flex items-center gap-2">
-                        <img src={avatar} alt={name} className="w-10 h-10 rounded-full" />
-                        <div className="flex flex-col gap-1">
-                            <span className="font-inter text-xs text-black dark:text-white">{name}</span>
-                            <span className="font-inter text-xs text-black dark:text-white">{username}</span>
+                list.map((creator, i) => {
+                    const name = creator.fullName || creator.name || 'Name Name';
+                    const rawUsername = creator.username || 'name';
+                    const username = rawUsername.startsWith('@') ? rawUsername : `@${rawUsername}`;
+                    const avatar = creator.avatarUrl || creator.avatar || '/user1.jpg';
+                    const isConnected = Boolean(creator.currentUserState?.subscribed);
+                    return (
+                        <div key={creator.id ?? i} className="flex items-center gap-2 justify-between">
+                            <div className="flex items-center gap-2">
+                                <img src={avatar} alt={name} className="w-10 h-10 rounded-full" />
+                                <div className="flex flex-col gap-1">
+                                    <span className="font-inter text-xs text-black dark:text-white">{name}</span>
+                                    <span className="font-inter text-xs text-black dark:text-white">{username}</span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => creator.id && onToggleConnect && onToggleConnect(creator)}
+                                className="font-inter text-[10px] font-semibold text-black dark:text-white border border-black dark:border-white rounded-sm px-3 py-2"
+                            >
+                                {isConnected ? 'Connected' : 'Connect'}
+                            </button>
                         </div>
-                    </div>
-                    <button className="font-inter text-[10px] font-semibold text-black dark:text-white border border-black dark:border-white rounded-sm px-3 py-2">Connect</button>
-                </div>)
+                    );
+                })
             }
         </div>
-        
+
     </div>
   )
 }

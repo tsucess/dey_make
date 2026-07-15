@@ -476,6 +476,10 @@ export const api = {
   unlikeComment: (commentId) => request(`/comments/${commentId}/like`, { method: "DELETE" }),
   dislikeComment: (commentId) => request(`/comments/${commentId}/dislike`, { method: "POST" }),
   undislikeComment: (commentId) => request(`/comments/${commentId}/dislike`, { method: "DELETE" }),
+  getConnectionsFeed: () => request("/connections/feed"),
+  getStoriesFeed: () => request("/stories/feed"),
+  markStoryViewed: (id) => request(`/stories/${id}/view`, { method: "POST" }),
+  getSuggestedCreators: (options = {}) => request(`/creators/suggestions${buildQueryString({ limit: options.limit })}`),
 };
 
 export function firstError(errors, fallback = "Something went wrong.") {
