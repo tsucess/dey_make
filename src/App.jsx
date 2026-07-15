@@ -49,7 +49,9 @@ const LivePreview = lazy(() => import("./pages/LivePreview"));
 const Live = lazy(() => import("./pages/LiveNew"));
 const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
-const VerificationRequest = lazy(() => import("./Admin/Pages/VerificationRequest"));
+const VerificationRequest = lazy(
+  () => import("./Admin/Pages/VerificationRequest"),
+);
 const Users = lazy(() => import("./Admin/Pages/Users"));
 const Comments = lazy(() => import("./Admin/Pages/Comments"));
 const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
@@ -59,7 +61,11 @@ const LivestreamAdmin = lazy(() => import("./Admin/Pages/LiveStream"));
 const ChallengesAdmin = lazy(() => import("./Admin/Pages/Challenges"));
 const WatchLive = lazy(() => import("./pages/WatchLive"));
 const LivePage = lazy(() => import("./pages/LivePage"));
-const CreateCampaign = lazy(() => import("./components/CreatorDashboard/CreateCampaign"));
+const CreateCampaign = lazy(
+  () => import("./components/CreatorDashboard/CreateCampaign"),
+);
+const CreatePost = lazy(() => import("./pages/Create"));
+const PostDetails = lazy(() => import("./components/Create/PostDetails"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -204,6 +210,11 @@ export default function App() {
               path="/create-campaign"
               element={renderLazyRoute(CreateCampaign)}
             />
+            <Route path="/create" element={renderLazyRoute(CreatePost)} />
+            <Route
+              path="/post-details"
+              element={renderLazyRoute(PostDetails)}
+            />
             <Route
               path="/notification"
               element={renderLazyRoute(Notification)}
@@ -234,7 +245,8 @@ export default function App() {
               element={renderLazyRoute(PostLiveAnalytics)}
             />
           </Route>
-          <Route path="/create" element={renderLazyRoute(CreateUpload)} />
+
+          {/* <Route path="/create" element={renderLazyRoute(CreateUpload)} /> */}
           <Route path="/create-live" element={renderLazyRoute(CreateLive)} />
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
@@ -253,8 +265,14 @@ export default function App() {
           />
           <Route path="/admin-user" element={renderLazyRoute(UserAdmin)} />
           <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
-          <Route path="/admin-livestream" element={renderLazyRoute(LivestreamAdmin)} />
-          <Route path="/admin-challenges" element={renderLazyRoute(ChallengesAdmin)} />
+          <Route
+            path="/admin-livestream"
+            element={renderLazyRoute(LivestreamAdmin)}
+          />
+          <Route
+            path="/admin-challenges"
+            element={renderLazyRoute(ChallengesAdmin)}
+          />
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />
