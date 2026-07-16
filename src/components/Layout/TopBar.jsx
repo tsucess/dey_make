@@ -305,7 +305,7 @@ export default function TopBar({ notificationState = null }) {
         {isAuthenticated ? (
           <>
             {/* Create */}
-            <button onClick={()=> navigate('/create')}
+            <button onClick={toggleVisiblity}
               className="flex items-center gap-1.5
                          bg-orange100 hover:bg-orange500
                          text-black font-semibold text-sm
@@ -316,7 +316,7 @@ export default function TopBar({ notificationState = null }) {
               <HiPlus className="w-4 h-4" />
               {t("common.create")}
             </button>
-            {/* <CreateDropdown isVisible={isVisible}/> */}
+            <CreateDropdown isVisible={isVisible} toggleVisiblity={toggleVisiblity}/>
 
             {/* Bell */}
             <div className="relative flex items-center justify-center ml-2 mr-2">

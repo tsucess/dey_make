@@ -113,7 +113,7 @@ function Comment({
   }
 
   return (
-    <div className="flex flex-col gap-4 w-full md:w-1/3">
+    <div className="flex flex-col gap-4 w-full md:w-1/3 font-inter">
         <div className="border-y border-black dark:border-white py-4 flex items-center justify-between px-4">
             <h3 className="text-xl font-inter text-black dark:text-white">{headerCount} Comments</h3>
             <button onClick={onClose}><IoClose className="w-6 h-6 text-black dark:text-white"/></button>
@@ -131,8 +131,8 @@ function Comment({
                             <img src={img} alt={name} className="w-12.5 h-12.5 rounded-full" />
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-black dark:text-white text-base font-inter">{name}</span>
-                                    <span className="text-black dark:text-white text-base font-inter">{time}</span>
+                                    <span className="text-black dark:text-white text-sm font-inter">{name}</span>
+                                    <span className="text-black dark:text-white text-sm font-inter">{time}</span>
                                 </div>
                                 <p className="text-black dark:text-white text-lg font-inter">{desc}</p>
                                 <div className="flex items-center gap-4">
@@ -193,11 +193,11 @@ function Comment({
                   ))}
                 </div>
               )}
-              <form onSubmit={submit} className="flex items-center py-3 px-4 rounded-full w-full gap-3 bg-slate150 dark:bg-black100 max-h-17.5 h-full">
-                  <img src={composerAvatar} alt="" className="w-7 h-7 rounded-full shrink-0" />
-                  <input ref={inputRef} type="text" value={draft} onChange={(event) => setDraft(event.target.value)} className="text-sm font-inter text-black dark:text-white flex-1 bg-transparent outline-none" placeholder={placeholder} />
-                  <button type="button" onClick={() => setEmojiOpen((prev) => !prev)}><CiFaceSmile className="text-black dark:text-white w-6 h-6" /></button>
-                  <button type="submit" className="bg-orange100 py-3 px-3 rounded-full flex items-center justify-center shrink-0"><TbSend2 className="w-6 h-6 text-black" /></button>
+              <form onSubmit={submit} className="flex items-center py-3 px-4 rounded-full w-full gap-2 bg-slate150 dark:bg-black100 max-h-17.5 h-full">
+                  <img src={composerAvatar} alt="" className="w-6 h-6 rounded-full shrink-0" />
+                  <input ref={inputRef} type="text" value={draft} onChange={(event) => setDraft(event.target.value)} className="text-sm font-inter text-black dark:text-white w-40 bg-transparent outline-none" placeholder={placeholder} />
+                  <button type="button" onClick={() => setEmojiOpen((prev) => !prev)}><CiFaceSmile className="text-black dark:text-white w-5 h-5" /></button>
+                  <button type="submit" className="bg-orange100 py-2 px-2 rounded-full flex items-center justify-center shrink-0"><TbSend2 className="w-5 h-5 text-black" /></button>
               </form>
             </div>
         </div>

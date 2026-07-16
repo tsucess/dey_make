@@ -87,10 +87,10 @@ function Video({
     : audioTitle || audioArtist;
 
   return (
-    <section className="w-full md:w-2/3 flex justify-center relative">
-      <div className="max-w-md w-full max-h-215 h-full relative">
+    <section className="w-full md:w-2/3 flex justify-center h-200 relative">
+      <div className="max-w-md w-full  h-full relative">
         <MediaFit src={mediaSrc} poster={thumbnail} type={video?.type} alt={caption} />
-        <div className="flex flex-col gap-2 absolute right-4 bottom-4 items-center">
+        <div className="flex flex-col gap-2 absolute right-4 bottom-24 items-center">
           <img
             src={avatarUrl || FALLBACK_AVATAR}
             alt=""
@@ -144,7 +144,7 @@ function Video({
             className="w-10 h-10 rounded-full mt-6"
           />
         </div>
-        <div className="flex flex-col gap-1 absolute left-3 bottom-4">
+        <div className="flex flex-col gap-1 absolute left-3 bottom-20">
           <div className="flex items-center gap-1.5">
             <IoLocationOutline className="text-white w-4 h-4" />
             <span className="text-xs font-inter text-white">{location}</span>
@@ -173,16 +173,16 @@ function Video({
         <button
           onClick={onPrev}
           disabled={!canPrev}
-          className="border-2 border-slate150 bg-black/40 dark:bg-white flex items-center justify-center w-8 h-8 rounded-full"
+          className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full"
         >
           <IoMdArrowDropup className="w-5 h-5 text-black dark:text-black" />
         </button>
         <button
           onClick={onNext}
           disabled={!canNext}
-          className="border-2 border-slate150 bg-black/40 dark:bg-white flex items-center justify-center w-8 h-8 rounded-full"
+          className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full"
         >
-          <IoMdArrowDropdown className="w-5 h-5 text-white dark:text-black" />
+          <IoMdArrowDropdown className="w-5 h-5 text-black dark:text-black" />
         </button>
       </div>
     </section>

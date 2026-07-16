@@ -64,10 +64,10 @@ function Comment() {
                 />
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-black dark:text-white text-base font-inter">
+                    <span className="text-black dark:text-white text-sm font-inter">
                       {name}
                     </span>
-                    <span className="text-black dark:text-white text-base font-inter">
+                    <span className="text-black dark:text-white text-sm font-inter">
                       {time}
                     </span>
                   </div>

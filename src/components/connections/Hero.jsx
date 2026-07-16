@@ -9,5 +9,5 @@ function Hero({ stories, creators, onViewStory, onToggleConnect }) {
     </section>
   );
 }
-
+ 
 export default Hero;

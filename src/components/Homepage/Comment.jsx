@@ -114,7 +114,7 @@ function Comment({
   }
 
   return (
-    <div className="hidden md:flex flex-col gap-4 w-full md:w-1/3 ">
+    <div className="hidden md:flex flex-col gap-4 w-full md:w-1/3 font-inter">
       <div className="border-y border-black dark:border-white py-4 flex items-center justify-between px-4">
         <h3 className="text-xl font-inter text-black dark:text-white">
           {headerCount} Comments
@@ -140,10 +140,10 @@ function Comment({
                 />
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-black dark:text-white text-base font-inter">
+                    <span className="text-black dark:text-white text-sm font-inter">
                       {name}
                     </span>
-                    <span className="text-black dark:text-white text-base font-inter">
+                    <span className="text-black dark:text-white text-sm font-inter">
                       {time}
                     </span>
                   </div>
