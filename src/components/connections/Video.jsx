@@ -173,16 +173,16 @@ function Video({
         <button
           onClick={onPrev}
           disabled={!canPrev}
-          className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full"
+          className="border-2 border-slate150 bg-black/40 dark:bg-white flex items-center justify-center w-8 h-8 rounded-full"
         >
-          <IoMdArrowDropup className="w-5 h-5 text-black dark:text-white" />
+          <IoMdArrowDropup className="w-5 h-5 text-black dark:text-black" />
         </button>
         <button
           onClick={onNext}
           disabled={!canNext}
-          className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full"
+          className="border-2 border-slate150 bg-black/40 dark:bg-white flex items-center justify-center w-8 h-8 rounded-full"
         >
-          <IoMdArrowDropdown className="w-5 h-5 text-black dark:text-white" />
+          <IoMdArrowDropdown className="w-5 h-5 text-white dark:text-black" />
         </button>
       </div>
     </section>
