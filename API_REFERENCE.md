@@ -112,10 +112,20 @@ These are the main resource objects returned throughout the API.
 
 - `id`
 - `fullName`
+- `username`
 - `bio`
 - `avatarUrl`
 - `isOnline`
+- `isVerifiedCreator`
+- `creatorVerificationStatus`
 - `subscriberCount`
+- `followingCount`
+- `videosCount` — published, discoverable videos owned by the user
+- `totalLikes` — total likes across the user's discoverable videos
+- `isDeveloper`
+- `hasActivePlans`
+- `activePlansCount`
+- `currentUserState.subscribed` — whether the viewer subscribes to this profile
 - `createdAt`
 - `email` (only populated when the authenticated user is viewing their own record)
 

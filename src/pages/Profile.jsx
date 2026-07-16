@@ -275,18 +275,28 @@ export default function Profile() {
   async function handleSaveProfile() {
     if (!isOwnProfile) return;
 
+    const scrollToBanner = () => {
+      if (typeof window === "undefined" || typeof window.scrollTo !== "function") return;
+      try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { /* jsdom / older browsers */ }
+    };
+
     if (!form.fullName.trim()) {
       setError(t("profile.fullNameRequired"));
+      scrollToBanner();
       return;
     }
 
-    if (!form.username.trim()) {
+    const normalizedUsername = form.username.trim().toLowerCase();
+
+    if (!normalizedUsername) {
       setError(t("profile.usernameRequired"));
+      scrollToBanner();
       return;
     }
 
-    if (!USERNAME_PATTERN.test(form.username.trim())) {
+    if (!USERNAME_PATTERN.test(normalizedUsername)) {
       setError(t("profile.usernameInvalid"));
+      scrollToBanner();
       return;
     }
 
@@ -297,7 +307,7 @@ export default function Profile() {
     try {
       const response = await api.updateProfile({
         fullName: form.fullName.trim(),
-        username: form.username.trim(),
+        username: normalizedUsername,
         bio: form.bio.trim() || null,
         avatarUrl: form.avatarUrl.trim() || null,
       });
@@ -313,8 +323,10 @@ export default function Profile() {
       syncUser?.(nextProfile);
       setEditing(false);
       setFeedback(t("profile.updated"));
+      scrollToBanner();
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || t("profile.unableToUpdate")));
+      scrollToBanner();
     } finally {
       setSaving(false);
     }
@@ -445,10 +457,10 @@ export default function Profile() {
     navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${nextVideo.id}` : buildVideoLink(nextVideo));
   }
 
-  const videosCount = profile?.videosCount || 134;
-  const followersCount = profile?.subscriberCount ? formatCompactNumber(profile.subscriberCount) : "1.5M";
-  const followingCount = profile?.followingCount || 100;
-  const totalLikes = profile?.totalLikes ? formatCompactNumber(profile.totalLikes) : "2.4M";
+  const videosCount = formatCompactNumber(profile?.videosCount ?? 0);
+  const followersCount = formatCompactNumber(profile?.subscriberCount ?? 0);
+  const followingCount = formatCompactNumber(profile?.followingCount ?? 0);
+  const totalLikes = formatCompactNumber(profile?.totalLikes ?? 0);
 
   return (
     <div className="min-h-full bg-white dark:bg-black100 pb-20">
@@ -463,7 +475,7 @@ export default function Profile() {
           </button>
         </div>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-orange100 rounded-full px-3 py-1 shadow-md">
-          <span className="text-[11px] font-bold text-black uppercase">{profile?.username || "zaravibes"}</span>
+          <span className="text-[11px] font-bold text-black uppercase">{profile?.username ? `@${profile.username}` : ""}</span>
           <FaCheck className="w-2.5 h-2.5 text-black" />
         </div>
       </div>
@@ -519,7 +531,7 @@ export default function Profile() {
                   <input
                     type="text"
                     value={form.username}
-                    onChange={(event) => setForm((current) => ({ ...current, username: event.target.value }))}
+                    onChange={(event) => setForm((current) => ({ ...current, username: event.target.value.toLowerCase() }))}
                     placeholder={t("profile.usernamePlaceholder")}
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -536,10 +548,10 @@ export default function Profile() {
               ) : (
                 <div className="mt-4 flex flex-col items-center text-center space-y-1.5">
                   <h1 className="text-[22px] md:text-[26px] font-semibold font-inter text-black dark:text-white">
-                    {getProfileName(displayProfile) || "Zara Vibes"}
+                    {getProfileName(displayProfile)}
                   </h1>
                   <p className="text-[13px] md:text-[14px] font-medium font-inter text-slate-600 dark:text-slate-300 max-w-md leading-relaxed">
-                    {profile?.bio || "I am Zara Vibes, A Professional Dancer, Hip-hop | Tap | Afro-Dance"}
+                    {profile?.bio?.trim() || t("profile.emptyBio")}
                   </p>
                 </div>
               )}
