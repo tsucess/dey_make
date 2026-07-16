@@ -21,7 +21,7 @@ ChartJS.register(
 );
 
 export default function MonthlyRevenueChart() {
-  const isDark = useTheme();
+  const { isDark } = useTheme();
   const data = {
     labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
 

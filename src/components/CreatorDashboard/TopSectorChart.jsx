@@ -59,7 +59,7 @@ const centerTextPlugin = {
 };
 
 export default function TopSectorsChart() {
-  const isDark = useTheme();
+  const { isDark } = useTheme();
   const sectors = [
     {
       name: "Creator Fund",
@@ -182,7 +182,7 @@ export default function TopSectorsChart() {
           flex
           w-full
           flex-col
-          gap-7
+          gap-4
           flex-1
         "
         >
