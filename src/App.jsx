@@ -22,7 +22,7 @@ const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const CreateUpload = lazy(() => import("./pages/CreateUpload"));
+const CreateUpload = lazy(() => import("./old/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Challenges = lazy(() => import("./pages/Challenges"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
