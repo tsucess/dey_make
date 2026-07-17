@@ -89,14 +89,14 @@ function Video({
     : audioTitle || audioArtist;
 
   return (
-    <section className="w-full md:w-2/3 h-215 flex justify-center relative">
+    <section className="w-full md:w-2/3 md:h-215 flex justify-center relative">
       <div className="max-w-md w-full h-110 max-h-215 md:h-full relative">
         <MediaFit src={mediaSrc} poster={thumbnail} type={video?.type} alt={caption} />
-        <div className="flex flex-col gap-2 absolute right-4 bottom-20 items-center">
+        <div className="flex flex-col gap-1 md:gap-2 absolute right-4 bottom-15 md:bottom-20 items-center">
           <img
             src={avatarUrl || FALLBACK_AVATAR}
             alt=""
-            className="w-12 h-12 rounded-full border-2 border-white object-cover"
+            className="w-10 md:w-12 h-10 md:h-12 rounded-full border-2 border-white object-cover"
           />
           <div className="flex flex-col gap-1 items-center">
             <button onClick={onToggleLike}>
@@ -141,7 +141,7 @@ function Video({
           <img
             src={audioCover}
             alt=""
-            className="w-10 h-10 rounded-full mt-6"
+            className="w-10 h-10 rounded-full mt-3 md:mt-6"
           />
         </div>
         <div className="flex flex-col gap-1 absolute left-2 bottom-18">
