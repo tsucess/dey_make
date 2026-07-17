@@ -105,7 +105,7 @@ function PostDetailsForm() {
                 ].map((location) => (
                   <button
                     key={location}
-                    className="border border-black/30 dark:border-white/30 rounded-md py-3 px-2.5 text-xs font-semibold"
+                    className="border border-black/30 dark:border-white/30 rounded-md py-3 text-black dark:text-white px-2.5 text-xs font-semibold"
                   >
                     {location}
                   </button>
@@ -341,7 +341,7 @@ function PostDetailsForm() {
             </button>
           </div>
         </div>
-        <div className="col-span-1 flex flex-col bg-white300">
+        <div className="col-span-1 flex flex-col bg-white300 dark:bg-slate100 overflow-hidden rounded-t-4xl rounded-b-2xl">
           <img src="/live-img.jpg" alt="" className="rounded-t-4xl" />
           <div className="flex flex-col gap-6 py-5 px-4 rounded-b-2xl border border-t-0 border-black/10 dark:border-white/30">
             <div className="flex items-center gap-6">
