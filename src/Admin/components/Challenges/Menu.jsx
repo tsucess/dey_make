@@ -49,7 +49,7 @@ function Menu({
           <select
             name=""
             id=""
-            onChange={category}
+            value={category}
             onChange={(e) => handleCategoryChange(e.target.value)}
             className="px-2.5 py-3.5 rounded-xl border border-zinc50 text-xs text-blue100"
           >
