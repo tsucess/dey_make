@@ -66,6 +66,7 @@ const CreateCampaign = lazy(
 );
 const CreatePost = lazy(() => import("./pages/Create"));
 const PostDetailsForm = lazy(() => import("./components/Create/PostDetailsForm"));
+const MobilePostDetailsForm = lazy(() => import("./components/Create/MobilePostDetailsForm"));
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 
 function FullPageLoader() {
@@ -215,6 +216,10 @@ export default function App() {
             <Route
               path="/post-details-form"
               element={renderLazyRoute(PostDetailsForm)}
+            />
+            <Route
+              path="/post-detail-form"
+              element={renderLazyRoute(MobilePostDetailsForm)}
             />
             <Route
               path="/post-detail"

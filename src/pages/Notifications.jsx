@@ -51,13 +51,13 @@ export default function Notifications() {
   return (
     <div className="min-h-full bg-white dark:bg-black300 text-black dark:text-white pb-20 md:pb-0">
       <div className="w-full px-4 py-8 md:px-8 md:py-12">
-        <div className="mb-6 flex flex-wrap items-center gap-2 md:gap-8 overflow-x-auto no-scrollbar">
+        <div className="mb-6 flex items-center gap-2 md:gap-8 overflow-x-auto no-scrollbar" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {TABS.map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap px-6 py-2 rounded-full text-sm font-semibold transition-colors ${
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
                 activeTab === tab
                   ? "bg-orange100 text-black"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-white/5"
