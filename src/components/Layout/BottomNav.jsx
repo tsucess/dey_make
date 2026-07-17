@@ -29,7 +29,7 @@ function getNavItems(isAdmin) {
     icon: <HiOutlineTrophy />,
   },
   {
-    to: "/create",
+    to: "/post-detail-form",
     labelKey: "Create",
     icon: <FaPlus />,
   },
