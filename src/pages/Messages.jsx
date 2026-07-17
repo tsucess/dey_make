@@ -120,7 +120,7 @@ function ConversationRow({ conversation, active, typingParticipant, onClick }) {
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange100 text-[10px] font-bold text-black mt-1">
             {conversation.unreadCount}
           </span>
-        ) : participant?.fullName?.includes("Claire") ? (
+        ) : conversation.lastMessage?.isMine ? (
            <svg viewBox="0 0 24 24" fill="currentColor" className={`w-3.5 h-3.5 mt-1 ${active ? "text-slate400" : "text-slate500"}`}><path d="M16 12V4h1V2H7v2h1v8l-2 2v2h4v6h2v-6h4v-2l-2-2z"/></svg>
         ) : <div className="h-5 w-5 mt-1"></div>}
       </div>
@@ -129,6 +129,10 @@ function ConversationRow({ conversation, active, typingParticipant, onClick }) {
 }
 
 function MessageBubble({ message }) {
+  const attachment = message.attachment;
+  const isImage = attachment && (attachment.type === "image" || attachment.type === "gif" || (attachment.mime || "").startsWith("image/"));
+  const isVideo = attachment && (attachment.type === "video" || (attachment.mime || "").startsWith("video/"));
+
   return (
     <div className={`flex ${message.isMine ? "justify-end" : "justify-start"}`}>
       <div
@@ -138,7 +142,23 @@ function MessageBubble({ message }) {
             : "bg-[#F3F3F3] dark:bg-white text-black rounded-[1.25rem] rounded-bl-sm"
         }`}
       >
-        <p className="text-[14px] font-inter leading-relaxed">{message.body}</p>
+        {attachment ? (
+          isImage ? (
+            <a href={attachment.url} target="_blank" rel="noreferrer" className="block mb-2">
+              <img src={attachment.url} alt={attachment.name || ""} className="rounded-lg max-h-64 object-cover" />
+            </a>
+          ) : isVideo ? (
+            <video src={attachment.url} controls className="rounded-lg max-h-64 mb-2" />
+          ) : (
+            <a href={attachment.url} target="_blank" rel="noreferrer" className="mb-2 flex items-center gap-2 rounded-lg bg-black/5 px-3 py-2 text-[13px] font-medium text-black hover:bg-black/10 transition-colors">
+              <HiOutlinePaperClip className="h-4 w-4 -rotate-45" />
+              <span className="truncate">{attachment.name || "attachment"}</span>
+            </a>
+          )
+        ) : null}
+        {message.body ? (
+          <p className="text-[14px] font-inter leading-relaxed">{message.body}</p>
+        ) : null}
         <p className={`mt-1 text-right text-[10px] font-medium ${message.isMine ? "text-black/50" : "text-black/40"}`}>
           {new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
         </p>
@@ -156,6 +176,56 @@ function SectionCard({ title, children }) {
   );
 }
 
+const EMOJI_CATEGORIES = {
+  smileys: ["😀", "😃", "😄", "😁", "😆", "😅", "😂", "🤣", "😊", "😇", "🙂", "🙃", "😉", "😌", "😍", "🥰", "😘", "😗", "😙", "😚", "😋", "😛", "😝", "😜", "🤪", "🤨", "🧐", "🤓", "😎", "🥳", "😏", "😒", "😞", "😔", "😟", "😕", "🙁", "😣", "😖", "😫", "😩", "🥺", "😢", "😭", "😤", "😠", "😡", "🤬", "🤯", "😳", "🥵", "🥶", "😱", "😨", "😰", "😥", "😓", "🤗", "🤔", "🤭", "🤫", "🤥", "😶", "😐", "😑", "😬", "🙄", "😯", "😦", "😧", "😮"],
+  gestures: ["👍", "👎", "👌", "✌️", "🤞", "🤟", "🤘", "🤙", "👈", "👉", "👆", "🖕", "👇", "☝️", "👋", "🤚", "🖐️", "✋", "🖖", "👏", "🙌", "🤝", "🙏", "💪", "🦾", "🖖", "✍️", "🤳", "💅", "🤲"],
+  hearts: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🖤", "🤍", "🤎", "💔", "❣️", "💕", "💞", "💓", "💗", "💖", "💘", "💝", "💟", "♥️", "💌", "💋"],
+  objects: ["🔥", "✨", "🎉", "🎊", "🎁", "🎂", "🍰", "🍕", "🍔", "🍟", "☕", "🍺", "🍻", "🥂", "🍷", "🎵", "🎶", "🎸", "🎤", "📱", "💻", "⌚", "📷", "🚀", "🌟", "⭐", "🌈", "☀️", "🌙", "⚡", "💯", "✅", "❌", "⚠️", "❓", "❗"],
+};
+
+function isSameCalendarDay(left, right) {
+  return (
+    left.getFullYear() === right.getFullYear()
+    && left.getMonth() === right.getMonth()
+    && left.getDate() === right.getDate()
+  );
+}
+
+function formatDayDivider(dateValue, t) {
+  const messageDate = new Date(dateValue);
+  if (Number.isNaN(messageDate.getTime())) return "";
+
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  if (isSameCalendarDay(messageDate, now)) return t("messages.todayLabel");
+  if (isSameCalendarDay(messageDate, yesterday)) return t("messages.yesterdayLabel");
+
+  return messageDate.toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+}
+
+function groupMessagesByDay(messages, t) {
+  const groups = [];
+  let currentKey = null;
+
+  messages.forEach((message) => {
+    const timestamp = message.createdAt ? new Date(message.createdAt) : null;
+    const key = timestamp && !Number.isNaN(timestamp.getTime())
+      ? `${timestamp.getFullYear()}-${timestamp.getMonth()}-${timestamp.getDate()}`
+      : "unknown";
+
+    if (key !== currentKey) {
+      groups.push({ key, label: timestamp ? formatDayDivider(timestamp, t) : "", messages: [] });
+      currentKey = key;
+    }
+
+    groups[groups.length - 1].messages.push(message);
+  });
+
+  return groups;
+}
+
 export default function Messages() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -166,6 +236,9 @@ export default function Messages() {
   const presenceChannelsRef = useRef({});
   const localTypingConversationIdRef = useRef(null);
   const localTypingTimeoutRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const emojiPopoverRef = useRef(null);
+  const fileInputRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
@@ -179,6 +252,12 @@ export default function Messages() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
+  const [uploadingAttachment, setUploadingAttachment] = useState(false);
+  const [chatSearchOpen, setChatSearchOpen] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState("");
+  const [emojiCategory, setEmojiCategory] = useState("smileys");
 
   const activeConversation = useMemo(
     () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
@@ -196,6 +275,47 @@ export default function Messages() {
 
     return suggestedUsers.filter((participant) => !interactedCreatorIds.has(participant.id));
   }, [conversations, suggestedUsers]);
+
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+
+  const filteredConversations = useMemo(() => {
+    if (!normalizedSearchQuery) return conversations;
+
+    return conversations.filter((conversation) => {
+      const participant = conversation.participant;
+      const nameMatch = (getProfileName(participant) || "").toLowerCase().includes(normalizedSearchQuery);
+      const usernameMatch = (participant?.username || "").toLowerCase().includes(normalizedSearchQuery);
+      const lastMessageMatch = (conversation.lastMessage?.body || "").toLowerCase().includes(normalizedSearchQuery);
+      return nameMatch || usernameMatch || lastMessageMatch;
+    });
+  }, [conversations, normalizedSearchQuery]);
+
+  const filteredSuggestedCreators = useMemo(() => {
+    if (!normalizedSearchQuery) return suggestedCreators;
+
+    return suggestedCreators.filter((participant) => {
+      const nameMatch = (getProfileName(participant) || "").toLowerCase().includes(normalizedSearchQuery);
+      const usernameMatch = (participant?.username || "").toLowerCase().includes(normalizedSearchQuery);
+      return nameMatch || usernameMatch;
+    });
+  }, [normalizedSearchQuery, suggestedCreators]);
+
+  const groupedMessages = useMemo(() => groupMessagesByDay(messages, t), [messages, t]);
+
+  const normalizedChatSearchQuery = chatSearchQuery.trim().toLowerCase();
+
+  const filteredGroupedMessages = useMemo(() => {
+    if (!normalizedChatSearchQuery) return groupedMessages;
+    return groupedMessages
+      .map((group) => ({
+        ...group,
+        messages: group.messages.filter((message) =>
+          (message.body || "").toLowerCase().includes(normalizedChatSearchQuery)
+          || (message.attachment?.name || "").toLowerCase().includes(normalizedChatSearchQuery),
+        ),
+      }))
+      .filter((group) => group.messages.length > 0);
+  }, [groupedMessages, normalizedChatSearchQuery]);
 
   const conversationSubscriptionKey = useMemo(
     () => [...new Set(conversations.map((conversation) => `${conversation.id || ""}`.trim()).filter(Boolean))].sort().join(":"),
@@ -216,6 +336,8 @@ export default function Messages() {
 
   useEffect(() => {
     messagesRef.current = [];
+    setChatSearchOpen(false);
+    setChatSearchQuery("");
   }, [activeConversationId]);
 
   useEffect(() => {
@@ -226,6 +348,25 @@ export default function Messages() {
       isMountedRef.current = false;
     };
   }, []);
+
+  useEffect(() => {
+    const node = messagesEndRef.current;
+    if (!node || typeof node.scrollIntoView !== "function") return;
+    node.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, activeTypingParticipant]);
+
+  useEffect(() => {
+    if (!emojiPickerOpen) return undefined;
+
+    function handleOutsideClick(event) {
+      if (emojiPopoverRef.current && !emojiPopoverRef.current.contains(event.target)) {
+        setEmojiPickerOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [emojiPickerOpen]);
 
   const updateParticipantPresence = useCallback((conversationId, participantId, isOnline) => {
     if (!participantId) return;
@@ -680,6 +821,65 @@ export default function Messages() {
     }
   }
 
+  async function handleAttachmentPick(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !activeConversationId) return;
+
+    setUploadingAttachment(true);
+    setError("");
+    setFeedback(t("messages.attachmentUploading"));
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadResponse = await api.uploadFile(formData);
+      const upload = uploadResponse?.data?.upload;
+      if (!upload) throw new Error(t("messages.attachmentUploadFailed"));
+
+      const attachmentUrl = upload.processedUrl || upload.url || upload.path;
+      const attachmentType = upload.type || (file.type.startsWith("image/") ? "image" : file.type.startsWith("video/") ? "video" : "file");
+
+      const sendResponse = await api.sendConversationMessage(activeConversationId, {
+        body: draftMessage.trim(),
+        attachmentUrl,
+        attachmentType,
+        attachmentName: file.name,
+        attachmentMime: file.type || null,
+        attachmentSize: file.size || null,
+      });
+
+      const nextMessage = sendResponse?.data?.message;
+      if (!nextMessage) return;
+
+      setMessages((current) => mergeMessages(current, [nextMessage]));
+      setDraftMessage("");
+      setConversations((current) => {
+        const updated = current.map((conversation) =>
+          conversation.id === activeConversationId
+            ? {
+                ...conversation,
+                lastMessage: nextMessage,
+                unreadCount: 0,
+                status: t("messages.sentJustNow"),
+                updatedAt: nextMessage.createdAt,
+              }
+            : conversation,
+        );
+
+        return [...updated].sort(
+          (left, right) => new Date(right.updatedAt || 0).getTime() - new Date(left.updatedAt || 0).getTime(),
+        );
+      });
+      setFeedback("");
+    } catch (nextError) {
+      setFeedback("");
+      setError(firstError(nextError?.errors, nextError?.message || t("messages.attachmentUploadFailed")));
+    } finally {
+      setUploadingAttachment(false);
+    }
+  }
+
   return (
     <div className="min-h-full bg-white dark:bg-black300 text-slate-900 dark:text-white">
       <div className="mx-auto w-full max-w-7xl h-screen md:h-[calc(100vh-34px)] flex flex-col">
@@ -693,38 +893,49 @@ export default function Messages() {
                 <HiOutlineSearch className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder={t("messages.searchPlaceholder")}
                   className="bg-transparent text-[15px] text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 outline-none w-full"
                 />
               </div>
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 space-y-1">
-              {loadingConversations ? (
-                <div className="text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
-              ) : conversations.length ? (
-                conversations.map((conversation) => (
-                  <ConversationRow
-                    key={conversation.id}
-                    conversation={conversation}
-                    typingParticipant={typingParticipantsByConversation[conversation.id] || null}
-                    active={conversation.id === activeConversationId}
-                    onClick={() => setActiveConversationId(conversation.id)}
-                  />
-                ))
-              ) : (
-                <p className="px-4 text-sm text-slate-500 dark:text-slate-400">{t("messages.noConversations")}</p>
-              )}
+              <section>
+                <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  {t("messages.inbox")}
+                </h3>
+                {loadingConversations ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
+                ) : filteredConversations.length ? (
+                  filteredConversations.map((conversation) => (
+                    <ConversationRow
+                      key={conversation.id}
+                      conversation={conversation}
+                      typingParticipant={typingParticipantsByConversation[conversation.id] || null}
+                      active={conversation.id === activeConversationId}
+                      onClick={() => setActiveConversationId(conversation.id)}
+                    />
+                  ))
+                ) : (
+                  <p className="px-4 text-sm text-slate-500 dark:text-slate-400">
+                    {normalizedSearchQuery && conversations.length
+                      ? t("messages.searchNoResults")
+                      : t("messages.noConversations")}
+                  </p>
+                )}
+              </section>
 
-              <div className="mt-8">
+              <section className="mt-8">
                 <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                   {t("messages.suggestedCreators")}
                 </h3>
                 {loadingSuggestions ? (
                   <div className="px-4 text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
-                ) : suggestedCreators.length ? (
+                ) : filteredSuggestedCreators.length ? (
                   <div className="space-y-1">
-                    {suggestedCreators.map((participant) => (
+                    {filteredSuggestedCreators.map((participant) => (
                       <div key={participant.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
                         <div className="flex min-w-0 items-center gap-3">
                           <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-10 w-10 rounded-full object-cover" />
@@ -749,7 +960,7 @@ export default function Messages() {
                 ) : (
                   <p className="px-4 text-sm text-slate-500 dark:text-slate-400">{t("messages.noSuggestions")}</p>
                 )}
-              </div>
+              </section>
             </div>
           </div>
 
@@ -768,55 +979,159 @@ export default function Messages() {
                         {getProfileName(activeConversation.participant)}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="h-2 w-2 rounded-full bg-[#00BA88]"></span>
-                        <span className="text-[13px] text-slate-500 dark:text-slate-400">Online</span>
+                        <span className={`h-2 w-2 rounded-full ${activeConversation.participant?.isOnline ? "bg-[#00BA88]" : "bg-slate-400"}`}></span>
+                        <span className="text-[13px] text-slate-500 dark:text-slate-400">
+                          {activeConversation.participant?.isOnline ? t("messages.online") : t("messages.offline")}
+                        </span>
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-5 text-slate-500 dark:text-slate-400">
-                    <HiOutlineSearch className="h-5 w-5 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors" />
+                    <HiOutlineSearch
+                      className="h-5 w-5 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors"
+                      onClick={() => setChatSearchOpen((current) => !current)}
+                    />
                     <HiOutlineChevronDown className="h-5 w-5 cursor-pointer hover:text-slate-700 dark:hover:text-white transition-colors" />
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto py-6 space-y-4 pr-2">
-                  <div className="flex justify-center mb-6">
-                    <span className="rounded bg-slate-100 dark:bg-white text-slate-900 px-3 py-1 text-[11px] font-bold tracking-wider uppercase">
-                      TODAY
-                    </span>
+                {chatSearchOpen ? (
+                  <div className="mt-3 flex items-center gap-2 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-2 shrink-0">
+                    <HiOutlineSearch className="h-4 w-4 text-slate-500 dark:text-slate-400" />
+                    <input
+                      autoFocus
+                      type="text"
+                      value={chatSearchQuery}
+                      onChange={(event) => setChatSearchQuery(event.target.value)}
+                      placeholder={t("messages.chatSearchPlaceholder")}
+                      className="bg-transparent text-[14px] text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400 outline-none w-full"
+                    />
+                    {chatSearchQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => setChatSearchQuery("")}
+                        className="text-[12px] text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                      >
+                        ×
+                      </button>
+                    ) : null}
                   </div>
+                ) : null}
+
+                <div className="flex-1 overflow-y-auto py-6 space-y-4 pr-2">
                   {loadingMessages ? (
                     <p className="text-sm text-slate-500 dark:text-slate-400 text-center">{t("messages.loadingMessages")}</p>
                   ) : messages.length ? (
-                    messages.map((message) => <MessageBubble key={message.id} message={message} />)
+                    filteredGroupedMessages.length ? (
+                      filteredGroupedMessages.map((group) => (
+                        <div key={group.key} className="space-y-4">
+                          {group.label ? (
+                            <div className="flex justify-center mb-6">
+                              <span className="rounded bg-slate-100 dark:bg-white text-slate-900 px-3 py-1 text-[11px] font-bold tracking-wider uppercase">
+                                {group.label}
+                              </span>
+                            </div>
+                          ) : null}
+                          {group.messages.map((message) => <MessageBubble key={message.id} message={message} />)}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center text-sm text-slate-500 dark:text-slate-400 mt-10">
+                        {t("messages.chatSearchNoMatches")}
+                      </div>
+                    )
                   ) : (
                     <div className="text-center text-sm text-slate-500 dark:text-slate-400 mt-10">
                       {t("messages.noMessagesYet", { name: getProfileName(activeConversation.participant) })}
                     </div>
                   )}
+                  {activeTypingParticipant ? (
+                    <p className="text-[12px] text-slate-500 dark:text-slate-400 italic">
+                      {t("messages.typingStatus", { name: getProfileName(activeTypingParticipant) })}
+                    </p>
+                  ) : null}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 <form onSubmit={handleSendMessage} className="pt-2 shrink-0">
-                  <div className="flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] p-3">
-                    <button type="button" className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
+                  <div className="relative flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] p-3">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*,video/*"
+                      className="hidden"
+                      onChange={handleAttachmentPick}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingAttachment}
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors disabled:opacity-60"
+                    >
                       <HiOutlinePaperClip className="h-6 w-6 transform -rotate-45" />
                     </button>
                     <textarea
                       value={draftMessage}
                       onChange={(event) => setDraftMessage(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && !event.shiftKey) {
+                          event.preventDefault();
+                          if (!sending && draftMessage.trim()) handleSendMessage(event);
+                        }
+                      }}
                       rows={1}
-                      placeholder=""
+                      placeholder={t("messages.messagePlaceholder", { name: getProfileName(activeConversation.participant) })}
                       className="min-h-10 flex-1 resize-none bg-transparent px-2 py-2 text-[15px] text-slate-900 dark:text-white outline-none"
                     />
-                    <button type="button" className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
-                      <HiOutlineEmojiHappy className="h-6 w-6" />
-                    </button>
+                    <div ref={emojiPopoverRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setEmojiPickerOpen((current) => !current)}
+                        className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
+                      >
+                        <HiOutlineEmojiHappy className="h-6 w-6" />
+                      </button>
+                      {emojiPickerOpen ? (
+                        <div className="absolute bottom-full right-0 mb-2 w-72 rounded-2xl bg-white dark:bg-[#1F1F1F] p-2 shadow-lg ring-1 ring-black/5 z-10">
+                          <div className="flex items-center gap-1 border-b border-black/5 dark:border-white/5 pb-2 mb-2">
+                            {Object.keys(EMOJI_CATEGORIES).map((category) => (
+                              <button
+                                key={category}
+                                type="button"
+                                onClick={() => setEmojiCategory(category)}
+                                className={`flex-1 rounded-lg px-2 py-1 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                                  emojiCategory === category
+                                    ? "bg-slate-100 text-slate-900 dark:bg-white/10 dark:text-white"
+                                    : "text-slate-500 dark:text-slate-400 hover:bg-black/5 dark:hover:bg-white/5"
+                                }`}
+                              >
+                                {t(`messages.emojiCategory${category.charAt(0).toUpperCase()}${category.slice(1)}`)}
+                              </button>
+                            ))}
+                          </div>
+                          <div className="grid grid-cols-8 gap-1 max-h-48 overflow-y-auto">
+                            {EMOJI_CATEGORIES[emojiCategory].map((emoji, index) => (
+                              <button
+                                key={`${emoji}-${index}`}
+                                type="button"
+                                onClick={() => {
+                                  setDraftMessage((current) => `${current}${emoji}`);
+                                }}
+                                className="rounded-lg px-2 py-1 text-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                              >
+                                {emoji}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
                     <button
                       type="submit"
                       disabled={sending || !draftMessage.trim()}
                       className="flex items-center gap-2 rounded-full bg-orange100 px-5 py-2.5 text-[15px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 transition-opacity hover:opacity-90"
                     >
-                      <span>Send</span>
+                      <span>{sending ? t("messages.sending") : t("messages.send")}</span>
                       <HiOutlinePaperAirplane className="h-5 w-5 transform rotate-45" />
                     </button>
                   </div>

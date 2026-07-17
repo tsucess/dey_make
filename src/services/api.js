@@ -396,7 +396,18 @@ export const api = {
   getSuggestedUsers: () => request("/conversations/suggested"),
   createConversation: (payload) => request("/conversations", { method: "POST", body: payload }),
   getConversationMessages: (id, options = {}) => request(`/conversations/${id}/messages${buildQueryString({ after: options.after })}`),
-  sendConversationMessage: (id, body) => request(`/conversations/${id}/messages`, { method: "POST", body: { body } }),
+  sendConversationMessage: (id, bodyOrPayload) => {
+    const payload = typeof bodyOrPayload === "string" || bodyOrPayload == null
+      ? { body: bodyOrPayload || "" }
+      : { body: bodyOrPayload.body || "", ...(bodyOrPayload.attachmentUrl ? {
+          attachmentUrl: bodyOrPayload.attachmentUrl,
+          attachmentType: bodyOrPayload.attachmentType,
+          attachmentName: bodyOrPayload.attachmentName,
+          attachmentMime: bodyOrPayload.attachmentMime,
+          attachmentSize: bodyOrPayload.attachmentSize,
+        } : {}) };
+    return request(`/conversations/${id}/messages`, { method: "POST", body: payload });
+  },
   markConversationRead: (id) => request(`/conversations/${id}/read`, { method: "POST" }),
   getVideo: (id) => request(`/videos/${id}`),
   getRelatedVideos: (id) => request(`/videos/${id}/related`),
