@@ -214,8 +214,7 @@ export default function App() {
             <Route path="/create" element={renderLazyRoute(CreatePost)} />
             <Route
               path="/post-details-form"
-              ele
-              ment={renderLazyRoute(PostDetailsForm)}
+              element={renderLazyRoute(PostDetailsForm)}
             />
             <Route
               path="/post-detail"

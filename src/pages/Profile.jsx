@@ -19,6 +19,8 @@ import {
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
+import { CiSaveDown2 } from "react-icons/ci";
+import { MdOutlineDrafts } from "react-icons/md";
 
 const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
 
@@ -32,8 +34,8 @@ function getProfileTabs(t, isOwnProfile) {
   return [
     ...tabs,
     { label: "Liked", feed: "liked", icon: FiHeart },
-    { label: "Private", feed: "private", icon: FiLock },
-    { label: "Collections", feed: "collections", icon: FiFilm },
+    { label: "Saved", feed: "saved", icon: CiSaveDown2 },
+    { label: "Drafts", feed: "drafts", icon: MdOutlineDrafts },
   ];
 }
 

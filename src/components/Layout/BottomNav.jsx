@@ -93,7 +93,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 z-50 flex h-18 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
+      className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
     >
       {navItems.map(({ to, labelKey, icon }, i) => {
         const label = t(labelKey);
