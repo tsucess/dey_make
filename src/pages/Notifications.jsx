@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { formatRelativeTime } from "../utils/content";
 import { useNotifications } from "../components/Layout/useNotifications";
@@ -6,6 +6,44 @@ import Spinner from "../components/Layout/Spinner";
 import { IoNotificationsOffOutline } from "react-icons/io5";
 
 const TABS = ["All notification", "Likes", "Comments", "Connects", "Mentions", "Live alerts"];
+
+const TAB_TYPE_MATCHERS = {
+  Likes: {
+    types: ["video_like", "comment_like", "like", "video_dislike", "comment_dislike"],
+    keywords: ["liked", "like your", "disliked"],
+  },
+  Comments: {
+    types: ["comment", "reply"],
+    keywords: ["commented", "replied", "comment on"],
+  },
+  Connects: {
+    types: ["subscription", "subscribe", "connect", "follow", "follower"],
+    keywords: ["subscribed", "connected", "started following", "followed you"],
+  },
+  Mentions: {
+    types: ["mention", "user_mentioned"],
+    keywords: ["mentioned you", "tagged you", "@"],
+  },
+  "Live alerts": {
+    types: ["live", "stream.started", "live.started"],
+    keywords: ["went live", "is live", "live now", "started streaming"],
+  },
+};
+
+const matchesTab = (notification, tab) => {
+  if (tab === "All notification") return true;
+
+  const matcher = TAB_TYPE_MATCHERS[tab];
+  if (!matcher) return true;
+
+  const typeLower = (notification.type || "").toLowerCase();
+  if (matcher.types.some((t) => typeLower === t || typeLower.startsWith(`${t}.`) || typeLower.includes(t))) {
+    return true;
+  }
+
+  const haystack = `${notification.title || ""} ${notification.body || ""}`.toLowerCase();
+  return matcher.keywords.some((keyword) => haystack.includes(keyword));
+};
 
 const groupNotifications = (notifications) => {
   const groups = {
@@ -47,6 +85,11 @@ export default function Notifications() {
     handleMarkNotificationRead,
     handleMarkAllNotificationsRead,
   } = useNotifications({ enabled: true });
+
+  const filteredNotifications = useMemo(
+    () => notifications.filter((notification) => matchesTab(notification, activeTab)),
+    [notifications, activeTab],
+  );
 
   return (
     <div className="min-h-full bg-white dark:bg-black300 text-black dark:text-white pb-20 md:pb-0">
@@ -95,9 +138,21 @@ export default function Notifications() {
               </p>
             </div>
           </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] bg-black100 min-h-[65vh] text-center px-4 w-full">
+            <IoNotificationsOffOutline className="h-28 w-28 text-white mb-2" strokeWidth={1} />
+            <div className="space-y-3">
+              <h2 className="text-[22px] font-semibold font-inter text-white">
+                No {activeTab === "All notification" ? "Notifications" : activeTab}
+              </h2>
+              <p className="text-[15px] font-medium font-inter text-white/90">
+                We'll let you know when there is something to update you.
+              </p>
+            </div>
+          </div>
         ) : (
           <div className="rounded-[20px] bg-white300 dark:bg-black100 p-4 md:p-8 w-full min-h-[65vh]">
-            {groupNotifications(notifications).map(([groupName, groupItems]) => (
+            {groupNotifications(filteredNotifications).map(([groupName, groupItems]) => (
               <div key={groupName} className="mb-8 last:mb-0">
                 <h3 className="text-[20px] font-medium font-inter text-black dark:text-white mb-4">
                   {groupName}
