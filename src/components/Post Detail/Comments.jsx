@@ -1,6 +1,8 @@
 import { BiDislike, BiLike } from "react-icons/bi";
+import { CiFaceSmile } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
+import { TbSend2 } from "react-icons/tb";
 
 const comments = [
   {
@@ -41,9 +43,9 @@ const comments = [
   },
 ];
 
-function Comment() {
+function Comments() {
   return (
-    <div className="flex flex-col gap-4 w-full md:w-1/3">
+    <div className="flex flex-col gap-4 w-full">
       <div className="border-y border-black dark:border-white py-4 flex items-center justify-between px-4">
         <h3 className="text-xl font-inter text-black dark:text-white">
           90 Comments
@@ -52,8 +54,8 @@ function Comment() {
           <IoClose className="w-6 h-6 text-black dark:text-white" />
         </button>
       </div>
-      <div className="h-full flex flex-col gap-8">
-        <div className="flex flex-col gap-6 overflow-y-auto max-h-120">
+      <div className="h-full flex flex-col gap-12">
+        <div className="flex flex-col gap-6 overflow-y-auto h-80" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {comments.map(
             ({ img, name, time, desc, likes, dislikes, replies }, i) => (
               <div key={i} className="flex gap-4 items-start">
@@ -71,7 +73,7 @@ function Comment() {
                       {time}
                     </span>
                   </div>
-                  <p className="text-black dark:text-white text-lg font-inter">
+                  <p className="text-black dark:text-white text-base font-inter">
                     {desc}
                   </p>
                   <div className="flex items-center gap-4">
@@ -116,13 +118,22 @@ function Comment() {
             type="text"
             name=""
             id=""
-            className="text-sm font-inter text-black dark:text-white flex-1"
+            className="text-sm font-inter text-black dark:text-white w-30"
             placeholder="Tell the creator what you think!"
           />
+          <button type="button">
+            <CiFaceSmile className="text-black dark:text-white w-5 h-5" />
+          </button>
+          <button
+            type="submit"
+            className="bg-orange100 py-2 px-2 rounded-full flex items-center justify-center shrink-0"
+          >
+            <TbSend2 className="w-5 h-5 text-black" />
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-export default Comment;
+export default Comments;

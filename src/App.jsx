@@ -22,7 +22,7 @@ const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const CreateUpload = lazy(() => import("./pages/CreateUpload"));
+const CreateUpload = lazy(() => import("./old/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Challenges = lazy(() => import("./pages/Challenges"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
@@ -65,7 +65,8 @@ const CreateCampaign = lazy(
   () => import("./components/CreatorDashboard/CreateCampaign"),
 );
 const CreatePost = lazy(() => import("./pages/Create"));
-const PostDetails = lazy(() => import("./components/Create/PostDetails"));
+const PostDetailsForm = lazy(() => import("./components/Create/PostDetailsForm"));
+const PostDetail = lazy(() => import("./pages/PostDetail"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -212,8 +213,13 @@ export default function App() {
             />
             <Route path="/create" element={renderLazyRoute(CreatePost)} />
             <Route
-              path="/post-details"
-              element={renderLazyRoute(PostDetails)}
+              path="/post-details-form"
+              ele
+              ment={renderLazyRoute(PostDetailsForm)}
+            />
+            <Route
+              path="/post-detail"
+              element={renderLazyRoute(PostDetail)}
             />
             <Route
               path="/notification"

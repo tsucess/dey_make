@@ -181,6 +181,7 @@ export default function AppLayout() {
           !location.pathname.startsWith("/live") &&
           !location.pathname.startsWith("/live-preview") &&
           !location.pathname.startsWith("/create-campaign") &&
+          !location.pathname.startsWith("/post-detail") &&
           !location.pathname.startsWith("/lives") && (
             <div className="hidden md:block">
               <TopBar notificationState={notificationState} />

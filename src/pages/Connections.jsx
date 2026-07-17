@@ -208,7 +208,7 @@ function Connections() {
         creators={creators}
         onViewStory={handleViewStory}
         onToggleConnect={handleToggleConnect}
-      />
+      /> 
       <div className="flex flex-col md:flex-row gap-10">
         <Video
           video={current}

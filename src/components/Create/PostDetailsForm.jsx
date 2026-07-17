@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MdLocationPin } from "react-icons/md";
 
-function PostDetails() {
+function PostDetailsForm() {
   const [isHighQuality, setIsHighQuality] = useState(true);
   const [isPostContent, setIsPostContent] = useState(false);
   const [isAiContent, setIsAiContent] = useState(false);
@@ -370,4 +370,4 @@ function PostDetails() {
   );
 }
 
-export default PostDetails;
+export default PostDetailsForm;
