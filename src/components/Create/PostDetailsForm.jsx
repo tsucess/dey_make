@@ -29,7 +29,7 @@ function PostDetailsForm() {
   }
 
   return (
-    <section className="p-5 flex flex-col gap-6 font-inter">
+    <section className="p-5 md:flex flex-col gap-6 font-inter hidden">
       <h1 className="text-xl font-bold text-black dark:text-white">
         Post Details
       </h1>

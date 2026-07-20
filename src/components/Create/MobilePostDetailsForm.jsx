@@ -37,7 +37,7 @@ function MobilePostDetailsForm() {
       {showMoreOptions && (
         <MoreOptions toggleShowMoreOptions={toggleShowMoreOptions} />
       )}
-      <section className="p-5 space-y-7 font-inter">
+      <section className="p-5 space-y-7 font-inter md:hidden">
         <div className="flex items-center gap-3.5">
           <img
             src="/friend.jpg"
