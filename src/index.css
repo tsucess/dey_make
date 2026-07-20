@@ -2,7 +2,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap");
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Raleway:ital,wght@0,100..900;1,100..900&display=swap");
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
@@ -15,6 +16,7 @@
   --font-roboto: "Roboto", sans-serif;
   --font-dmSans: "DM Sans", sans-serif;
   --font-lexend: "Lexend", sans-serif;
+  --font-raleway: "Raleway", sans-serif;
   --color-slate100: #1a1a1a;
   --color-orange100: #fdb300;
   --color-slate200: #d9d9d9;
@@ -34,14 +36,14 @@
   --color-orange600: #f2d208;
   --color-orange700: #ad9c72;
   --color-orange800: #e5be04;
-  --color-orange900: #FFAE4C;
+  --color-orange900: #ffae4c;
   --color-slate700: #808080;
   --color-slate800: #a6a6a6;
   --color-green100: #0ea759;
   --color-green200: #152f26;
   --color-green300: #3ad584;
   --color-green400: #14251b;
-  --color-green500: #34C759;
+  --color-green500: #34c759;
   --color-red100: #de1b1b;
   --color-slate900: #b3b3b3;
   --color-slate50: #999999;
@@ -61,13 +63,13 @@
   --color-brown300: #41371d;
   --color-brown400: #474343;
   --color-brown500: #27230f;
-  --color-brown600 : #CC927A;
+  --color-brown600: #cc927a;
   --color-zinc50: #e2e4e9;
   --color-zinc100: #f6f8fa;
-  --color-zinc200: #8D9098;
-  --color-zinc300: #868C98;
-  --color-zinc400 : #A29F9B;
-  --color-zinc500 : #71727A;
+  --color-zinc200: #8d9098;
+  --color-zinc300: #868c98;
+  --color-zinc400: #a29f9b;
+  --color-zinc500: #71727a;
   --color-red200: #b61616;
   --color-red300: #9f1414;
   --color-red400: #e31c1c;
@@ -75,21 +77,21 @@
   --color-red600: #ff4655;
   --color-red700: #ff4757;
   --color-pink: #ff6b9d;
-  --color-purple: #CB3CFF;
+  --color-purple: #cb3cff;
   --color-cyan: #00c0e8;
   --color-cyan100: #07dbfa;
   --color-cyan200: #4facfe;
   --color-blue: #534feb;
   --color-blue100: #525866;
   --color-blue200: #0d141e;
-  --color-blue300: #0C131D;
+  --color-blue300: #0c131d;
   --color-blue400: #010710;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
   --color-black600: #141516;
   --color-black700: #0b1011;
-  --color-black800: #0F1721;
+  --color-black800: #0f1721;
   --color-black900: #010710;
   --shadow-toggle: 0 4px 10px 0 #0000000d;
   --shadow-waitlist: 0 4px 40px 0 #00000005;
@@ -121,8 +123,8 @@
   background-position: center;
 }
 
-.live-hover-bg{
-  background-image: url('/live-bg.png');
+.live-hover-bg {
+  background-image: url("/live-bg.png");
   background-size: cover;
   background-position: center;
 }
@@ -134,6 +136,6 @@
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .hide-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

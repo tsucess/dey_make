@@ -168,7 +168,7 @@ export default function AppLayout() {
     <div className="flex min-h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#121212] md:h-screen">
       {/* Sidebar — desktop and mobile */}
       {isAuthenticated ? (
-        <div className="md:flex">
+        <div className="lg:flex">
           <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
         </div>
       ) : null}
@@ -183,7 +183,7 @@ export default function AppLayout() {
           !location.pathname.startsWith("/create-campaign") &&
           !location.pathname.startsWith("/post-detail") &&
           !location.pathname.startsWith("/lives") && (
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <TopBar notificationState={notificationState} />
             </div>
           )}
@@ -209,10 +209,10 @@ export default function AppLayout() {
           onMarkAllRead={handleMarkAllNotificationsRead}
         />
         {!currentConfig.hidden && (
-          <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] md:hidden">
+          <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] lg:hidden">
             {currentConfig.isHomepage || currentConfig.isConnection ? (
               <div className="flex justify-between items-center w-3/5">
-                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 md:hidden">
+                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 lg:hidden">
                   <FiMenu className="w-6 h-6 text-black dark:text-white" />
                 </button>
                 <button onClick={() => navigate("/live")}>

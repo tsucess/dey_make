@@ -86,13 +86,13 @@ function PostDetailsForm() {
                 <h4 className="text-base font-semibold text-black dark:text-white">
                   Location
                 </h4>
-                <select
+                <input
+                  type="text"
                   name=""
+                  placeholder="Search location"
                   id=""
-                  className="border border-black/30 dark:border-white/30 rounded-xl p-4"
-                >
-                  <option value="">Search location</option>
-                </select>
+                  className="border border-black/30 dark:border-white/30 rounded-xl p-4 outline-none"
+                />
               </div>
               <div className="flex items-center gap-3">
                 {[

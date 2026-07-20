@@ -6,6 +6,7 @@ import NetworkIllustration from "../components/NetworkIllustration";
 import { useLanguage } from "../context/LanguageContext";
 import { ApiError, api, firstError } from "../services/api";
 import { setPendingPasswordReset } from "../utils/authFlowStorage";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -15,11 +16,16 @@ export default function ForgotPassword() {
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (event) => {
     setEmail(event.target.value);
     setErrors({});
     setSubmitError("");
+  };
+
+  const handleToggleShowPassword = () => {
+    setShowPassword((prev) => !prev);
   };
 
   const validate = () => {
@@ -78,10 +84,10 @@ export default function ForgotPassword() {
         <Logo />
         <NetworkIllustration />
 
-        <div className="pt-8">
-          <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
+        <div className="pt-8 flex flex-col items-center font-raleway">
+          {/* <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
             {t("auth.forgotPasswordEyebrow")}
-          </p>
+          </p> */}
           <h1 className="text-3xl font-semibold text-black200 md:text-[2.5rem] dark:text-white">
             {t("auth.checkYourEmailTitle")}
           </h1>
@@ -92,7 +98,7 @@ export default function ForgotPassword() {
           <button
             type="button"
             onClick={() => navigate("/login")}
-            className="mt-8 w-full rounded-md bg-orange100 py-3 text-sm font-semibold text-slate100 transition-colors hover:bg-[#e09510]"
+            className="mt-8 w-full rounded-md bg-orange100 py-3 text-sm font-semibold text-slate100 transition-colors hover:bg-orange500"
           >
             {t("auth.backToLogin")}
           </button>
@@ -106,10 +112,10 @@ export default function ForgotPassword() {
       <Logo />
       <NetworkIllustration />
 
-      <div className="pt-8">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
+      <div className="pt-8 flex flex-col items-center font-raleway">
+        {/* <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
           {t("auth.forgotPasswordEyebrow")}
-        </p>
+        </p> */}
         <h1 className="text-3xl font-semibold text-black200 md:text-[2.5rem] dark:text-white">
           {t("auth.forgotPasswordTitle")}
         </h1>
@@ -117,34 +123,84 @@ export default function ForgotPassword() {
           {t("auth.forgotPasswordDescription")}
         </p>
 
-        <form onSubmit={handleSubmit} noValidate className="pt-8 pb-3">
+        <form onSubmit={handleSubmit} noValidate className="pt-8 pb-3 w-full">
           {submitError ? (
             <p className="mb-3 rounded-md bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-300">
               {submitError}
             </p>
           ) : null}
 
-          <div className="mb-4">
+          <div className="mb-4 space-y-3">
+            <label
+              htmlFor=""
+              className="font-semibold text-base text-black10 dark:text-slate200"
+            >
+              Email
+            </label>
+
             <input
               type="email"
               name="email"
               placeholder={t("auth.email")}
               value={email}
               onChange={handleChange}
-              className={`w-full rounded-md px-4 py-3 text-sm outline-none transition-colors placeholder-slate500 dark:placeholder-slate500 ${errors.email
-                ? "border border-red-400 bg-red-50 text-slate500 dark:bg-red-900/20 dark:text-slate500"
-                : "bg-white300 text-slate500 dark:bg-black100 dark:text-slate500 focus:bg-[#ebebeb] dark:focus:bg-[#3a3a3a]"
-                }`}
+              className={`w-full rounded-md px-4 py-4 text-sm outline-none border border-slate100 dark:border-white  transition-colors placeholder-slate500 dark:placeholder-slate500 ${
+                errors.email
+                  ? "border border-red-400 bg-red-50 text-slate500 dark:bg-red-900/20 dark:text-slate500"
+                  : " text-slate500 dark:bg-black100 dark:text-slate500  focus:border-orange100 dark:focus:bg-[#3a3a3a]"
+              }`}
             />
-            {errors.email ? <p className="ml-1 mt-1 text-[0.75rem] text-red-500">{errors.email}</p> : null}
+            {errors.email && (
+              <p className="ml-1 mt-1 text-[0.75rem] text-red-500">
+                {errors.email}
+              </p>
+            )}
+          </div>
+          <div className="mb-4 border border-slate100 rounded-md dark:border-white divide-x divide-slate100 dark:divide-white grid grid-cols-3">
+            <input
+              type="text"
+              name=""
+              id=""
+              placeholder="Enter 4-digit code"
+              className="col-span-2 py-4 px-4 transition-colors text-sm outline-none placeholder-slate500 dark:placeholder-slate500"
+            />
+            <button className="text-orange100 hover:text-orange500 text-base ">
+              Send Code
+            </button>
+          </div>
+          <div>
+            <label
+              htmlFor=""
+              className="font-semibold text-base text-black10 dark:text-slate200"
+            >
+              Password
+            </label>
+            <div className="flex border border-slate100 rounded-md dark:border-white px-3 py-4 mb-4 gap-3">
+              <input
+                type={`${showPassword ? "text" : "password"}`}
+                name=""
+                id=""
+                placeholder="Password"
+                className="flex-1 text-sm placeholder-slate500 dark:placeholder-slate500 outline-none"
+              />
+              <button type="button" onClick={handleToggleShowPassword}>
+                {!showPassword ? (
+                  <FaEye className="w-5 h-5 text-slate200" />
+                ) : (
+                  <FaEyeSlash className="w-5 h-5 text-slate200" />
+                )}
+              </button>
+            </div>
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-orange100 py-3 text-sm font-semibold text-slate100 transition-colors hover:bg-[#e09510] disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-orange100 py-3 text-sm font-semibold text-slate100 transition-colors hover:bg-orange500 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isSubmitting ? t("auth.requestingResetToken") : t("auth.requestResetToken")}
+            {isSubmitting
+              ? t("auth.requestingResetToken")
+              : t("auth.requestResetToken")}
           </button>
         </form>
 
