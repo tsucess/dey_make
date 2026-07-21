@@ -768,6 +768,10 @@ const en = {
     todayLabel: "TODAY",
     yesterdayLabel: "YESTERDAY",
   },
+  mutuals: {
+    emptyTitle: "No mutuals yet",
+    emptyBody: "You have no mutual connections yet. Follow someone who follows you back to see their content here.",
+  },
   challenges: {
     title: "Challenges",
     myChallenges: "My Challenges",
