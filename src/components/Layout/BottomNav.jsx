@@ -29,7 +29,7 @@ function getNavItems(isAdmin) {
     icon: <HiOutlineTrophy />,
   },
   {
-    to: "/post-detail-form",
+    to: "/post-details-form",
     labelKey: "Create",
     icon: <FaPlus />,
   },
@@ -93,7 +93,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 md:hidden"
+      className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 lg:hidden"
     >
       {navItems.map(({ to, labelKey, icon }, i) => {
         const label = t(labelKey);
@@ -110,8 +110,8 @@ export default function BottomNav() {
               isCreate
                 ? " text-slate900 dark:bg-black100 dark:text-slate200"
                 : isActive
-                  ? " text-orange100 dark:bg-black100"
-                  : " text-slate900 dark:bg-black100 dark:text-slate200"
+                  ? " text-orange100 "
+                  : " text-slate900  dark:text-slate200"
             } ${
               i === 2 ? 'bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black' : ''
             }`;

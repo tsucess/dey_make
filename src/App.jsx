@@ -17,7 +17,7 @@ const SignUp = lazy(() => import("./pages/SignUp"));
 const Login = lazy(() => import("./pages/Login"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+// const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
@@ -65,8 +65,10 @@ const CreateCampaign = lazy(
   () => import("./components/CreatorDashboard/CreateCampaign"),
 );
 const CreatePost = lazy(() => import("./pages/Create"));
-const PostDetailsForm = lazy(() => import("./components/Create/PostDetailsForm"));
-const MobilePostDetailsForm = lazy(() => import("./components/Create/MobilePostDetailsForm"));
+const PostDetailsForm = lazy(() => import("./components/Create/FormContainer"));
+const MobilePostDetailsForm = lazy(
+  () => import("./components/Create/MobilePostDetailsForm"),
+);
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 
 function FullPageLoader() {
@@ -168,10 +170,10 @@ export default function App() {
             path="/forgot-password"
             element={renderLazyRoute(ForgotPassword)}
           />
-          <Route
+          {/* <Route
             path="/reset-password"
             element={renderLazyRoute(ResetPassword)}
-          />
+          /> */}
         </Route>
 
         <Route element={<PendingVerificationRoute />}>
@@ -217,14 +219,7 @@ export default function App() {
               path="/post-details-form"
               element={renderLazyRoute(PostDetailsForm)}
             />
-            <Route
-              path="/post-detail-form"
-              element={renderLazyRoute(MobilePostDetailsForm)}
-            />
-            <Route
-              path="/post-detail"
-              element={renderLazyRoute(PostDetail)}
-            />
+            <Route path="/post-detail" element={renderLazyRoute(PostDetail)} />
             <Route
               path="/notification"
               element={renderLazyRoute(Notification)}

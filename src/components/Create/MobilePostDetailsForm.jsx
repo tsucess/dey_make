@@ -27,7 +27,7 @@ function MobilePostDetailsForm() {
   }
 
   return (
-    <>
+    <div className="md:hidden">
       {showDisclosure && (
         <DisclosureSetting toggleShowDisclosure={toggleShowDisclosure} />
       )}
@@ -37,7 +37,7 @@ function MobilePostDetailsForm() {
       {showMoreOptions && (
         <MoreOptions toggleShowMoreOptions={toggleShowMoreOptions} />
       )}
-      <section className="p-5 space-y-7 font-inter">
+      <section className="p-5 space-y-7 font-inter ">
         <div className="flex items-center gap-3.5">
           <img
             src="/friend.jpg"
@@ -70,13 +70,13 @@ function MobilePostDetailsForm() {
             <h4 className="text-base font-semibold text-black dark:text-white flex items-center gap-1">
               <GrLocationPin /> Location
             </h4>
-            <select
+            <input
+              type="text"
               name=""
+              placeholder="Search location"
               id=""
-              className="border border-black/30 dark:border-white/30 rounded-xl p-4"
-            >
-              <option value="">Search location</option>
-            </select>
+              className="border border-black/30 dark:border-white/30 rounded-xl p-4 outline-none"
+            />
           </div>
           <div
             className="flex items-center gap-3 overflow-x-auto "
@@ -92,7 +92,7 @@ function MobilePostDetailsForm() {
             ].map((location) => (
               <button
                 key={location}
-                className="border border-black/30 dark:border-white/30 rounded-md py-3 whitespace-nowrap text-black dark:text-white px-4 text-xs font-semibold"
+                className="border border-black/30 dark:border-white/30 rounded-md py-3 whitespace-nowrap text-black dark:text-white px-4 text-xs font-semibold focus:border-orange100"
               >
                 {location}
               </button>
@@ -107,7 +107,7 @@ function MobilePostDetailsForm() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <IoMdClipboard className="w-5 h-5 text-black dark:text-white" />
-              <h3 className="text-slate100 dark:text-slate650 text-base font-medium">
+              <h3 className="text-slate100 dark:text-slate650 text-sm font-medium">
                 Content disclosure and sponsorship
               </h3>
             </div>
@@ -118,7 +118,7 @@ function MobilePostDetailsForm() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <MdLiveTv className="w-5 h-5 text-black dark:text-white" />
-              <h3 className="text-slate100 dark:text-slate650 text-base font-medium">
+              <h3 className="text-slate100 dark:text-slate650 text-sm font-medium">
                 LIVE Events (Post a link to your LIVE)
               </h3>
             </div>
@@ -129,7 +129,7 @@ function MobilePostDetailsForm() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <FaGlobeAfrica className="w-5 h-5 text-black dark:text-white" />
-              <h3 className="text-slate100 dark:text-slate650 text-base font-medium">
+              <h3 className="text-slate100 dark:text-slate650 text-sm font-medium">
                 Everyone can view this post
               </h3>
             </div>
@@ -140,7 +140,7 @@ function MobilePostDetailsForm() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <IoSettingsOutline className="w-5 h-5 text-black dark:text-white" />
-              <h3 className="text-slate100 dark:text-slate650 text-base font-medium">
+              <h3 className="text-slate100 dark:text-slate650 text-sm font-medium">
                 More options
               </h3>
             </div>
@@ -162,7 +162,7 @@ function MobilePostDetailsForm() {
           </button>
         </div>
       </section>
-    </>
+    </div>
   );
 }
 

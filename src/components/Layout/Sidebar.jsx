@@ -53,7 +53,7 @@ export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
         />
       )}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-67.5 min-h-screen bg-white dark:bg-black300 border-r border-orange100 shrink-0 transform transition-transform duration-300 md:relative md:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col w-67.5 min-h-screen bg-white dark:bg-black300 border-r border-orange100 shrink-0 transform transition-transform duration-300 lg:relative lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
       <div className="flex flex-col justify-center px-8 h-18.5 bg-orange100 border-t border-b border-orange100 shrink-0">
         <Link to="/home" className="flex flex-col items-start">

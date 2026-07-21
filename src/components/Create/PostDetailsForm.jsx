@@ -29,7 +29,7 @@ function PostDetailsForm() {
   }
 
   return (
-    <section className="p-5 flex flex-col gap-6 font-inter">
+    <section className="p-5 md:flex flex-col gap-6 font-inter hidden">
       <h1 className="text-xl font-bold text-black dark:text-white">
         Post Details
       </h1>
@@ -86,13 +86,13 @@ function PostDetailsForm() {
                 <h4 className="text-base font-semibold text-black dark:text-white">
                   Location
                 </h4>
-                <select
+                <input
+                  type="text"
                   name=""
+                  placeholder="Search location"
                   id=""
-                  className="border border-black/30 dark:border-white/30 rounded-xl p-4"
-                >
-                  <option value="">Search location</option>
-                </select>
+                  className="border border-black/30 dark:border-white/30 rounded-xl p-4 outline-none"
+                />
               </div>
               <div className="flex items-center gap-3">
                 {[

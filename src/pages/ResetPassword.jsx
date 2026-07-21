@@ -156,10 +156,10 @@ export default function ResetPassword() {
       <Logo />
       <NetworkIllustration />
 
-      <div className="pt-8">
-        <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
+      <div className="pt-8 flex flex-col items-center">
+        {/* <p className="mb-3 text-sm font-medium uppercase tracking-[0.24em] text-orange100">
           {t("auth.resetPasswordEyebrow")}
-        </p>
+        </p> */}
         <h1 className="text-3xl font-semibold text-black200 md:text-[2.5rem] dark:text-white">
           {t("auth.resetPasswordTitle")}
         </h1>

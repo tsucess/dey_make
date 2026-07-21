@@ -1,6 +1,6 @@
 export default function Logo({ className = "" }) {
   return (
-    <>
+    <div className="flex justify-center">
     <img
         src="/DEYMAKE LOGO Yellow.svg"
         alt="DeyMake"
@@ -9,7 +9,7 @@ export default function Logo({ className = "" }) {
         src="/DEYMAKE LOGO with Tagline Yellow.svg"
         alt="DeyMake"
         className={`w-40 h-12 md:w-50 md:h-12 object-contain hidden md:block ${className}`}
-      /></>
+      /></div>
       
     
   );
