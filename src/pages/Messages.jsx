@@ -880,15 +880,21 @@ export default function Messages() {
     }
   }
 
+  const [showContact, setShowContact] = useState(false)
+
+  function handleToggleShowContact(){
+    setShowContact(prev => !prev)
+  }
+
   return (
     <div className="min-h-full bg-white dark:bg-black300 text-slate-900 dark:text-white">
       <div className="mx-auto w-full max-w-7xl h-screen md:h-[calc(100vh-34px)] flex flex-col">
         {error ? <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700 m-4 shrink-0">{error}</div> : null}
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700 m-4 shrink-0">{feedback}</div> : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] flex-1 overflow-hidden">
-          <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 overflow-hidden">
-            <div className="mb-6 px-2 shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] flex-1 lg:overflow-hidden">
+          <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 lg:overflow-hidden">
+            <div className="mb-3 lg:mb-6 px-2 shrink-0">
               <div className="flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-3">
                 <HiOutlineSearch className="h-5 w-5 text-slate-500 dark:text-slate-400" />
                 <input
@@ -901,7 +907,13 @@ export default function Messages() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 space-y-1">
+            <div className="lg:hidden  pr-2 space-y-1 relative">
+              <button onClick={handleToggleShowContact}>
+                Show
+              </button>
+              <div className={`${
+                showContact ? 'absolute top-5 left-0 w-full h-100 overflow-y-auto z-40 bg-white p-4 dark:bg-black' : 'hidden'
+              }   `}>
               <section>
                 <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                   {t("messages.inbox")}
@@ -962,6 +974,72 @@ export default function Messages() {
                 )}
               </section>
             </div>
+            </div>
+
+            <div className="lg:flex lg:flex-1  overflow-y-auto overflow-x-hidden pr-2 space-y-1 relative">
+              
+              <div className=" h-100 overflow-y-auto overflow-x-hidden w-full z-20 bg-white p-4 dark:bg-black">
+              <section>
+                <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  {t("messages.inbox")}
+                </h3>
+                {loadingConversations ? (
+                  <div className="text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
+                ) : filteredConversations.length ? (
+                  filteredConversations.map((conversation) => (
+                    <ConversationRow
+                      key={conversation.id}
+                      conversation={conversation}
+                      typingParticipant={typingParticipantsByConversation[conversation.id] || null}
+                      active={conversation.id === activeConversationId}
+                      onClick={() => setActiveConversationId(conversation.id)}
+                    />
+                  ))
+                ) : (
+                  <p className="px-4 text-sm text-slate-500 dark:text-slate-400">
+                    {normalizedSearchQuery && conversations.length
+                      ? t("messages.searchNoResults")
+                      : t("messages.noConversations")}
+                  </p>
+                )}
+              </section>
+
+              <section className="mt-8">
+                <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  {t("messages.suggestedCreators")}
+                </h3>
+                {loadingSuggestions ? (
+                  <div className="px-4 text-sm text-slate-500 dark:text-slate-400"><Spinner/></div>
+                ) : filteredSuggestedCreators.length ? (
+                  <div className="space-y-1">
+                    {filteredSuggestedCreators.map((participant) => (
+                      <div key={participant.id} className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <img src={getProfileAvatar(participant)} alt={getProfileName(participant)} className="h-10 w-10 rounded-full object-cover" />
+                          <div className="min-w-0">
+                            <p className="truncate text-[14px] font-medium text-slate-900 dark:text-white">{getProfileName(participant)}</p>
+                            <p className="text-[12px] text-slate-500 dark:text-slate-400">
+                              {participant.isOnline ? t("messages.activeNow") : t("messages.suggestedForNewChats")}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => startConversation(participant)}
+                          disabled={busyUserId === participant.id}
+                          className="rounded-full bg-slate-200 dark:bg-white/10 px-3 py-1.5 text-xs font-medium text-slate-900 dark:text-white hover:bg-slate-300 dark:hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60 transition-colors"
+                        >
+                          {busyUserId === participant.id ? t("messages.opening") : t("messages.messageAction")}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="px-4 text-sm text-slate-500 dark:text-slate-400">{t("messages.noSuggestions")}</p>
+                )}
+              </section>
+            </div>
+            </div>
           </div>
 
           <section className="flex flex-col bg-white dark:bg-transparent overflow-hidden px-4 md:px-8 pt-6 pb-4">
@@ -1018,7 +1096,7 @@ export default function Messages() {
                   </div>
                 ) : null}
 
-                <div className="flex-1 overflow-y-auto py-6 space-y-4 pr-2">
+                <div className="lg:flex-1 overflow-y-auto py-6 space-y-4 pr-2 h-100">
                   {loadingMessages ? (
                     <p className="text-sm text-slate-500 dark:text-slate-400 text-center">{t("messages.loadingMessages")}</p>
                   ) : messages.length ? (

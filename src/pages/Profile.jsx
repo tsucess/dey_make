@@ -467,7 +467,7 @@ export default function Profile() {
   return (
     <div className="min-h-full bg-white dark:bg-black100 pb-20">
       <div className="relative">
-        <img src="/header_profile.png" alt="" className="h-48 w-full object-cover md:h-72" />
+        <img src="/challenge_entries.png" alt="" className="h-48 w-full object-cover md:h-72" />
         <div className="absolute top-4 right-4 flex items-center gap-3">
           <button className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiBell className="w-5 h-5" />
@@ -476,9 +476,9 @@ export default function Profile() {
             <FiMoreHorizontal className="w-5 h-5" />
           </button>
         </div>
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-orange100 rounded-full px-3 py-1 shadow-md">
-          <span className="text-[11px] font-bold text-black uppercase">{profile?.username ? `@${profile.username}` : ""}</span>
-          <FaCheck className="w-2.5 h-2.5 text-black" />
+        <div className="absolute top-4 w-25 h-7.5 left-1/2 -translate-x-1/2 flex items-center justify-center gap-1.5 bg-orange100 rounded-md px-3 py-1 shadow-md">
+          <span className="text-[11px] font-medium text-black">{profile?.username ? `@${profile.username}` : ""}</span>
+          <span className="w-2.5 h-2.5 bg-black rounded-full" ></span>
         </div>
       </div>
 

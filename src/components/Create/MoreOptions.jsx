@@ -24,7 +24,7 @@ function MoreOptions({ toggleShowMoreOptions }) {
           onClick={toggleShowMoreOptions}
           className="w-7.5 h-7.5 flex items-center justify-center border border-black/10 dark:border-white/10 rounded-md hover:bg-slate150 transition-all"
         >
-          <FaArrowLeft className="text-black dark:text-white w-5 h-5 " />
+          <FaArrowLeft className="text-black dark:text-white w-4 h-4 " />
         </button>
         <h2 className="text-sm font-medium text-black/65 dark:text-white/65">
           More options

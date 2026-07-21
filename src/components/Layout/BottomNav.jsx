@@ -3,86 +3,107 @@ import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { HiOutlineSquares2X2, HiOutlineTrophy } from "react-icons/hi2";
 import { FaPlus, FaRegCommentDots, FaRegUser } from "react-icons/fa";
+import { useRef } from "react";
 
 function LiveNavIcon() {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-      <path d="M7 8a7 7 0 0 0 0 8"/>
-      <path d="M17 8a7 7 0 0 1 0 8"/>
-      <path d="M10 10.5a3 3 0 0 0 0 3"/>
-      <path d="M14 10.5a3 3 0 0 1 0 3"/>
-      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/>
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+    >
+      <path d="M7 8a7 7 0 0 0 0 8" />
+      <path d="M17 8a7 7 0 0 1 0 8" />
+      <path d="M10 10.5a3 3 0 0 0 0 3" />
+      <path d="M14 10.5a3 3 0 0 1 0 3" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
     </svg>
   );
-} 
+}
 
 function getNavItems(isAdmin) {
   return [
-  {
-    to: "/home",
-    labelKey: "common.home",
-    icon: <HiOutlineSquares2X2 />
-  },
-  {
-    to: "/challenge",
-    labelKey: "Challenge",
-    icon: <HiOutlineTrophy />,
-  },
-  {
-    to: "/post-details-form",
-    labelKey: "Create",
-    icon: <FaPlus />,
-  },
-  // {
-  //   to: "/live",
-  //   labelKey: "common.live",
-  //   icon: <LiveNavIcon />,
-  // },
-  // {
-  //   to: "/leaderboard",
-  //   labelKey: "common.leaderboard",
-  //   icon: (
-  //     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-  //       stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-  //       <line x1="18" y1="20" x2="18" y2="10"/>
-  //       <line x1="12" y1="20" x2="12" y2="4"/>
-  //       <line x1="6" y1="20" x2="6" y2="14"/>
-  //     </svg>
-  //   ),
-  // },
-  // {
-  //   to: "/create",
-  //   labelKey: "common.create",
-  //   icon: (
-  //     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-  //       stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-  //       <circle cx="12" cy="12" r="10"/>
-  //       <line x1="12" y1="8" x2="12" y2="16"/>
-  //       <line x1="8" y1="12" x2="16" y2="12"/>
-  //     </svg>
-  //   ),
-  // },
-  {
-    to: "/messages",
-    labelKey: "common.messages",
-    icon: <FaRegCommentDots />,
-  },
-  ...(isAdmin ? [{
-    to: "/admin",
-    labelKey: "common.admin",
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-        stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 3l7 4v5c0 4.2-2.9 8.1-7 9-4.1-.9-7-4.8-7-9V7l7-4z"/>
-        <path d="M9.5 12l1.7 1.7L14.8 10"/>
-      </svg>
-    ),
-  }] : []),
-  {
-    to: "/profile",
-    labelKey: "common.profile",
-    icon: <FaRegUser />
-  },
+    {
+      to: "/home",
+      labelKey: "common.home",
+      icon: <HiOutlineSquares2X2 />,
+    },
+    {
+      to: "/challenge",
+      labelKey: "Challenge",
+      icon: <HiOutlineTrophy />,
+    },
+    {
+      to: "/create",
+      labelKey: "Create",
+      icon: <FaPlus />,
+    },
+    // {
+    //   to: "/live",
+    //   labelKey: "common.live",
+    //   icon: <LiveNavIcon />,
+    // },
+    // {
+    //   to: "/leaderboard",
+    //   labelKey: "common.leaderboard",
+    //   icon: (
+    //     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    //       stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    //       <line x1="18" y1="20" x2="18" y2="10"/>
+    //       <line x1="12" y1="20" x2="12" y2="4"/>
+    //       <line x1="6" y1="20" x2="6" y2="14"/>
+    //     </svg>
+    //   ),
+    // },
+    // {
+    //   to: "/create",
+    //   labelKey: "common.create",
+    //   icon: (
+    //     <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+    //       stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+    //       <circle cx="12" cy="12" r="10"/>
+    //       <line x1="12" y1="8" x2="12" y2="16"/>
+    //       <line x1="8" y1="12" x2="16" y2="12"/>
+    //     </svg>
+    //   ),
+    // },
+    {
+      to: "/messages",
+      labelKey: "common.messages",
+      icon: <FaRegCommentDots />,
+    },
+    ...(isAdmin
+      ? [
+          {
+            to: "/admin",
+            labelKey: "common.admin",
+            icon: (
+              <svg
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 3l7 4v5c0 4.2-2.9 8.1-7 9-4.1-.9-7-4.8-7-9V7l7-4z" />
+                <path d="M9.5 12l1.7 1.7L14.8 10" />
+              </svg>
+            ),
+          },
+        ]
+      : []),
+    {
+      to: "/profile",
+      labelKey: "common.profile",
+      icon: <FaRegUser />,
+    },
   ];
 }
 
@@ -90,37 +111,93 @@ export default function BottomNav() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navItems = getNavItems(Boolean(user?.isAdmin));
+  const inputRef = useRef(null);
+
+  function openCamera() {
+    inputRef.current?.click();
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+
+    if (!file) return;
+
+    console.log(file);
+
+    // save to state or navigate
+  }
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 lg:hidden"
-    >
-      {navItems.map(({ to, labelKey, icon }, i) => {
+    <nav className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 lg:hidden">
+      <input
+        ref={inputRef}
+        hidden
+        type="file"
+        accept="video/*"
+        capture="environment"
+        onChange={handleFileChange}
+      />
+      {/* {navItems.map(({ to, labelKey, icon }, i) => {
         const label = t(labelKey);
 
         return (
-        <NavLink
-          key={to}
-          to={to}
-          end={to === "/"}
-          className={({ isActive }) => {
-            const isCreate = to === "/create";
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            className={({ isActive }) => {
+              const isCreate = to === "/create";
 
-            return `flex flex-col gap-px items-center justify-center rounded-full transition-all duration-200 ${
-              isCreate
-                ? " text-slate900 dark:bg-black100 dark:text-slate200"
-                : isActive
-                  ? " text-orange100 "
-                  : " text-slate900  dark:text-slate200"
-            } ${
-              i === 2 ? 'bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black' : ''
-            }`;
-          }}
-          aria-label={label}
-        >
-          {icon}
-          {i !== 2 && <span className="text-[10px]">{t(labelKey)}</span>}
-        </NavLink>
+              return `flex flex-col gap-px items-center justify-center rounded-full transition-all duration-200 ${
+                isCreate
+                  ? " text-slate900 dark:bg-black100 dark:text-slate200"
+                  : isActive
+                    ? " text-orange100 "
+                    : " text-slate900  dark:text-slate200"
+              } ${
+                i === 2
+                  ? "bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black"
+                  : ""
+              }`;
+            }}
+            aria-label={label}
+          >
+            {icon}
+            {i !== 2 && <span className="text-[10px]">{t(labelKey)}</span>}
+          </NavLink>
+        );
+      })} */}
+      {navItems.map(({ to, labelKey, icon }, i) => {
+        const label = t(labelKey);
+
+        if (to === "/create") {
+          return (
+            <button
+              key={to}
+              type="button"
+              onClick={openCamera}
+              className="bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black flex items-center justify-center"
+              aria-label={label}
+            >
+              {icon}
+            </button>
+          );
+        }
+
+        return (
+          <NavLink
+            key={to}
+            to={to}
+            end={to === "/"}
+            className={({ isActive }) =>
+              `flex flex-col items-center justify-center ${
+                isActive ? "text-orange100" : "text-slate900 dark:text-slate200"
+              }`
+            }
+          >
+            {icon}
+            <span className="text-[10px]">{label}</span>
+          </NavLink>
         );
       })}
     </nav>
