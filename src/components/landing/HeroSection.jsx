@@ -116,15 +116,15 @@ const smoothX = useTransform(x, [-20, 20], [-10, 10]);
 
       {/* Buttons */}
       <MotionDiv variants={fadeUp} className="flex justify-start md:justify-center gap-3 mb-12">
-        <button
-          onClick={onSignUp}
-          className="bg-orange100 font-inter hover:bg-orange300 text-slate100
+        <a
+          href="#waitlist"
+          className="bg-orange100 font-inter hover:bg-orange500 text-slate100
                      font-semibold text-sm md:text-base px-2 md:px-9 py-3.5 rounded-xl
                      border-none cursor-pointer transition-colors
                      md:min-w-45"
         >
           {t("landing.hero.joinWaitlist")}
-        </button>
+        </a>
         <button
           onClick={scrollToAbout}
           className="bg-white dark:bg-transparent

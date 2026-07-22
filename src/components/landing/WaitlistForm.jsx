@@ -302,7 +302,7 @@ export default function WaitlistForm() {
   whileTap={{ scale: 0.95 }}
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 font-inter bg-orange100 hover:bg-[#e09510]
+            className="w-full py-4 font-inter bg-orange100 hover:bg-orange500
                        text-slate100 font-semibold text-[15px] rounded-xl
                        border-none cursor-pointer transition-colors disabled:cursor-not-allowed disabled:opacity-60"
           >
