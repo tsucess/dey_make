@@ -9,7 +9,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { useLanguage } from "./context/LanguageContext";
 import Spinner from "./components/Layout/Spinner";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -72,8 +71,6 @@ const MobilePostDetailsForm = lazy(
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 
 function FullPageLoader() {
-  const { t } = useLanguage();
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
       <Spinner big />
