@@ -21,7 +21,6 @@ const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const CreateUpload = lazy(() => import("./old/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Challenges = lazy(() => import("./pages/Challenges"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
@@ -248,7 +247,6 @@ export default function App() {
             />
           </Route>
 
-          {/* <Route path="/create" element={renderLazyRoute(CreateUpload)} /> */}
           <Route path="/create-live" element={renderLazyRoute(CreateLive)} />
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>

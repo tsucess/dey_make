@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FaRegCommentDots, FaRegHeart, FaCheck, FaPlay } from "react-icons/fa";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
@@ -8,12 +8,12 @@ import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
 import Spinner from "../components/Layout/Spinner";
 import {
-  buildVideoAnalyticsLink,
+  // buildVideoAnalyticsLink,
   buildVideoLink,
   formatCompactNumber,
   formatCountLabel,
-  formatSubscriberLabel,
-  hasPostLiveAnalytics,
+  // formatSubscriberLabel,
+  // hasPostLiveAnalytics,
   getProfileAvatar,
   getProfileName,
   getVideoMediaUrl,
@@ -71,31 +71,10 @@ function FeedTile({ video, onOpen, showViews = true }) {
   );
 }
 
-function normalizePlan(plan = {}) {
-  return {
-    ...plan,
-    benefits: Array.isArray(plan.benefits) ? plan.benefits : [],
-    priceAmount: Number(plan.priceAmount) || 0,
-    activeMemberCount: Number(plan.activeMemberCount) || 0,
-    currentUserMembership: plan.currentUserMembership || null,
-  };
-}
-
-function formatMoney(amount, currency) {
-  try {
-    return new Intl.NumberFormat(undefined, {
-      style: "currency",
-      currency: currency || "USD",
-    }).format((Number(amount) || 0) / 100);
-  } catch {
-    return `${currency || "USD"} ${amount || 0}`;
-  }
-}
-
 export default function Profile() {
   const { id: routeProfileId } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated, syncUser } = useAuth();
+  const { user, syncUser } = useAuth();
   const { t } = useLanguage();
   const avatarInputRef = useRef(null);
   const isOwnProfile = !routeProfileId || String(user?.id) === String(routeProfileId);
@@ -112,14 +91,11 @@ export default function Profile() {
   const [editing, setEditing] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
-  const [loadingMemberships, setLoadingMemberships] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [membershipActionId, setMembershipActionId] = useState(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [isAvatarPreviewOpen, setIsAvatarPreviewOpen] = useState(false);
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
-  const [membershipPlans, setMembershipPlans] = useState([]);
   const [draftPreview, setDraftPreview] = useState(null);
   const [draftAction, setDraftAction] = useState(null);
   const [draftError, setDraftError] = useState("");
@@ -135,25 +111,6 @@ export default function Profile() {
   );
   const avatarPreviewUrl = getProfileAvatar(displayProfile);
   const visiblePosts = feeds[activeConfig.feed] || [];
-  const canSubscribe = !isOwnProfile && Boolean(profile?.id) && user?.id !== profile?.id;
-
-  const loadMembershipPlans = useCallback(async (creatorId, { silent = false } = {}) => {
-    if (!creatorId) {
-      setMembershipPlans([]);
-      return;
-    }
-
-    if (!silent) setLoadingMemberships(true);
-
-    try {
-      const response = await api.getCreatorPlans(creatorId);
-      setMembershipPlans((response?.data?.plans || []).map(normalizePlan));
-    } catch (nextError) {
-      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToLoad")));
-    } finally {
-      if (!silent) setLoadingMemberships(false);
-    }
-  }, [t]);
 
   useEffect(() => {
     if (!feedback) return undefined;
@@ -261,46 +218,6 @@ export default function Profile() {
       ignore = true;
     };
   }, [activeConfig.feed, activeConfig.label, isOwnProfile, routeProfileId, t]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function fetchPlans() {
-      if (isOwnProfile || !routeProfileId) {
-        setMembershipPlans([]);
-        setLoadingMemberships(false);
-        return;
-      }
-
-      setLoadingMemberships(true);
-
-      try {
-        const response = await api.getCreatorPlans(routeProfileId);
-
-        if (!ignore) {
-          setMembershipPlans((response?.data?.plans || []).map(normalizePlan));
-        }
-      } catch (nextError) {
-        if (!ignore) {
-          setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToLoad")));
-        }
-      } finally {
-        if (!ignore) setLoadingMemberships(false);
-      }
-    }
-
-    fetchPlans();
-
-    return () => {
-      ignore = true;
-    };
-  }, [isOwnProfile, routeProfileId, t]);
-
-  function requireAuth() {
-    if (isAuthenticated) return true;
-    navigate("/login");
-    return false;
-  }
 
   async function handleSaveProfile() {
     if (!isOwnProfile) return;
@@ -421,56 +338,6 @@ export default function Profile() {
     } finally {
       setUploadingAvatar(false);
       event.target.value = "";
-    }
-  }
-
-  async function handleSubscribe() {
-    if (!canSubscribe || !requireAuth()) return;
-
-    setSaving(true);
-    setError("");
-    setFeedback("");
-
-    try {
-      const response = profile?.currentUserState?.subscribed
-        ? await api.unsubscribeFromCreator(profile.id)
-        : await api.subscribeToCreator(profile.id);
-      const creator = response?.data?.creator;
-
-      setProfile((current) => current ? {
-        ...current,
-        subscriberCount: creator?.subscriberCount ?? current.subscriberCount,
-        currentUserState: {
-          ...current.currentUserState,
-          subscribed: creator?.subscribed ?? current.currentUserState?.subscribed,
-        },
-      } : current);
-    } catch (nextError) {
-      setError(firstError(nextError?.errors, nextError?.message || t("videoDetails.unableToUpdateSubscription")));
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleMembershipAction(plan) {
-    if (!plan?.id || !requireAuth()) return;
-
-    setMembershipActionId(plan.id);
-    setError("");
-    setFeedback("");
-
-    try {
-      const isActiveMembership = plan.currentUserMembership?.status === "active";
-      const response = isActiveMembership
-        ? await api.cancelMembership(plan.currentUserMembership.id)
-        : await api.subscribeToPlan(plan.id);
-
-      await loadMembershipPlans(profile?.id || routeProfileId, { silent: true });
-      setFeedback(response?.message || (isActiveMembership ? t("profile.memberships.cancelled") : t("profile.memberships.joinedFeedback")));
-    } catch (nextError) {
-      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpdate")));
-    } finally {
-      setMembershipActionId(null);
     }
   }
 
