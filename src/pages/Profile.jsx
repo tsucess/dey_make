@@ -490,6 +490,7 @@ export default function Profile() {
       setDraftError("");
       return;
     }
+
     navigate(buildVideoLink(nextVideo));
   }
 
@@ -582,9 +583,9 @@ export default function Profile() {
       <div className="relative">
         <img src="/challenge_entries.png" alt="" className="h-48 w-full object-cover md:h-72" />
         <div className="absolute top-4 right-4 flex items-center gap-3">
-          <button className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
+          {/* <button className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiBell className="w-5 h-5" />
-          </button>
+          </button> */}
           <button onClick={() => navigate("/coins-wallet")} className="w-10 h-10 cursor-pointer rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/60 transition-colors">
             <FiMoreHorizontal className="w-5 h-5" />
           </button>
