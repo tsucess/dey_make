@@ -357,6 +357,7 @@ export const api = {
   uploadFile: (formData) => request("/uploads", { method: "POST", body: formData }),
   createVideo: (payload) => request("/videos", { method: "POST", body: payload }),
   updateVideo: (id, payload) => request(`/videos/${id}`, { method: "PATCH", body: payload }),
+  deleteVideo: (id) => request(`/videos/${id}`, { method: "DELETE" }),
   publishVideo: (id) => request(`/videos/${id}/publish`, { method: "POST" }),
   getLiveAgoraSession: (id, options = {}) => request(`/videos/${id}/live/session${buildQueryString({ role: options.role })}`),
   startVideoLive: (id) => request(`/videos/${id}/live/start`, { method: "POST" }),
@@ -492,6 +493,9 @@ export const api = {
   getStoriesFeed: () => request("/stories/feed"),
   markStoryViewed: (id) => request(`/stories/${id}/view`, { method: "POST" }),
   getSuggestedCreators: (options = {}) => request(`/creators/suggestions${buildQueryString({ limit: options.limit })}`),
+  getExploreData: (options = {}) => request(`/explore${buildQueryString({ category: options.category })}`),
+  getExploreVideos: (options = {}) =>
+    request(`/explore/videos${buildQueryString({ category: options.category, page: options.page, per_page: options.perPage })}`),
 };
 
 export function firstError(errors, fallback = "Something went wrong.") {

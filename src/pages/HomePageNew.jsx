@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Comment from "../components/Homepage/Comment";
 import Video from "../components/Homepage/Video";
 import { useAuth } from "../context/AuthContext";
@@ -8,6 +8,8 @@ import { buildShareUrl, getProfileAvatar, getVideoRouteId } from "../utils/conte
 
 function HomePageNew() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const newVideo = location.state?.newVideo ?? null;
   const { user, isAuthenticated } = useAuth();
   const [videos, setVideos] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -23,10 +25,22 @@ function HomePageNew() {
         const trending = response?.data?.trending ?? [];
         const live = response?.data?.liveStreams ?? [];
         const feed = [...live, ...trending];
-        setVideos(feed);
+        const seeded = newVideo
+          ? [newVideo, ...feed.filter((video) => video?.id !== newVideo?.id)]
+          : feed;
+        setVideos(seeded);
+        if (newVideo) setCurrentIndex(0);
       })
-      .catch(() => setVideos([]));
+      .catch(() => setVideos(newVideo ? [newVideo] : []));
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (newVideo && location.state) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const current = videos[currentIndex] || null;

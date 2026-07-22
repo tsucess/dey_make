@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FaRegCommentDots, FaRegHeart, FaCheck, FaPlay } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
 import { FiBell, FiMoreHorizontal, FiShare, FiGrid, FiFilm, FiLock, FiHeart } from "react-icons/fi";
 import { useAuth } from "../context/AuthContext";
@@ -16,11 +16,13 @@ import {
   hasPostLiveAnalytics,
   getProfileAvatar,
   getProfileName,
+  getVideoMediaUrl,
   getVideoThumbnail,
   getVideoTitle,
 } from "../utils/content";
 import { CiSaveDown2 } from "react-icons/ci";
 import { MdOutlineDrafts } from "react-icons/md";
+import Toast from "../components/Layout/Toast";
 
 const USERNAME_PATTERN = /^[a-z0-9._]{3,30}$/;
 
@@ -50,21 +52,21 @@ function ViewsBadge({ views }) {
   );
 }
 
-function FeedTile({ video, onOpen }) {
-  const { t } = useLanguage();
-  
+function FeedTile({ video, onOpen, showViews = true }) {
   return (
     <article
       onClick={() => onOpen(video)}
       className="group relative cursor-pointer overflow-hidden rounded-2xl bg-[#1a1a1a] aspect-[9/16]"
     >
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex items-end">
-        <div className="flex items-center gap-1.5 text-white">
-          <FaPlay className="w-3.5 h-3.5" />
-          <span className="text-[13px] font-semibold">{formatCompactNumber(video.views || 8200000)}</span>
+      {showViews ? (
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex items-end">
+          <div className="flex items-center gap-1.5 text-white">
+            <FaPlay className="w-3.5 h-3.5" />
+            <span className="text-[13px] font-semibold">{formatCompactNumber(video.views || 0)}</span>
+          </div>
         </div>
-      </div>
+      ) : null}
     </article>
   );
 }
@@ -98,7 +100,12 @@ export default function Profile() {
   const avatarInputRef = useRef(null);
   const isOwnProfile = !routeProfileId || String(user?.id) === String(routeProfileId);
   const profileTabs = useMemo(() => getProfileTabs(t, isOwnProfile), [isOwnProfile, t]);
-  const [activeTab, setActiveTab] = useState("posts");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState(() => {
+    const allowed = ["posts", "liked", "saved", "drafts"];
+    return allowed.includes(initialTabParam) ? initialTabParam : "posts";
+  });
   const [profile, setProfile] = useState(null);
   const [feeds, setFeeds] = useState({ posts: [], liked: [], saved: [], drafts: [] });
   const [form, setForm] = useState({ fullName: "", username: "", bio: "", avatarUrl: "" });
@@ -113,6 +120,10 @@ export default function Profile() {
   const [error, setError] = useState("");
   const [feedback, setFeedback] = useState("");
   const [membershipPlans, setMembershipPlans] = useState([]);
+  const [draftPreview, setDraftPreview] = useState(null);
+  const [draftAction, setDraftAction] = useState(null);
+  const [draftError, setDraftError] = useState("");
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
   const activeConfig = useMemo(
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
@@ -163,6 +174,23 @@ export default function Profile() {
       setActiveTab(profileTabs[0]?.feed || "posts");
     }
   }, [activeTab, profileTabs]);
+
+  useEffect(() => {
+    const currentParam = searchParams.get("tab");
+    if (activeTab === "posts") {
+      if (currentParam) {
+        const next = new URLSearchParams(searchParams);
+        next.delete("tab");
+        setSearchParams(next, { replace: true });
+      }
+      return;
+    }
+    if (currentParam !== activeTab) {
+      const next = new URLSearchParams(searchParams);
+      next.set("tab", activeTab);
+      setSearchParams(next, { replace: true });
+    }
+  }, [activeTab, searchParams, setSearchParams]);
 
   useEffect(() => {
     let ignore = false;
@@ -456,7 +484,82 @@ export default function Profile() {
   }
 
   function handleOpenFeedItem(nextVideo) {
-    navigate(isOwnProfile && activeConfig.feed === "drafts" ? `/create?id=${nextVideo.id}` : buildVideoLink(nextVideo));
+    if (isOwnProfile && activeConfig.feed === "drafts") {
+      setDraftPreview(nextVideo);
+      setDraftAction(null);
+      setDraftError("");
+      return;
+    }
+    navigate(buildVideoLink(nextVideo));
+  }
+
+  function closeDraftPreview() {
+    if (draftAction) return;
+    setDraftPreview(null);
+    setDraftError("");
+  }
+
+  async function handleDraftPublish() {
+    if (!draftPreview?.id || draftAction) return;
+    setDraftAction("publish");
+    setDraftError("");
+
+    try {
+      const response = await api.publishVideo(draftPreview.id);
+      const published = response?.data?.video ?? null;
+      setFeeds((current) => ({
+        ...current,
+        drafts: (current.drafts || []).filter((item) => String(item.id) !== String(draftPreview.id)),
+        posts: published ? [published, ...(current.posts || [])] : current.posts,
+      }));
+      setFeedback(response?.message || t("upload.actions.draftSaved"));
+      setDraftPreview(null);
+    } catch (nextError) {
+      setDraftError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpdate")));
+    } finally {
+      setDraftAction(null);
+    }
+  }
+
+  function handleDraftDelete() {
+    if (!draftPreview?.id || draftAction) return;
+    setDraftError("");
+    setConfirmDeleteOpen(true);
+  }
+
+  async function confirmDraftDelete() {
+    if (!draftPreview?.id || draftAction) return;
+    const targetId = draftPreview.id;
+    setDraftAction("delete");
+    setDraftError("");
+
+    try {
+      const response = await api.deleteVideo(targetId);
+      setFeeds((current) => ({
+        ...current,
+        drafts: (current.drafts || []).filter((item) => String(item.id) !== String(targetId)),
+      }));
+      setFeedback(response?.message || t("profile.draftDeleted"));
+      setConfirmDeleteOpen(false);
+      setDraftPreview(null);
+    } catch (nextError) {
+      setDraftError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpdate")));
+      setConfirmDeleteOpen(false);
+    } finally {
+      setDraftAction(null);
+    }
+  }
+
+  function cancelDraftDelete() {
+    if (draftAction === "delete") return;
+    setConfirmDeleteOpen(false);
+  }
+
+  function handleDraftEdit() {
+    if (!draftPreview?.id || draftAction) return;
+    const id = draftPreview.id;
+    setDraftPreview(null);
+    navigate(`/post-details-form?id=${id}`);
   }
 
   const videosCount = formatCompactNumber(profile?.videosCount ?? 0);
@@ -466,6 +569,16 @@ export default function Profile() {
 
   return (
     <div className="min-h-full bg-white dark:bg-black100 pb-20">
+      <Toast
+        message={error}
+        variant="error"
+        onDismiss={() => setError("")}
+      />
+      <Toast
+        message={feedback}
+        variant="success"
+        onDismiss={() => setFeedback("")}
+      />
       <div className="relative">
         <img src="/header_profile.png" alt="" className="h-48 w-full object-cover md:h-72" />
         <div className="absolute top-4 right-4 flex items-center gap-3">
@@ -484,9 +597,6 @@ export default function Profile() {
 
       <div className="mx-auto max-w-5xl px-4 md:px-8">
         <div className="-mt-16 md:-mt-20 flex flex-col items-center">
-          {error ? <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div> : null}
-          {feedback ? <div className="mb-4 rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">{feedback}</div> : null}
-
           {loadingProfile ? (
             <div className="py-20"><Spinner big /></div>
           ) : (
@@ -677,6 +787,7 @@ export default function Profile() {
                     key={post.id}
                     video={post}
                     onOpen={handleOpenFeedItem}
+                    showViews={activeConfig.feed !== "drafts"}
                   />
                 ))}
               </div>
@@ -706,6 +817,134 @@ export default function Profile() {
               </button>
               <img src={avatarPreviewUrl} alt={getProfileName(displayProfile)} className="max-h-[80vh] max-w-full rounded-3xl object-contain shadow-2xl" />
             </div>
+          </div>
+        ) : null}
+
+        {draftPreview ? (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4 py-6"
+            onClick={closeDraftPreview}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("profile.draftPreview")}
+          >
+            <div
+              className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl dark:bg-[#141414]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={closeDraftPreview}
+                disabled={Boolean(draftAction)}
+                className="absolute right-3 top-3 z-10 rounded-full bg-black/60 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-60"
+              >
+                {t("profile.close")}
+              </button>
+
+              <div className="relative aspect-[9/16] max-h-[65vh] w-full bg-black">
+                {draftPreview.type === "video" && getVideoMediaUrl(draftPreview) ? (
+                  <video
+                    src={getVideoMediaUrl(draftPreview)}
+                    poster={getVideoThumbnail(draftPreview)}
+                    className="h-full w-full object-contain"
+                    controls
+                    playsInline
+                  />
+                ) : (
+                  <img
+                    src={getVideoThumbnail(draftPreview)}
+                    alt={getVideoTitle(draftPreview)}
+                    className="h-full w-full object-contain"
+                  />
+                )}
+              </div>
+
+              <div className="flex flex-col gap-4 p-5">
+                <div>
+                  <h3 className="text-base font-semibold text-black dark:text-white">
+                    {getVideoTitle(draftPreview)}
+                  </h3>
+                  {draftPreview.description ? (
+                    <p className="mt-1 line-clamp-3 text-sm text-slate-500 dark:text-slate-300">
+                      {draftPreview.description}
+                    </p>
+                  ) : null}
+                </div>
+
+                {draftError ? (
+                  <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {draftError}
+                  </div>
+                ) : null}
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleDraftEdit}
+                    disabled={Boolean(draftAction)}
+                    className="flex-1 min-w-30 rounded-md bg-black100 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#404040] disabled:opacity-60"
+                  >
+                    {t("profile.editDraft")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDraftPublish}
+                    disabled={Boolean(draftAction)}
+                    className="flex-1 min-w-30 rounded-md bg-orange100 px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange200 disabled:opacity-60"
+                  >
+                    {draftAction === "publish" ? t("upload.actions.publishing") : t("profile.postDraft")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDraftDelete}
+                    disabled={Boolean(draftAction)}
+                    className="flex-1 min-w-30 rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                  >
+                    {draftAction === "delete" ? t("profile.deleting") : t("profile.deleteDraft")}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {confirmDeleteOpen ? (
+              <div
+                className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 px-4"
+                role="dialog"
+                aria-modal="true"
+                aria-label={t("profile.confirmDeleteTitle")}
+                onClick={cancelDraftDelete}
+              >
+                <div
+                  className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl dark:bg-[#141414]"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <h4 className="text-lg font-semibold text-black dark:text-white">
+                    {t("profile.confirmDeleteTitle")}
+                  </h4>
+                  <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">
+                    {t("profile.confirmDeleteBody")}
+                  </p>
+                  <div className="mt-5 flex justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={cancelDraftDelete}
+                      disabled={draftAction === "delete"}
+                      className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-black transition-colors hover:bg-slate-100 disabled:opacity-60 dark:border-slate-600 dark:text-white dark:hover:bg-white/10"
+                    >
+                      {t("profile.cancelDelete")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={confirmDraftDelete}
+                      disabled={draftAction === "delete"}
+                      className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                    >
+                      {draftAction === "delete" ? t("profile.deleting") : t("profile.deleteDraft")}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
