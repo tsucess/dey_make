@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
 import { FaHeart, FaRegCommentDots, FaRegHeart } from "react-icons/fa";
@@ -25,8 +25,10 @@ function pickObjectFit(naturalWidth, naturalHeight) {
 
 function MediaFit({ src, poster, type, alt }) {
   const [fit, setFit] = useState("object-cover");
-  const hasVideoExt = typeof src === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(src);
-  const looksLikeImage = typeof src === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(src);
+  const hasVideoExt =
+    typeof src === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(src);
+  const looksLikeImage =
+    typeof src === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(src);
   const isVideo = (type === "video" || hasVideoExt) && !looksLikeImage;
 
   if (isVideo && src) {
@@ -37,7 +39,14 @@ function MediaFit({ src, poster, type, alt }) {
         controls
         playsInline
         preload="metadata"
-        onLoadedMetadata={(event) => setFit(pickObjectFit(event.currentTarget.videoWidth, event.currentTarget.videoHeight))}
+        onLoadedMetadata={(event) =>
+          setFit(
+            pickObjectFit(
+              event.currentTarget.videoWidth,
+              event.currentTarget.videoHeight,
+            ),
+          )
+        }
         className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
       />
     );
@@ -47,7 +56,14 @@ function MediaFit({ src, poster, type, alt }) {
     <img
       src={(!isVideo && src) || poster || "/home_img.jpg"}
       alt={alt || ""}
-      onLoad={(event) => setFit(pickObjectFit(event.currentTarget.naturalWidth, event.currentTarget.naturalHeight))}
+      onLoad={(event) =>
+        setFit(
+          pickObjectFit(
+            event.currentTarget.naturalWidth,
+            event.currentTarget.naturalHeight,
+          ),
+        )
+      }
       className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
     />
   );
@@ -68,15 +84,19 @@ function Video({
   const creator = video?.creator || video?.author || null;
   const state = video?.currentUserState || {};
 
-  const mediaSrc = getVideoStreamUrl(video) || getVideoMediaUrl(video) || "/home_img.jpg";
+  const mediaSrc =
+    getVideoStreamUrl(video) || getVideoMediaUrl(video) || "/home_img.jpg";
   const thumbnail = video ? getVideoThumbnail(video) : "/home_img.jpg";
   const avatarUrl = creator ? getProfileAvatar(creator) : "/user1.jpg";
   const displayName = creator ? getProfileName(creator) : "Name and Last name";
   const location = video?.location || "Location";
-  const caption = video?.caption || video?.title || "Caption of the post 😉 #fyp";
+  const caption =
+    video?.caption || video?.title || "Caption of the post 😉 #fyp";
 
   const likesText = video ? formatCompactNumber(video.likes || 0) : "250,5K";
-  const commentsText = video ? formatCompactNumber(video.commentsCount || 0) : "100K";
+  const commentsText = video
+    ? formatCompactNumber(video.commentsCount || 0)
+    : "100K";
   const repostsText = video ? formatCompactNumber(video.reposts || 0) : "89K";
   const sharesText = video ? formatCompactNumber(video.shares || 0) : "132,5K";
 
@@ -84,14 +104,46 @@ function Video({
   const audioCover = audioTrack?.coverUrl || "/audio-traack.png";
   const audioTitle = audioTrack?.title || (video ? null : "Song name");
   const audioArtist = audioTrack?.artist || (video ? null : "song artist");
-  const audioLabel = audioTitle && audioArtist
-    ? `${audioTitle} - ${audioArtist}`
-    : audioTitle || audioArtist;
+  const audioLabel =
+    audioTitle && audioArtist
+      ? `${audioTitle} - ${audioArtist}`
+      : audioTitle || audioArtist;
+
+  const touchStartY = useRef(0);
+  const touchEndY = useRef(0);
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e) => {
+    touchEndY.current = e.changedTouches[0].clientY;
+
+    const distance = touchStartY.current - touchEndY.current;
+    const threshold = 50; // minimum swipe distance
+
+    if (distance > threshold && canNext) {
+      // Swiped up
+      onNext();
+    } else if (distance < -threshold && canPrev) {
+      // Swiped down
+      onPrev();
+    }
+  };
 
   return (
-    <section className="w-full md:w-2/3 md:h-215 flex justify-center relative">
-      <div className="max-w-md w-full h-110 max-h-215 md:h-full relative">
-        <MediaFit src={mediaSrc} poster={thumbnail} type={video?.type} alt={caption} />
+    <section
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="fixed inset-0 md:relative w-full h-screen lg:w-2/3 md:h-215 flex justify-center "
+    >
+      <div className="lg:max-w-md w-full h-full relative">
+        <MediaFit
+          src={mediaSrc}
+          poster={thumbnail}
+          type={video?.type}
+          alt={caption}
+        />
         <div className="flex flex-col gap-1 md:gap-2 absolute right-4 bottom-15 md:bottom-20 items-center">
           <img
             src={avatarUrl || FALLBACK_AVATAR}
@@ -100,7 +152,9 @@ function Video({
           />
           <div className="flex flex-col gap-1 items-center">
             <button onClick={onToggleLike}>
-              <FaHeart className={`w-6 h-6 ${state.liked ? "text-red100" : "text-white"}`} />
+              <FaHeart
+                className={`w-6 h-6 ${state.liked ? "text-red100" : "text-white"}`}
+              />
             </button>
             <span className="font-inter text-xs font-semibold text-white">
               {likesText}
@@ -121,7 +175,9 @@ function Video({
               title={isOwner ? "You can't repost your own video" : undefined}
               className={isOwner ? "opacity-40 cursor-not-allowed" : undefined}
             >
-              <AiOutlineRetweet className={`w-6 h-6 ${state.reposted ? "text-green-400" : "text-white"}`} />
+              <AiOutlineRetweet
+                className={`w-6 h-6 ${state.reposted ? "text-green-400" : "text-white"}`}
+              />
             </button>
             <span className="font-inter text-xs font-semibold text-white">
               {repostsText}

@@ -51,7 +51,7 @@ function PostViewOption({ toggleShowPostView }) {
       
       <div className="flex flex-col gap-4.5">
         {settings.map(({ title, desc, icon: Icon }, i) => (
-          <div className="flex justify-between items-center gap-3 border border-black/30 rounded-2xl dark:border-white/30 p-4">
+          <label htmlFor={title} className="flex justify-between items-center gap-3 border border-black/30 rounded-2xl dark:border-white/30 p-4">
             <div className="flex items-center gap-2">
               <div className="rounded-md w-8 h-8 border border-black/40 dark:border-white/40 flex items-center justify-center">
                 <Icon className="w-5 h-5 text-black dark:text-white" />
@@ -73,11 +73,11 @@ function PostViewOption({ toggleShowPostView }) {
                 type="radio"
                 name="setting"
                 value={title}
-                id=""
+                id={title}
                 className="accent-orange100 "
               />
             </div>
-          </div>
+          </label>
         ))}
       </div>
       </div>

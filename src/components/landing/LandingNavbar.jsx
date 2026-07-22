@@ -47,15 +47,15 @@ export default function LandingNavbar({ onSignUp }) {
         {/* Right side */}
         <div className="flex items-center gap-2.5">
           
-          <button
-            onClick={onSignUp}
-            className="bg-orange100 hover:bg-orange200 text-slate100
+          <a
+            href="#waitlist"
+            className="bg-orange100 hover:bg-orange500 text-slate100
                        font-semibold text-sm px-6 py-4 md:px-8 md:py-3 md:text-base
                        rounded-lg border-none cursor-pointer
                        transition-colors hidden md:block"
           >
             {t("landing.navbar.joinWaitlist")}
-          </button>
+          </a>
 
           {/* Hamburger */}
           <button
