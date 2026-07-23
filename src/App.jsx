@@ -55,7 +55,6 @@ const VerificationRequest = lazy(
 const Users = lazy(() => import("./Admin/Pages/Users"));
 const Comments = lazy(() => import("./Admin/Pages/Comments"));
 const SuspendedAccount = lazy(() => import("./Admin/Pages/SuspendedAccount"));
-const UserAdmin = lazy(() => import("./Admin/Pages/Users"));
 const VideoAdmin = lazy(() => import("./Admin/Pages/Video"));
 const LivestreamAdmin = lazy(() => import("./Admin/Pages/LiveStream"));
 const ChallengesAdmin = lazy(() => import("./Admin/Pages/Challenges"));
@@ -70,6 +69,7 @@ const MobilePostDetailsForm = lazy(
   () => import("./components/Create/MobilePostDetailsForm"),
 );
 const PostDetail = lazy(() => import("./pages/PostDetail"));
+const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
 
 function FullPageLoader() {
   const { t } = useLanguage();
@@ -268,7 +268,6 @@ export default function App() {
             path="/suspended-account"
             element={renderLazyRoute(SuspendedAccount)}
           />
-          <Route path="/admin-user" element={renderLazyRoute(UserAdmin)} />
           <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
           <Route
             path="/admin-livestream"
@@ -277,6 +276,10 @@ export default function App() {
           <Route
             path="/admin-challenges"
             element={renderLazyRoute(ChallengesAdmin)}
+          />
+          <Route
+            path="/admin-creator-ecosystem"
+            element={renderLazyRoute(CreatorEcosystem)}
           />
         </Route>
 
