@@ -1,12 +1,15 @@
 import { button } from "motion/react-client";
-import { FiSettings } from "react-icons/fi";
-import { HiOutlineSquares2X2 } from "react-icons/hi2";
-import { MdArrowForwardIos, MdOutlineArrowForwardIos } from "react-icons/md";
+import { FaRegComments } from "react-icons/fa";
+import { FiSettings, FiVideo } from "react-icons/fi";
+import { GiEcology } from "react-icons/gi";
+import { HiOutlineSquares2X2, HiOutlineUserGroup } from "react-icons/hi2";
+import { MdArrowForwardIos, MdOndemandVideo, MdOutlineArrowForwardIos, MdOutlineLiveTv, MdVerifiedUser } from "react-icons/md";
 import {
   RiBookShelfLine,
   RiHeadphoneLine,
   RiMessage2Line,
 } from "react-icons/ri";
+import { TbCancel, TbTargetArrow } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 
 const navLinks = [
@@ -20,143 +23,143 @@ const navLinks = [
     title: "User Management",
     isLink: false,
     links: [
-      { link: "/users", title: "Users", icon: HiOutlineSquares2X2 },
+      { link: "/users", title: "Users", icon: HiOutlineUserGroup },
       {
         link: "/comments",
         title: "Comment Management",
-        icon: HiOutlineSquares2X2,
+        icon: FaRegComments,
       },
       {
         link: "/verification-request",
         title: "Verification",
-        icon: HiOutlineSquares2X2,
+        icon: MdVerifiedUser,
       },
       {
         link: "/suspended-account",
         title: "Suspended Account",
-        icon: HiOutlineSquares2X2,
+        icon: TbCancel,
       },
-      { link: "/admin-video", title: "Video", icon: HiOutlineSquares2X2 },
+      { link: "/admin-video", title: "Video", icon: FiVideo },
       {
         link: "/admin-livestream",
         title: "Livestream",
-        icon: HiOutlineSquares2X2,
+        icon: MdOutlineLiveTv,
       },
       {
         link: "/admin-challenges",
         title: "Challenges",
-        icon: HiOutlineSquares2X2,
+        icon: TbTargetArrow,
       },
       {
         link: "/admin-creator-ecosystem",
         title: "Creator Ecosystem",
-        icon: HiOutlineSquares2X2,
+        icon: GiEcology,
       },
     ],
   },
-  {
-    title: "Content & Moderation",
-    isLink: false,
-    links: [
-      {
-        link: "/admin-user",
-        title: "Moderation Center",
-        icon: RiMessage2Line,
-        badge: 5,
-      },
-      { link: "/reports", title: "Reports", icon: HiOutlineSquares2X2 },
-      {
-        link: "/content-check",
-        title: "Content Check",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/comments",
-        title: "Comment Management",
-        icon: HiOutlineSquares2X2,
-      },
-      { link: "/live-center", title: "Live Center", icon: HiOutlineSquares2X2 },
-    ],
-  },
-  {
-    title: "Growth & Engagement",
-    isLink: false,
-    links: [
-      { link: "/trends", title: "Trends", icon: HiOutlineSquares2X2 },
-      { link: "/hashtags", title: "Hashtags", icon: HiOutlineSquares2X2 },
-      { link: "/sounds", title: "Sounds", icon: HiOutlineSquares2X2 },
-    ],
-  },
-  {
-    title: "Monetization",
-    isLink: false,
-    links: [
-      {
-        link: "/challenge-manager",
-        title: "Challenge Manger",
-        icon: HiOutlineSquares2X2,
-      },
-      { link: "/ads-manager", title: "Ads Manager", icon: HiOutlineSquares2X2 },
-      {
-        link: "/revenue",
-        title: "Revenue Dashboard",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/transactions",
-        title: "Transactions",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/creator-rewards",
-        title: "Creator Rewards",
-        icon: HiOutlineSquares2X2,
-      },
-    ],
-  },
-  {
-    title: "Analytics",
-    isLink: false,
-    links: [
-      {
-        link: "/platform-analytics",
-        title: "Platform Analytics",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/content-analytics",
-        title: "Content Analytics",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/user-analytics",
-        title: "User Analytics",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/live-analytics",
-        title: "Live Analytics",
-        icon: HiOutlineSquares2X2,
-      },
-    ],
-  },
-  {
-    title: "System",
-    isLink: false,
-    links: [
-      {
-        link: "/system-health",
-        title: "System Health",
-        icon: HiOutlineSquares2X2,
-      },
-      {
-        link: "/security-center",
-        title: "Security Center",
-        icon: HiOutlineSquares2X2,
-      },
-      { link: "/audit-logs", title: "Audit Logs", icon: HiOutlineSquares2X2 },
-    ],
-  },
+  // {
+  //   title: "Content & Moderation",
+  //   isLink: false,
+  //   links: [
+  //     {
+  //       link: "/admin-user",
+  //       title: "Moderation Center",
+  //       icon: RiMessage2Line,
+  //       badge: 5,
+  //     },
+  //     { link: "/reports", title: "Reports", icon: HiOutlineSquares2X2 },
+  //     {
+  //       link: "/content-check",
+  //       title: "Content Check",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/comments",
+  //       title: "Comment Management",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     { link: "/live-center", title: "Live Center", icon: HiOutlineSquares2X2 },
+  //   ],
+  // },
+  // {
+  //   title: "Growth & Engagement",
+  //   isLink: false,
+  //   links: [
+  //     { link: "/trends", title: "Trends", icon: HiOutlineSquares2X2 },
+  //     { link: "/hashtags", title: "Hashtags", icon: HiOutlineSquares2X2 },
+  //     { link: "/sounds", title: "Sounds", icon: HiOutlineSquares2X2 },
+  //   ],
+  // },
+  // {
+  //   title: "Monetization",
+  //   isLink: false,
+  //   links: [
+  //     {
+  //       link: "/challenge-manager",
+  //       title: "Challenge Manger",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     { link: "/ads-manager", title: "Ads Manager", icon: HiOutlineSquares2X2 },
+  //     {
+  //       link: "/revenue",
+  //       title: "Revenue Dashboard",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/transactions",
+  //       title: "Transactions",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/creator-rewards",
+  //       title: "Creator Rewards",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //   ],
+  // },
+  // {
+  //   title: "Analytics",
+  //   isLink: false,
+  //   links: [
+  //     {
+  //       link: "/platform-analytics",
+  //       title: "Platform Analytics",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/content-analytics",
+  //       title: "Content Analytics",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/user-analytics",
+  //       title: "User Analytics",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/live-analytics",
+  //       title: "Live Analytics",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //   ],
+  // },
+  // {
+  //   title: "System",
+  //   isLink: false,
+  //   links: [
+  //     {
+  //       link: "/system-health",
+  //       title: "System Health",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     {
+  //       link: "/security-center",
+  //       title: "Security Center",
+  //       icon: HiOutlineSquares2X2,
+  //     },
+  //     { link: "/audit-logs", title: "Audit Logs", icon: HiOutlineSquares2X2 },
+  //   ],
+  // },
 ];
 
 const bottomNavLinks = [
@@ -208,6 +211,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
               return nav.isLink ? (
                 <button
                   key={nav.title - i}
+                  onClick={() => handleNavigation(nav.link)}
                   className="flex items-center justify-between gap-2 px-3 py-2 rounded-md"
                 >
                   {isActive && (
