@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Comment from "../components/Homepage/Comment";
 import Video from "../components/Homepage/Video";
 import { useAuth } from "../context/AuthContext";
@@ -8,14 +8,23 @@ import { buildShareUrl, getProfileAvatar, getVideoRouteId } from "../utils/conte
 
 function HomePageNew() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const newVideo = location.state?.newVideo ?? null;
+  const seedVideos = Array.isArray(location.state?.seedVideos) ? location.state.seedVideos : null;
+  const seedStartIndex = Number.isInteger(location.state?.startIndex) ? location.state.startIndex : 0;
   const { user, isAuthenticated } = useAuth();
-  const [videos, setVideos] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [videos, setVideos] = useState(seedVideos && seedVideos.length ? seedVideos : []);
+  const [currentIndex, setCurrentIndex] = useState(
+    seedVideos && seedVideos.length
+      ? Math.min(Math.max(0, seedStartIndex), seedVideos.length - 1)
+      : 0,
+  );
   const [comments, setComments] = useState([]);
   const [repliesByComment, setRepliesByComment] = useState({});
   const [isCommentVisible, setIsCommentVisible] = useState(false)
 
   useEffect(() => {
+    if (seedVideos && seedVideos.length) return;
     let cancelled = false;
     api.getHome()
       .then((response) => {
@@ -23,10 +32,22 @@ function HomePageNew() {
         const trending = response?.data?.trending ?? [];
         const live = response?.data?.liveStreams ?? [];
         const feed = [...live, ...trending];
-        setVideos(feed);
+        const seeded = newVideo
+          ? [newVideo, ...feed.filter((video) => video?.id !== newVideo?.id)]
+          : feed;
+        setVideos(seeded);
+        if (newVideo) setCurrentIndex(0);
       })
-      .catch(() => setVideos([]));
+      .catch(() => setVideos(newVideo ? [newVideo] : []));
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if ((newVideo || seedVideos) && location.state) {
+      navigate(location.pathname, { replace: true, state: null });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const current = videos[currentIndex] || null;

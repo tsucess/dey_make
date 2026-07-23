@@ -29,19 +29,19 @@ const stats = [
 
 function Create() {
   const inputRef = useRef(null);
-  const [video, setVideo] = useState(null);
-  const navigate = useNavigate()
+  const [, setVideo] = useState(null);
+  const navigate = useNavigate();
 
   const handleFileSelect = () => {
     inputRef.current?.click();
   };
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
 
     if (file) {
       setVideo(file);
-      navigate('/post-details-form')
+      navigate("/post-details-form", { state: { file } });
     }
   };
 
@@ -59,8 +59,7 @@ function Create() {
         <input
           ref={inputRef}
           type="file"
-          name=""
-          id=""
+          accept="video/*"
           hidden
           onChange={handleFileChange}
         />

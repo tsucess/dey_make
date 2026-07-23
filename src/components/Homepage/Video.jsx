@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
 import { FaHeart, FaRegCommentDots, FaRegHeart } from "react-icons/fa";
@@ -14,6 +14,7 @@ import {
   getVideoStreamUrl,
   getVideoThumbnail,
 } from "../../utils/content";
+import { loadHls } from "../../utils/loadHls";
 
 function pickObjectFit(naturalWidth, naturalHeight) {
   if (!naturalWidth || !naturalHeight) return "object-cover";
@@ -23,38 +24,126 @@ function pickObjectFit(naturalWidth, naturalHeight) {
   return ratio <= 0.75 ? "object-cover" : "object-contain";
 }
 
-function MediaFit({ src, poster, type, alt }) {
+function MediaFit({ streamUrl, mediaUrl, poster, type, alt }) {
+  const videoRef = useRef(null);
   const [fit, setFit] = useState("object-cover");
-  const hasVideoExt =
-    typeof src === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(src);
-  const looksLikeImage =
-    typeof src === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(src);
-  const isVideo = (type === "video" || hasVideoExt) && !looksLikeImage;
+  const [muted, setMuted] = useState(true);
 
-  if (isVideo && src) {
+  const preferredSrc = streamUrl || mediaUrl || "";
+  const fallbackSrc = mediaUrl || "";
+  const looksLikeImage =
+    typeof preferredSrc === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(preferredSrc);
+  const hasVideoExt =
+    typeof preferredSrc === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(preferredSrc);
+  // Trust the backend `type` first (VideoResource sets this reliably to
+  // "video" | "image" | "gif"); fall back to extension sniffing only when
+  // `type` is missing. Cloudinary URLs frequently omit a filename extension.
+  const isVideo = type === "video" || (!type && hasVideoExt && !looksLikeImage);
+
+  useEffect(() => {
+    if (!isVideo) return undefined;
+    const el = videoRef.current;
+    if (!el) return undefined;
+
+    let cancelled = false;
+    let hls = null;
+
+    const setSrc = (url) => {
+      if (!url) return;
+      if (el.src !== url) el.src = url;
+    };
+
+    async function init() {
+      el.removeAttribute("src");
+
+      // Prefer MP4 when available: universally supported, no CORS or HLS.js
+      // dependency. Fall back to HLS only when no MP4 is provided.
+      if (fallbackSrc) {
+        setSrc(fallbackSrc);
+        return;
+      }
+
+      if (!preferredSrc) return;
+
+      const isHls = /\.m3u8(\?|$)/i.test(preferredSrc);
+
+      if (!isHls) {
+        setSrc(preferredSrc);
+        return;
+      }
+
+      if (typeof el.canPlayType === "function" && el.canPlayType("application/vnd.apple.mpegurl")) {
+        setSrc(preferredSrc);
+        return;
+      }
+
+      try {
+        const Hls = await loadHls();
+        if (cancelled) return;
+        if (!Hls?.isSupported?.()) return;
+
+        hls = new Hls();
+        hls.loadSource(preferredSrc);
+        hls.attachMedia(el);
+      } catch {
+        // no-op: no MP4 and HLS.js failed
+      }
+    }
+
+    init();
+
+    return () => {
+      cancelled = true;
+      hls?.destroy();
+    };
+  }, [isVideo, preferredSrc, fallbackSrc]);
+
+  if (isVideo && preferredSrc) {
+    const toggleMute = () => setMuted((current) => !current);
     return (
-      <video
-        src={src}
-        poster={poster || undefined}
-        controls
-        playsInline
-        preload="metadata"
-        onLoadedMetadata={(event) =>
-          setFit(
-            pickObjectFit(
-              event.currentTarget.videoWidth,
-              event.currentTarget.videoHeight,
-            ),
-          )
-        }
-        className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
-      />
+      <div className="relative w-full h-full">
+        <video
+          ref={videoRef}
+          poster={poster || undefined}
+          controls
+          playsInline
+          autoPlay
+          muted={muted}
+          loop
+          preload="metadata"
+          onLoadedMetadata={(event) =>
+            setFit(
+              pickObjectFit(
+                event.currentTarget.videoWidth,
+                event.currentTarget.videoHeight,
+              ),
+            )
+          }
+          className={`md:rounded-3xl w-full h-full bg-black ${fit}`}
+        />
+        <button
+          type="button"
+          onClick={toggleMute}
+          aria-label={muted ? "Unmute" : "Mute"}
+          className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-opacity hover:bg-black/70"
+        >
+          {muted ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+              <path d="M3.63 3.63a1 1 0 0 0 0 1.41L7.29 8.7 7 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l3.29 3.29A1 1 0 0 0 12 17.59V13.41l3.59 3.59a5.4 5.4 0 0 1-1.09.61 1 1 0 1 0 .78 1.84 7.4 7.4 0 0 0 1.72-1.02l1.59 1.59a1 1 0 0 0 1.41-1.41L5.05 3.63a1 1 0 0 0-1.42 0ZM19 12a7 7 0 0 0-3.36-6 1 1 0 1 0-.96 1.75A5 5 0 0 1 17 12a5 5 0 0 1-.31 1.72 1 1 0 0 0 .62 1.27 1 1 0 0 0 1.27-.61A7 7 0 0 0 19 12Zm-7-5.59V4.41a1 1 0 0 0-1.71-.7l-2 2 3.71 3.7Z" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+              <path d="M3 10v4a1 1 0 0 0 1 1h3l3.29 3.29A1 1 0 0 0 12 17.59V6.41a1 1 0 0 0-1.71-.7L7 9H4a1 1 0 0 0-1 1Zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05A4.5 4.5 0 0 0 16.5 12ZM14 3.23v2.06A6.99 6.99 0 0 1 19 12a6.99 6.99 0 0 1-5 6.71v2.06A9 9 0 0 0 21 12a9 9 0 0 0-7-8.77Z" />
+            </svg>
+          )}
+        </button>
+      </div>
     );
   }
 
   return (
     <img
-      src={(!isVideo && src) || poster || "/home_img.jpg"}
+      src={(!isVideo && preferredSrc) || poster || "/home_img.jpg"}
       alt={alt || ""}
       onLoad={(event) =>
         setFit(
@@ -84,8 +173,8 @@ function Video({
   const creator = video?.creator || video?.author || null;
   const state = video?.currentUserState || {};
 
-  const mediaSrc =
-    getVideoStreamUrl(video) || getVideoMediaUrl(video) || "/home_img.jpg";
+  const streamUrl = video ? getVideoStreamUrl(video) : "";
+  const mediaUrl = video ? getVideoMediaUrl(video) : "";
   const thumbnail = video ? getVideoThumbnail(video) : "/home_img.jpg";
   const avatarUrl = creator ? getProfileAvatar(creator) : "/user1.jpg";
   const displayName = creator ? getProfileName(creator) : "Name and Last name";
@@ -111,6 +200,7 @@ function Video({
 
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
+  const wheelCooldown = useRef(0);
 
   const handleTouchStart = (e) => {
     touchStartY.current = e.touches[0].clientY;
@@ -131,15 +221,30 @@ function Video({
     }
   };
 
+  const handleWheel = (e) => {
+    const now = Date.now();
+    if (now - wheelCooldown.current < 600) return;
+    const threshold = 20;
+    if (e.deltaY > threshold && canNext) {
+      wheelCooldown.current = now;
+      onNext();
+    } else if (e.deltaY < -threshold && canPrev) {
+      wheelCooldown.current = now;
+      onPrev();
+    }
+  };
+
   return (
     <section
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel}
       className="fixed inset-0 md:relative w-full h-screen lg:w-2/3 md:h-215 flex justify-center "
     >
       <div className="lg:max-w-md w-full h-full relative">
         <MediaFit
-          src={mediaSrc}
+          streamUrl={streamUrl}
+          mediaUrl={mediaUrl}
           poster={thumbnail}
           type={video?.type}
           alt={caption}

@@ -9,7 +9,6 @@ import {
   useNavigate,
 } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
-import { useLanguage } from "./context/LanguageContext";
 import Spinner from "./components/Layout/Spinner";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -22,7 +21,6 @@ const AppLayout = lazy(() => import("./components/Layout/AppLayout"));
 const Homepage = lazy(() => import("./pages/HomePageNew"));
 const ExplorePage = lazy(() => import("./pages/ExplorePage"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const CreateUpload = lazy(() => import("./old/CreateUpload"));
 const Messages = lazy(() => import("./pages/Messages"));
 const Challenges = lazy(() => import("./pages/Challenges"));
 const OAuthCallback = lazy(() => import("./pages/OAuthCallback"));
@@ -72,8 +70,6 @@ const PostDetail = lazy(() => import("./pages/PostDetail"));
 const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
 
 function FullPageLoader() {
-  const { t } = useLanguage();
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-white text-slate100 dark:bg-[#121212] dark:text-white">
       <Spinner big />
@@ -251,7 +247,6 @@ export default function App() {
             />
           </Route>
 
-          {/* <Route path="/create" element={renderLazyRoute(CreateUpload)} /> */}
           <Route path="/create-live" element={renderLazyRoute(CreateLive)} />
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
