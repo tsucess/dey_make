@@ -1,3 +1,12 @@
+/**
+ * ForgotPassword page.
+ *
+ * Requests a password-reset link. Posts to api.requestPasswordReset.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@sendPasswordResetLink.
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";

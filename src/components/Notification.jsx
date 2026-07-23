@@ -1,3 +1,14 @@
+/**
+ * Notification — legacy standalone notification card component.
+ *
+ * The primary notification UI lives in pages/Notifications.jsx; this file
+ * remains as a shared card used by other surfaces.
+ *
+ * Feature: 3.22 Notifications (see PROJECT_OVERVIEW.md).
+ * Backend: NotificationController.
+ */
+
+
 import { IoIosArrowBack } from "react-icons/io";
 import { IoMdClose } from "react-icons/io";
 import { useLanguage } from "../context/LanguageContext";

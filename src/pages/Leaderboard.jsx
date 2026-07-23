@@ -1,3 +1,10 @@
+/**
+ * Leaderboard page — ranked creators / videos.
+ *
+ * Feature: 3.23 Leaderboard (see PROJECT_OVERVIEW.md).
+ * Backend: LeaderboardController@index.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { MdArrowDropDown, MdArrowDropUp } from "react-icons/md";
 import { IoMdArrowDropright } from "react-icons/io";
@@ -188,7 +195,7 @@ export default function Leaderboard() {
           <div className="mt-8 w-full rounded-3xl bg-[#F3F3F3] px-6 py-12 text-center text-sm text-slate100 dark:bg-[#343434] dark:text-white">
             <Spinner/>
           </div>
-          
+
         ) : (
           <>
             <div className="mt-8 flex w-full items-end justify-center gap-2 md:mt-10">

@@ -1,3 +1,15 @@
+/**
+ * AppLayout — root shell for authenticated routes.
+ *
+ * Wraps every logged-in page with Sidebar (desktop), TopBar (search + user
+ * menu), BottomNav (mobile), and the RealtimeNotificationPopup listener.
+ * Handles the auth-guard redirect for guests.
+ *
+ * Feature: cross-cutting UI shell (see PROJECT_OVERVIEW.md §3.1 Auth,
+ * §3.22 Notifications).
+ */
+
+
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
@@ -174,7 +186,7 @@ export default function AppLayout() {
       ) : null}
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* TopBar — desktop only */} 
+        {/* TopBar — desktop only */}
         {!location.pathname.startsWith("/messages") &&
           !location.pathname.startsWith("/challenge") &&
           !location.pathname.startsWith("/coins-wallet") &&

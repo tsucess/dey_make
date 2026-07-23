@@ -1,3 +1,13 @@
+/**
+ * Profile page — authenticated user's own profile.
+ *
+ * Fetches api.getMyProfile and the user's posts/liked/saved/drafts tabs.
+ * Edits post back through api.updateMyProfile and refresh AuthContext.
+ *
+ * Feature: 3.8 Profile (see PROJECT_OVERVIEW.md).
+ * Backend: ProfileController (me/profile + tab endpoints).
+ */
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FaRegCommentDots, FaRegHeart, FaCheck, FaPlay } from "react-icons/fa";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";

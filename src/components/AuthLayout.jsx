@@ -1,3 +1,12 @@
+/**
+ * AuthLayout — shared shell for guest-facing auth pages (Login, SignUp, etc.).
+ *
+ * Renders the branded left panel + form area used by all auth flows.
+ *
+ * Feature: 3.1 Auth (see PROJECT_OVERVIEW.md).
+ */
+
+
 export default function AuthLayout({ children }) {
   return (
     <div className="flex min-h-screen w-full bg-white dark:bg-slate100">

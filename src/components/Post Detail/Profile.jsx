@@ -1,3 +1,11 @@
+/**
+ * PostDetail/Profile — author summary card shown alongside the post video.
+ *
+ * Feature: 3.4 Videos, 3.9 Profiles (see PROJECT_OVERVIEW.md).
+ * Backend: ProfileController@show.
+ */
+
+
 import { FaEllipsis } from "react-icons/fa6";
 import { IoMusicalNotes } from "react-icons/io5";
 

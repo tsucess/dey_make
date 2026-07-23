@@ -1,3 +1,11 @@
+/**
+ * Connections/Video — video card variant used inside the Connections feed.
+ *
+ * Feature: 3.10 Connections, 3.4 Videos (see PROJECT_OVERVIEW.md).
+ * Backend: ConnectionsController@feed, VideoInteractionController.
+ */
+
+
 import { useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";

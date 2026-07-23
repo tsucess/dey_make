@@ -1,3 +1,12 @@
+/**
+ * Challenges page — challenge browse + join.
+ *
+ * Lists active challenges, opens the brief, and links to submission entry.
+ *
+ * Feature: 3.14 Challenges (see PROJECT_OVERVIEW.md).
+ * Backend: ChallengeController@index/show.
+ */
+
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { IoTrophy, IoTrophyOutline, IoCheckmarkCircle } from "react-icons/io5";

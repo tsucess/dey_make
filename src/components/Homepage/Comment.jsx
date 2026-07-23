@@ -1,3 +1,14 @@
+/**
+ * Homepage/Comment — comment sheet mounted from the Home feed video card.
+ *
+ * Lists comments for a video (api.getComments), posts new ones, and
+ * supports replies + like toggles. Also shared with VideoDetails.
+ *
+ * Feature: 3.7 Comments (see PROJECT_OVERVIEW.md).
+ * Backend: CommentController@index/store/like.
+ */
+
+
 import { useRef, useState } from "react";
 import { BiDislike, BiLike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";

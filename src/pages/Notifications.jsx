@@ -1,3 +1,12 @@
+/**
+ * Notifications page.
+ *
+ * In-app notification list with mark-read and delete actions.
+ *
+ * Feature: 3.22 Notifications (see PROJECT_OVERVIEW.md).
+ * Backend: NotificationController.
+ */
+
 import { useMemo, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { formatRelativeTime } from "../utils/content";
@@ -54,13 +63,13 @@ const groupNotifications = (notifications) => {
   };
 
   const now = new Date();
-  
+
   notifications.forEach((n) => {
     const d = new Date(n.createdAt || Date.now());
     const isToday = d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
     const diffTime = Math.abs(now - d);
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (isToday) groups.Today.push(n);
     else if (diffDays <= 1) groups.Yesterday.push(n);
     else if (diffDays <= 30) groups["This Month"].push(n);
@@ -77,13 +86,8 @@ export default function Notifications() {
     notifications,
     loadingNotifications,
     notificationError,
-    unreadNotificationCount,
-    markingAllNotificationsRead,
-    busyNotificationId,
     onRetry,
     handleSelectNotification,
-    handleMarkNotificationRead,
-    handleMarkAllNotificationsRead,
   } = useNotifications({ enabled: true });
 
   const filteredNotifications = useMemo(
@@ -163,7 +167,7 @@ export default function Notifications() {
                     const userAvatar = notification.data?.userAvatar || "https://images.unsplash.com/photo-1531123897727-8f129e1b4492?w=80&q=80";
                     const titleLower = notification.title?.toLowerCase() || "";
                     const typeLower = notification.type?.toLowerCase() || "";
-                    
+
                     const hasAction = typeLower === "connect" || titleLower.includes("connect");
                     const hasThumbnail = !hasAction && (typeLower === "comment" || typeLower === "like" || titleLower.includes("comment") || titleLower.includes("like") || titleLower.includes("replied"));
 
@@ -178,13 +182,13 @@ export default function Notifications() {
                           <div className="w-2 flex justify-center">
                             {!isRead && <span className="h-2.5 w-2.5 rounded-full bg-orange100 shrink-0" aria-hidden="true" />}
                           </div>
-                          <img 
-                            src={userAvatar} 
-                            alt="" 
-                            className="w-12 h-12 rounded-full object-cover shrink-0" 
+                          <img
+                            src={userAvatar}
+                            alt=""
+                            className="w-12 h-12 rounded-full object-cover shrink-0"
                           />
                         </div>
-                        
+
                         <div className="flex-1 mt-2.5">
                           <p className="text-[15.5px] font-inter text-black dark:text-white leading-relaxed pr-4">
                             {notification.title}

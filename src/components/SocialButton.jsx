@@ -1,3 +1,14 @@
+/**
+ * SocialButton — OAuth social sign-in button (Google, Facebook).
+ *
+ * Redirects to the backend OAuth start URL; the callback lands on
+ * pages/OAuthCallback.jsx.
+ *
+ * Feature: 3.1 Auth (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@oauthRedirect / @oauthCallback.
+ */
+
+
 import { useState } from "react";
 import { api } from "../services/api";
 import { useLanguage } from "../context/LanguageContext";

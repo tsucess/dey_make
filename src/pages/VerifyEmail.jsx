@@ -1,3 +1,13 @@
+/**
+ * VerifyEmail page.
+ *
+ * Six-digit code entry after signup. On success, AuthContext flips the
+ * user to verified and the app routes to /home.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@verifyEmail, AuthController@resendVerification.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";

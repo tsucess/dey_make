@@ -1,5 +1,8 @@
 # dey_make
 
+> **Start here:** [PROJECT_OVERVIEW.md](../PROJECT_OVERVIEW.md) — full architectural map of the DeyMake platform (28 feature areas, pages, components, API methods, and their backend counterparts).
+
+
 ## OAuth frontend flow
 
 The frontend does not store Google or Facebook secrets.

@@ -1,3 +1,13 @@
+/**
+ * Toast — global toast host driven by the ToastContext.
+ *
+ * Renders queued toasts (success, error, info) in a stacked overlay.
+ * Consumers push via useToast().
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useEffect } from "react";
 import { FiX } from "react-icons/fi";
 import { useLanguage } from "../../context/LanguageContext";

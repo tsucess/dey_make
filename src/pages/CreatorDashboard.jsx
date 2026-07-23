@@ -1,3 +1,16 @@
+/**
+ * CreatorDashboard page — creator console.
+ *
+ * Tabs for analytics, monetization, memberships, campaigns, sponsorships,
+ * collaborations, and revenue-shares. Each tab lazy-loads via its own
+ * api.* method.
+ *
+ * Features: 3.13-3.17, 3.21 (see PROJECT_OVERVIEW.md).
+ * Backend: CreatorAnalyticsController, MonetizationController,
+ * MembershipController, BrandCampaignController, SponsorshipController,
+ * CollaborationController, RevenueShareController.
+ */
+
 import { useState } from "react";
 import { HiMiniSquares2X2 } from "react-icons/hi2";
 import Overview from "../components/CreatorDashboard/Overview";

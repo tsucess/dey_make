@@ -1,3 +1,10 @@
+/**
+ * ExploreHero — banner at the top of the Explore page.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ */
+
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { buildVideoLink, getVideoThumbnail, getVideoTitle, isActiveLiveVideo } from "../../utils/content";

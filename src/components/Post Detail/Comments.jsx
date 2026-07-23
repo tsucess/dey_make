@@ -1,3 +1,11 @@
+/**
+ * PostDetail/Comments — comment thread on the legacy post-detail page.
+ *
+ * Feature: 3.7 Comments (see PROJECT_OVERVIEW.md).
+ * Backend: CommentController.
+ */
+
+
 import { BiDislike, BiLike } from "react-icons/bi";
 import { CiFaceSmile } from "react-icons/ci";
 import { IoClose } from "react-icons/io5";

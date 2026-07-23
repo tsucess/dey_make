@@ -1,3 +1,13 @@
+/**
+ * PostLiveAnalytics page — analytics summary for a finished live stream.
+ *
+ * Renders peak viewers, duration, top gifters/likers/commenters, and
+ * new follows, sourced from VideoController@liveEngagements summary.
+ *
+ * Feature: 3.5 Live, 3.15 Analytics (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@liveEngagements (includeSummary=1).
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
 import { FaHeart, FaRegCommentDots } from "react-icons/fa";

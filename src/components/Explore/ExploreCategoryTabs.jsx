@@ -1,3 +1,11 @@
+/**
+ * ExploreCategoryTabs — horizontally scrollable category filter for Explore.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ * Backend: CategoryController@index.
+ */
+
+
 import React from "react";
 
 const FALLBACK_TABS = [

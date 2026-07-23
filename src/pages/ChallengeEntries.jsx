@@ -1,3 +1,10 @@
+/**
+ * ChallengeEntries page — submissions for a single challenge.
+ *
+ * Feature: 3.14 Challenges (see PROJECT_OVERVIEW.md).
+ * Backend: ChallengeController@submissions.
+ */
+
 import { HiMiniSquares2X2 } from "react-icons/hi2";
 import HeroSection from "../components/ChallengeEntries/HeroSection";
 import StatsSection from "../components/ChallengeEntries/StatsSection";

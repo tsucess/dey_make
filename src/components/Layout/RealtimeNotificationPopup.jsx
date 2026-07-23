@@ -1,3 +1,14 @@
+/**
+ * RealtimeNotificationPopup — toast-style popup for incoming push notifications.
+ *
+ * Subscribes to the private user channel via services/realtime.js and
+ * renders a transient card when a new notification broadcasts.
+ *
+ * Feature: 3.22 Notifications, 3.28 Realtime (see PROJECT_OVERVIEW.md).
+ * Backend: broadcasts from NotificationService.
+ */
+
+
 import { useLanguage } from "../../context/LanguageContext";
 
 export default function RealtimeNotificationPopup({ notification, onSelectNotification, onDismiss }) {

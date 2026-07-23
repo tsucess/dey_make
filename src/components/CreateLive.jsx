@@ -1,3 +1,15 @@
+/**
+ * CreateLive — form panel used by LivePreview to configure a new live stream.
+ *
+ * Collects title, description, category, and privacy before the host taps
+ * "Go Live", at which point LivePreview calls api.createVideo followed by
+ * api.startVideoLive.
+ *
+ * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@store, VideoController@startLive.
+ */
+
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

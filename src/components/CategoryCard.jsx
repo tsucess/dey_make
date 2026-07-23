@@ -1,3 +1,11 @@
+/**
+ * CategoryCard — category-picker tile used across Create, Explore, LivePreview.
+ *
+ * Feature: 3.3 Explore, 3.4 Videos (see PROJECT_OVERVIEW.md).
+ * Backend: CategoryController@index.
+ */
+
+
 import { FALLBACK_THUMBNAIL } from "../utils/content";
 
 export default function CategoryCard({ thumb, label, subs, onClick, active = false }) {

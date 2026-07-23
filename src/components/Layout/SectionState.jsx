@@ -1,3 +1,13 @@
+/**
+ * SectionState — shared empty / loading / error placeholder for feed sections.
+ *
+ * Reused across Explore, Live, Search, Analytics, etc. Accepts title,
+ * message, loading flag, and an optional action button.
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 import Spinner from "./Spinner";
 
 function joinClassNames(...values) {

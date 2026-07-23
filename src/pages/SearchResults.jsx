@@ -1,3 +1,13 @@
+/**
+ * SearchResults page.
+ *
+ * Reads ?q= from the URL and renders per-tab result lists (videos,
+ * creators, categories) via api.searchVideos/searchCreators/etc.
+ *
+ * Feature: 3.9 Search (see PROJECT_OVERVIEW.md).
+ * Backend: SearchController.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { HiSearch } from "react-icons/hi";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";

@@ -1,3 +1,13 @@
+/**
+ * PreviewLive — camera-preview surface shown before going live.
+ *
+ * Renders the local webcam feed and privacy/mode controls that feed into
+ * CreateLive's submit flow.
+ *
+ * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";

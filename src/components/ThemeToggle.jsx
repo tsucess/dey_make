@@ -1,3 +1,10 @@
+/**
+ * ThemeToggle — light/dark theme switch, backed by ThemeContext.
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../context/LanguageContext";
 import { MdSunny } from "react-icons/md";
@@ -18,7 +25,7 @@ export default function ThemeToggle() {
       aria-label={ariaLabel}
     >
         <MdSunny className="w-6 h-6 text-black dark:text-white"/>
-        
+
         <IoIosMoon className="text-black/20 w-6 h-6 dark:text-white"/>
     </button>
     <button

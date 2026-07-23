@@ -1,3 +1,12 @@
+/**
+ * MentionText — renders text with @username mentions parsed into links.
+ *
+ * Used by comments, notifications, and post bodies.
+ *
+ * Feature: 3.7 Comments, 3.22 Notifications (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { Fragment } from "react";
 import { Link } from "react-router-dom";
 import { buildSearchPath } from "../utils/search";

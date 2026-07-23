@@ -1,3 +1,12 @@
+/**
+ * CreatorLiveDashboard page — pre/post live analytics rollup.
+ *
+ * Lists a creator's recent live streams with headline analytics.
+ *
+ * Feature: 3.15 Analytics, 3.5 Live (see PROJECT_OVERVIEW.md).
+ * Backend: CreatorAnalyticsController, VideoController@liveIndex.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { HiArrowLeft } from "react-icons/hi";

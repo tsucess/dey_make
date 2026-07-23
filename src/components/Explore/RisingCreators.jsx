@@ -1,3 +1,11 @@
+/**
+ * RisingCreators — rising-creators list on Explore.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ * Backend: ExploreController@rising (Rising = engagement-based creators).
+ */
+
+
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";

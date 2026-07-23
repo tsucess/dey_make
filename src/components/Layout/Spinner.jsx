@@ -1,3 +1,10 @@
+/**
+ * Spinner — shared spinning-indicator primitive.
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 function Spinner({big}) {
   return (
     <div className="flex justify-center items-center">

@@ -1,3 +1,10 @@
+/**
+ * OrDivider — "or" horizontal separator used between form sections (e.g. OAuth vs. email login).
+ *
+ * Feature: 3.1 Auth (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useLanguage } from "../context/LanguageContext";
 
 export default function OrDivider({ label = "OR" }) {

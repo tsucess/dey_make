@@ -1,3 +1,15 @@
+/**
+ * Settings page — account, preferences, verification, and developer tabs.
+ *
+ * Hosts profile-edit form, preferences, creator verification submission,
+ * and developer (API keys + webhooks) tab.
+ *
+ * Features: 3.8 Profile, 3.24 Verification, 3.26 Developer
+ * (see PROJECT_OVERVIEW.md).
+ * Backend: ProfileController, CreatorVerificationController,
+ * DeveloperController.
+ */
+
 import { useEffect, useRef, useState } from "react";
 import { MdKeyboardArrowDown } from "react-icons/md";
 import { IoIosArrowBack } from "react-icons/io";

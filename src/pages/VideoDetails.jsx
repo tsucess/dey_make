@@ -1,3 +1,14 @@
+/**
+ * VideoDetails page — single-video watch screen.
+ *
+ * Fetches api.getVideo, plays it, renders like/save/share/report actions
+ * and the threaded comment panel.
+ *
+ * Feature: 3.4 Videos, 3.7 Comments (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@show, VideoInteractionController,
+ * CommentController.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { HiArrowLeft } from "react-icons/hi";

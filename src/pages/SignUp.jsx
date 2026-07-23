@@ -1,3 +1,14 @@
+/**
+ * SignUp page.
+ *
+ * Registration screen for email or phone. On submit calls
+ * api.register/registerWithPhone and routes to /verify-email or the
+ * phone-code entry screen.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@register, AuthController@registerWithPhone.
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
@@ -366,7 +377,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
                  </div>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-2 mb-8 mt-4 text-slate-500">
                <GrayLockIcon />
                <span className="text-sm font-inter">Your birthday won't be shown publicly.</span>
@@ -528,7 +539,7 @@ export default function SignUp({ onNavigateToLogin, onSuccess }) {
 
         {/* Buttons */}
         <div className="w-full flex flex-col gap-4">
-          <button 
+          <button
             onClick={() => setAuthMode("phone")}
             className="w-full flex items-center p-2 rounded-lg border border-gray-700 bg-[#1c1c1c] hover:bg-[#2c2c2c] transition-colors cursor-pointer text-white"
           >

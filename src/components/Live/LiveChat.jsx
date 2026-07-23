@@ -1,3 +1,15 @@
+/**
+ * LiveChat — in-stream chat overlay for the host + viewers.
+ *
+ * Posts messages via api.postComment against the live video and polls the
+ * comment endpoint for fresh entries. Also handles the mobile share sheet.
+ *
+ * Feature: 3.5 Live streaming, 3.7 Comments (see PROJECT_OVERVIEW.md).
+ * Backend: CommentController@store, CommentController@index.
+ */
+
+
+import { useState } from "react";
 import { CiFaceSmile } from "react-icons/ci";
 import { FaHeart } from "react-icons/fa";
 import { FaArrowLeftLong } from "react-icons/fa6";
@@ -5,21 +17,74 @@ import { IoMdArrowDropdown } from "react-icons/io";
 import { RiShareForwardLine } from "react-icons/ri";
 import { TbSend2 } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../services/api";
+import {
+  formatCompactNumber,
+  getProfileAvatar,
+  getProfileName,
+} from "../../utils/content";
 
-function LiveChat() {
-    const navigate = useNavigate()
+function formatChatTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
+    const navigate = useNavigate();
+    const [comment, setComment] = useState("");
+    const [submitting, setSubmitting] = useState(false);
+
+    const creator = video?.author || video?.creator || null;
+    const creatorAvatar = creator ? getProfileAvatar(creator) : "/story5.jpg";
+    const creatorName = creator ? getProfileName(creator) : "User1234567890";
+    const subscribers = Number(creator?.subscriberCount ?? 0);
+    const isSubscribed = Boolean(video?.currentUserState?.subscribed);
+
+    const chatItems = engagements
+      .filter((event) => event.type === "comment")
+      .slice(0, 12);
+
+    async function handleSubmit(event) {
+      event.preventDefault();
+      const body = comment.trim();
+      if (!videoId || !body || submitting) return;
+      setSubmitting(true);
+      try {
+        await api.postComment(videoId, body);
+        setComment("");
+        onSubmitted?.();
+      } catch {
+        /* keep the comment for retry */
+      } finally {
+        setSubmitting(false);
+      }
+    }
+
+    async function handleConnect() {
+      const creatorId = creator?.id;
+      if (!creatorId) return;
+      try {
+        if (isSubscribed) await api.unsubscribeFromCreator(creatorId);
+        else await api.subscribeToCreator(creatorId);
+      } catch {
+        /* ignore */
+      }
+    }
+
   return <div className="flex flex-col gap-8 font-inter col-span-2">
     <button onClick={()=> navigate('/live')} className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-5 h-5" /></button>
     <div className="flex items-center gap-3">
         <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150 flex-1">
         <div className="flex items-center gap-2">
-            <img src="/story5.jpg" alt="" className="w-7.5 h-7.5 rounded-full object-cover"/>
+            <img src={creatorAvatar} alt="" className="w-7.5 h-7.5 rounded-full object-cover"/>
         <div className="flex flex-col gap-1">
-            <h4 className="text-sm text-black dark:text-white">User1234567890</h4>
-            <div className="flex items-end gap-1"> <FaHeart className="text-red100 w-5 h-5" /> <span className="text-[10px] text-black dark:text-white">184k</span></div>
+            <h4 className="text-sm text-black dark:text-white">{creatorName}</h4>
+            <div className="flex items-end gap-1"> <FaHeart className="text-red100 w-5 h-5" /> <span className="text-[10px] text-black dark:text-white">{subscribers ? formatCompactNumber(subscribers) : "184k"}</span></div>
         </div>
         </div>
-        <button className="w-25 h-8 rounded-full bg-orange100 text-black font-semibold text-xs">Connect</button>
+        <button onClick={handleConnect} className="w-25 h-8 rounded-full bg-orange100 text-black font-semibold text-xs">{isSubscribed ? "Connected" : "Connect"}</button>
         </div>
         <button className="border border-black/10 dark:border-white/10 rounded-2xl w-13 h-15 flex items-center justify-center bg-white300 dark:bg-slate150 shrink-0"><RiShareForwardLine className="text-black dark:text-white w-7 h-7" /></button>
     </div>
@@ -32,20 +97,28 @@ function LiveChat() {
         <div className="flex flex-col gap-10">
             <div className="flex flex-col gap-6 h-50 overflow-y-auto">
                 {
-                    [1,2, 3,4].map(i => <div key={i} className="flex items-start gap-2">
-                        <img src="/user1.jpg" alt="" className="w-12 h-12 rounded-full"/>
+                    (chatItems.length ? chatItems : [1,2, 3,4]).map((entry, i) => {
+                      const isReal = typeof entry === "object" && entry !== null;
+                      const actor = isReal ? entry.actor : null;
+                      const avatar = actor ? getProfileAvatar(actor) : "/user1.jpg";
+                      const username = actor?.username ? `@${actor.username}` : "@SammieNed";
+                      const body = isReal ? entry.body : "You are so amazing, and I really love your contents.";
+                      const time = isReal ? formatChatTime(entry.createdAt) : "10:21 PM";
+                      return (
+                      <div key={isReal ? entry.id : i} className="flex items-start gap-2">
+                        <img src={avatar} alt="" className="w-12 h-12 rounded-full"/>
                         <div className="flex flex-col gap-1">
-                            <p className="text-black dark:text-white text-base">@SammieNed</p>
-                            <span className="text-black dark:text-white text-sm">You are so amazing, and I really love your contents. 10:21 PM</span>
+                            <p className="text-black dark:text-white text-base">{username}</p>
+                            <span className="text-black dark:text-white text-sm">{body} {time}</span>
                         </div>
-                    </div>)
+                    </div>);})
                 }
             </div>
-            <div className="py-6 px-4 flex gap-2 items-center bg-slate150 dark:bg-slate300 rounded-full">
-                <input type="text" name="" id="" placeholder="Add a comment..." className="text-base font-medium outline-none w-50"/>
-                <button><CiFaceSmile className="text-black dark:text-white w-6 h-6" /></button>
-                <button className="bg-orange100 py-3 px-3 rounded-full flex items-center justify-center shrink-0"><TbSend2 className="w-6 h-6 text-black" /></button>
-            </div>
+            <form onSubmit={handleSubmit} className="py-6 px-4 flex gap-2 items-center bg-slate150 dark:bg-slate300 rounded-full">
+                <input type="text" name="" id="" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment..." className="text-base font-medium outline-none w-50 bg-transparent"/>
+                <button type="button"><CiFaceSmile className="text-black dark:text-white w-6 h-6" /></button>
+                <button type="submit" disabled={submitting} className="bg-orange100 py-3 px-3 rounded-full flex items-center justify-center shrink-0 disabled:opacity-60"><TbSend2 className="w-6 h-6 text-black" /></button>
+            </form>
         </div>
     </div>
   </div>;

@@ -1,3 +1,13 @@
+/**
+ * NotificationButton — bell icon + unread-count badge in the TopBar.
+ *
+ * Uses the shared useNotifications hook to reflect live unread counts.
+ *
+ * Feature: 3.22 Notifications (see PROJECT_OVERVIEW.md).
+ * Backend: NotificationController@unreadCount.
+ */
+
+
 import { IoNotificationsOutline } from "react-icons/io5";
 
 export default function NotificationButton({

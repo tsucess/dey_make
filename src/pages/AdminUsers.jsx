@@ -1,3 +1,13 @@
+/**
+ * AdminUsers page — legacy admin users screen kept as a route target.
+ *
+ * The main admin console lives under src/Admin/. This file is retained
+ * for its route in App.jsx and delegates rendering to the admin layout.
+ *
+ * Feature: 3.27 Admin (see PROJECT_OVERVIEW.md).
+ * Backend: AdminUserManagementController.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { HiArrowLeft } from "react-icons/hi";
 import { Navigate, useNavigate } from "react-router-dom";

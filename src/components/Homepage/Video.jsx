@@ -1,3 +1,15 @@
+/**
+ * Homepage/Video — the primary short-form video card on the Home feed.
+ *
+ * Renders the player, meta strip (author, caption, category), and side
+ * action rail (like, comment, save, share, tip). Consumes the video
+ * object from HomePageNew and calls api.* handlers for each interaction.
+ *
+ * Feature: 3.4 Videos, 3.7 Comments, 3.12 Tips (see PROJECT_OVERVIEW.md).
+ * Backend: VideoInteractionController, CommentController, FanTipController.
+ */
+
+
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";

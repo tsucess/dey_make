@@ -1,3 +1,13 @@
+/**
+ * Create page — video upload + publish flow.
+ *
+ * Orchestrates media upload (utils/upload.js), form fields, category
+ * pick, and posts to api.createVideo. Chained with PostDetailsForm.
+ *
+ * Feature: 3.4 Videos, 3.6 Uploads (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@store, UploadController.
+ */
+
 import { useRef, useState } from "react";
 import { HiOutlineDocumentPlus } from "react-icons/hi2";
 import { MdAspectRatio, MdSlowMotionVideo } from "react-icons/md";

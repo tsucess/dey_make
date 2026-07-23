@@ -1,3 +1,10 @@
+/**
+ * InputField — shared labelled text/password/email input primitive.
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 

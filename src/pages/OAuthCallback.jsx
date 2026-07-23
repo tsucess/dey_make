@@ -1,3 +1,14 @@
+/**
+ * OAuthCallback page.
+ *
+ * Landing target for external OAuth providers. Reads the returned code
+ * from the URL, exchanges it via api.oauthCallback, and either verifies
+ * or logs the user in.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@oauthCallback.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";

@@ -1,3 +1,14 @@
+/**
+ * ExplorePage — discovery screen.
+ *
+ * Trending hashtags, Rising creators (engagement-based), and Top videos
+ * (engagement-based), grouped by category tab. Data comes from
+ * api.getExploreTrending / getExploreRising / getExploreTop.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ * Backend: ExploreController@trending/rising/top/hashtags.
+ */
+
 import React, { useEffect, useMemo, useState } from "react";
 import ExploreCategoryTabs from "../components/Explore/ExploreCategoryTabs";
 import ExploreHero from "../components/Explore/ExploreHero";

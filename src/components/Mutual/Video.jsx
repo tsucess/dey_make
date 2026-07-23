@@ -1,3 +1,11 @@
+/**
+ * Mutual/Video — video card variant used inside the Mutuals feed.
+ *
+ * Feature: 3.10 Connections (see PROJECT_OVERVIEW.md).
+ * Backend: MutualsController@feed.
+ */
+
+
 import { useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";

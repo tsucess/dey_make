@@ -1,3 +1,10 @@
+/**
+ * ProfileSubscribers page — list of the current user's subscribers.
+ *
+ * Feature: 3.8 Profile (see PROJECT_OVERVIEW.md).
+ * Backend: ProfileController@subscribers.
+ */
+
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Spinner from "../components/Layout/Spinner";

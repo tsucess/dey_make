@@ -1,3 +1,12 @@
+/**
+ * ResetPassword page.
+ *
+ * Sets a new password given a valid reset token from the email link.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@resetPassword.
+ */
+
 import { useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";

@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+/**
+ * TopBar — desktop top navigation with search, language, notifications, and user menu.
+ *
+ * Feature: cross-cutting UI shell, 3.8 Search, 3.22 Notifications
+ * (see PROJECT_OVERVIEW.md).
+ * Backend: SearchController, NotificationController.
+ */
+
+
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiSearch, HiPlus, HiChevronDown } from "react-icons/hi";
 import { useAuth } from "../../context/AuthContext";
@@ -330,7 +339,7 @@ export default function TopBar({ notificationState = null }) {
               {/* Blue dot indicator for notifications */}
               <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 border border-black300"></span>
             </div>
-            
+
             {/* Avatar */}
             <Link to="/profile" className="flex items-center gap-2 cursor-pointer ml-2">
               <img

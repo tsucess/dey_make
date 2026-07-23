@@ -1,3 +1,13 @@
+/**
+ * Workspace page — AI assistant + editing studio.
+ *
+ * Caption generation, content-idea prompts, and lightweight editing
+ * projects sit on this single screen.
+ *
+ * Feature: 3.18 AI (see PROJECT_OVERVIEW.md).
+ * Backend: AiAssistantController, AiEditingStudioController.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { IoIosArrowBack } from "react-icons/io";
 import { useNavigate } from "react-router-dom";

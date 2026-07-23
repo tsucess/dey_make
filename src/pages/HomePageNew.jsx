@@ -1,3 +1,14 @@
+/**
+ * HomePageNew — authenticated Home screen.
+ *
+ * Fetches the personalized home payload (trending, category rails,
+ * featured lives) via api.getHome and renders the vertical feed via
+ * components/Homepage/Video and the stories rail.
+ *
+ * Feature: 3.2 Home feed (see PROJECT_OVERVIEW.md).
+ * Backend: HomeController@index.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Comment from "../components/Homepage/Comment";

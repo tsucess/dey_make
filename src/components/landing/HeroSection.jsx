@@ -65,7 +65,7 @@ const letter = {
   );
 }
 
-export default function HeroSection({ onSignUp }) {
+export default function HeroSection() {
   const { isDark } = useTheme();
   const { t } = useLanguage();
   const x = useMotionValue(0);

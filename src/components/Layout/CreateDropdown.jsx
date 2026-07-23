@@ -1,3 +1,13 @@
+/**
+ * CreateDropdown — "+" button menu that opens the creation flows.
+ *
+ * Routes into /create (video), /create-live (live), /workspace (AI editing),
+ * and story/post entry points.
+ *
+ * Feature: 3.4 Videos, 3.5 Live, 3.6 Uploads (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { Link } from "react-router-dom";
 import { MdOutlineDriveFolderUpload } from "react-icons/md";
 import { MdOutlineSurroundSound } from "react-icons/md";

@@ -1,3 +1,11 @@
+/**
+ * TrendingList — trending hashtags list on Explore.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ * Backend: ExploreController@trending (Trending = hashtags).
+ */
+
+
 import React from "react";
 
 const FALLBACK_TOPICS = [

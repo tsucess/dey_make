@@ -1,4 +1,15 @@
-import { useState } from "react";
+/**
+ * LivePreview page — creator go-live setup screen.
+ *
+ * Lets the creator title their stream, pick a category, and press
+ * "Go Live Now". On submit it calls api.createVideo({ isLive: true, ... })
+ * then api.startVideoLive(video.id) and navigates to /live/:id.
+ *
+ * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@store, VideoController@startLive.
+ */
+
+import { useEffect, useState } from "react";
 import { FaRegUser, FaUserFriends } from "react-icons/fa";
 import { FiLock, FiUsers } from "react-icons/fi";
 import { GiAlliedStar, GiStarKey } from "react-icons/gi";
@@ -7,8 +18,9 @@ import { LuDot } from "react-icons/lu";
 import { PiBasketballLight } from "react-icons/pi";
 import { TbCamera, TbHearts } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
+import { api, firstError } from "../services/api";
 
-const categoryTab = [
+const FALLBACK_CATEGORY_TABS = [
   "Dance",
   "Music",
   "Gaming",
@@ -73,11 +85,78 @@ const settings = [
 
 function LivePreview() {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategorye] = useState("Dance");
+  const [title, setTitle] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("Dance");
+  const [activeCategoryId, setActiveCategoryId] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
-  function handleActiveCategoryChange(value) {
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadCategories() {
+      try {
+        const response = await api.getCategories();
+        const list = response?.data?.categories || [];
+        if (!ignore && list.length) {
+          setCategories(list);
+          const first = list[0];
+          setActiveCategory(first?.name || "Dance");
+          setActiveCategoryId(first?.id ?? null);
+        }
+      } catch {
+        // Fall back to hardcoded tabs silently.
+      }
+    }
+
+    loadCategories();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  function handleActiveCategoryChange(value, id = null) {
     setActiveCategory(value);
+    setActiveCategoryId(id);
   }
+
+  async function handleGoLive() {
+    if (submitting) return;
+
+    if (!title.trim()) {
+      setError("Please enter a stream title.");
+      return;
+    }
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const createResponse = await api.createVideo({
+        type: "video",
+        title: title.trim(),
+        categoryId: activeCategoryId,
+        isLive: true,
+        isDraft: false,
+      });
+
+      const video = createResponse?.data?.video;
+      if (!video?.id) throw new Error("Unable to start the live stream.");
+
+      await api.startVideoLive(video.id);
+      navigate(`/live/${video.id}`, { replace: true });
+    } catch (nextError) {
+      setError(firstError(nextError.errors, nextError.message || "Unable to start the live stream."));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const displayedCategoryTabs = categories.length
+    ? categories.map((category) => ({ name: category.name, id: category.id }))
+    : FALLBACK_CATEGORY_TABS.map((name) => ({ name, id: null }));
   return (
     <section className="flex flex-col gap-8 font-inter dark:bg-black300 pb-20">
       <div className=" relative">
@@ -113,12 +192,18 @@ function LivePreview() {
           type="text"
           name=""
           id=""
+          value={title}
+          onChange={(event) => setTitle(event.target.value.slice(0, 80))}
+          maxLength={80}
           className="px-6 py-3 rounded-full bg-white300 dark:bg-black100 outline-none"
           placeholder="What’s your stream about? (e.g. Late night dance)"
         />
         <span className="text-orange100 text-sm self-end font-semibold">
-          0/80
+          {title.length}/80
         </span>
+        {error ? (
+          <span className="text-red100 text-sm self-start font-medium">{error}</span>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-4.75 font-inter px-6">
@@ -126,17 +211,17 @@ function LivePreview() {
           Category
         </h3>
         <div className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-          {categoryTab.map((tab) => (
+          {displayedCategoryTabs.map((tab) => (
             <button
-              key={tab}
-              onClick={() => handleActiveCategoryChange(tab)}
+              key={tab.id ?? tab.name}
+              onClick={() => handleActiveCategoryChange(tab.name, tab.id)}
               className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 ${
-                activeCategory === tab
+                activeCategory === tab.name
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
               }`}
             >
-              {tab}
+              {tab.name}
             </button>
           ))}
         </div>
@@ -148,7 +233,7 @@ function LivePreview() {
           Settings
         </h3>
         <div className="flex flex-col gap-4.5">{
-            settings.map(({title, desc, isCheckbox, icon:Icon}, i) => <div className="flex justify-between items-center gap-3 border border-black/30 rounded-2xl dark:border-white/30 p-4">
+            settings.map(({title, desc, isCheckbox, icon:Icon}, i) => <div key={`${title}-${i}`} className="flex justify-between items-center gap-3 border border-black/30 rounded-2xl dark:border-white/30 p-4">
                 <div className="flex items-center gap-2">
                     <div className="rounded-md w-8 h-8 border border-black/40 dark:border-white/40 flex items-center justify-center">
                     <Icon className="w-5 h-5 text-black dark:text-white"/></div>
@@ -165,10 +250,10 @@ function LivePreview() {
                     }</div>
             </div>)
             }</div>
-            <button onClick={()=> navigate('/lives')} className="bg-orange100 py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center">Go Live Now</button>
+            <button disabled={submitting} onClick={handleGoLive} className="bg-orange100 py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center disabled:opacity-60 disabled:cursor-not-allowed">{submitting ? "Going Live..." : "Go Live Now"}</button>
       </div>
 
-      
+
     </section>
   );
 }

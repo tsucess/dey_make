@@ -1,3 +1,10 @@
+/**
+ * Logo — brand mark component used in nav bars and auth layouts.
+ *
+ * Feature: cross-cutting UI primitive (see PROJECT_OVERVIEW.md).
+ */
+
+
 export default function Logo({ className = "" }) {
   return (
     <div className="flex justify-center">
@@ -10,7 +17,7 @@ export default function Logo({ className = "" }) {
         alt="DeyMake"
         className={`w-40 h-12 md:w-50 md:h-12 object-contain hidden md:block ${className}`}
       /></div>
-      
-    
+
+
   );
 }

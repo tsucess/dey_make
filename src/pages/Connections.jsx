@@ -1,3 +1,10 @@
+/**
+ * Connections page — "people you follow" feed.
+ *
+ * Feature: 3.10 Messaging & connections (see PROJECT_OVERVIEW.md).
+ * Backend: ConnectionsController@feed.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Comment from "../components/connections/Comment";
@@ -208,7 +215,7 @@ function Connections() {
         creators={creators}
         onViewStory={handleViewStory}
         onToggleConnect={handleToggleConnect}
-      /> 
+      />
       <div className="flex flex-col md:flex-row gap-10">
         <Video
           video={current}

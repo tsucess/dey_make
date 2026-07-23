@@ -1,3 +1,13 @@
+/**
+ * VideoCard — reusable thumbnail-based video tile.
+ *
+ * Used by Explore, Search, Profile, Live, and other grid-based screens.
+ * Accepts normalized props via mapVideoToCardProps (utils/content.js).
+ *
+ * Feature: 3.4 Videos (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { useNavigate } from "react-router-dom";
 import { buildVideoLink, FALLBACK_AVATAR, FALLBACK_THUMBNAIL } from "../utils/content";
 import { useLanguage } from "../context/LanguageContext";

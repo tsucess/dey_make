@@ -1,3 +1,13 @@
+/**
+ * LandingPage — public marketing / pre-launch screen.
+ *
+ * Waitlist capture + top-level pitch. Signup CTA leads to /signup;
+ * waitlist form posts to api.joinWaitlist.
+ *
+ * Feature: 3.28 Misc / waitlist (see PROJECT_OVERVIEW.md).
+ * Backend: WaitlistController@store.
+ */
+
 import LandingNavbar from "../components/landing/LandingNavbar";
 import HeroSection from "../components/landing/HeroSection";
 import CreativesSection from "../components/landing/CreativesSection";

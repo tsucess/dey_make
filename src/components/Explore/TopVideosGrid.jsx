@@ -1,3 +1,11 @@
+/**
+ * TopVideosGrid — top-videos grid on Explore.
+ *
+ * Feature: 3.3 Explore (see PROJECT_OVERVIEW.md).
+ * Backend: ExploreController@top (Top = engagement-based videos).
+ */
+
+
 import React from "react";
 import { Link } from "react-router-dom";
 import { HiPlay } from "react-icons/hi";

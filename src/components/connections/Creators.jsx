@@ -1,3 +1,11 @@
+/**
+ * Connections/Creators — suggested-creators rail on the Connections page.
+ *
+ * Feature: 3.10 Connections, 3.9 Profiles (see PROJECT_OVERVIEW.md).
+ * Backend: CreatorController@suggestions, SubscriptionController.
+ */
+
+
 const FALLBACK_CREATORS = [
     {id: null, fullName: 'Name Name', username: '@name', avatarUrl: '/user1.jpg'},
     {id: null, fullName: 'Name Name', username: '@name', avatarUrl: '/user1.jpg'},

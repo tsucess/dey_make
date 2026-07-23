@@ -1,3 +1,13 @@
+/**
+ * BottomNav — mobile primary navigation bar.
+ *
+ * Mobile counterpart to Sidebar. Fixed to the bottom of the viewport on
+ * screens < md and hosts Home, Explore, Create (dropdown), Inbox, Profile.
+ *
+ * Feature: cross-cutting UI shell (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
@@ -167,7 +177,7 @@ export default function BottomNav() {
           </NavLink>
         );
       })} */}
-      {navItems.map(({ to, labelKey, icon }, i) => {
+      {navItems.map(({ to, labelKey, icon }) => {
         const label = t(labelKey);
 
         if (to === "/create") {

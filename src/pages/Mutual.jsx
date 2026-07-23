@@ -1,3 +1,10 @@
+/**
+ * Mutual page — mutuals feed.
+ *
+ * Feature: 3.10 Messaging & connections (see PROJECT_OVERVIEW.md).
+ * Backend: MutualsController@feed.
+ */
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Comment from "../components/Mutual/Comment";

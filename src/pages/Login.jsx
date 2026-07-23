@@ -1,3 +1,13 @@
+/**
+ * Login page.
+ *
+ * Email/password + phone-code + OAuth entry point. On success stores the
+ * Sanctum token via context/AuthContext and redirects to /home.
+ *
+ * Feature: 3.1 Authentication (see PROJECT_OVERVIEW.md).
+ * Backend: AuthController@login, AuthController@verifyPhoneCode.
+ */
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";

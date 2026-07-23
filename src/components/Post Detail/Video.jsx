@@ -1,3 +1,11 @@
+/**
+ * PostDetail/Video — video player + primary meta panel on the post-detail page.
+ *
+ * Feature: 3.4 Videos (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@show.
+ */
+
+
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
 import { FaRegCommentDots, FaRegHeart } from "react-icons/fa";

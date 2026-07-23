@@ -1,3 +1,11 @@
+/**
+ * PostDetail/SideSection — right-rail related-videos list on the post-detail page.
+ *
+ * Feature: 3.4 Videos (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@related.
+ */
+
+
 import { useState } from "react";
 import Comments from "./Comments";
 

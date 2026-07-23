@@ -1,3 +1,12 @@
+/**
+ * PostDetail page — legacy alias for the video-detail view.
+ *
+ * Kept as a route target for `/post-detail`.
+ *
+ * Feature: 3.4 Videos (see PROJECT_OVERVIEW.md).
+ * Backend: VideoController@show.
+ */
+
 import Profile from "../components/Post Detail/Profile";
 import SideSection from "../components/Post Detail/SideSection";
 import Video from "../components/Post Detail/Video";

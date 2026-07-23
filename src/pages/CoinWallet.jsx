@@ -1,3 +1,13 @@
+/**
+ * CoinWallet page — fan/creator wallet screen.
+ *
+ * Shows balance, transaction ledger, and payout controls. Data comes
+ * from api.getMonetizationSummary and api.getWalletTransactions.
+ *
+ * Feature: 3.12 Tips & wallet (see PROJECT_OVERVIEW.md).
+ * Backend: MonetizationController.
+ */
+
 import CoinTabSection from "../components/CoinsWallet/CoinTabSection";
 import HeroSection from "../components/CoinsWallet/HeroSection";
 

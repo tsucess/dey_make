@@ -1,3 +1,13 @@
+/**
+ * Sidebar — desktop primary navigation rail.
+ *
+ * Renders the top-level route links (Home, Explore, Connections, Mutual,
+ * Live, Messages, Creator Dashboard, etc.) inside AppLayout on md+ widths.
+ *
+ * Feature: cross-cutting UI shell (see PROJECT_OVERVIEW.md).
+ */
+
+
 import { Link, NavLink } from "react-router-dom";
 import { RiLogoutCircleLine } from "react-icons/ri";
 import { useAuth } from "../../context/AuthContext";
@@ -19,7 +29,7 @@ import {
 import { MdOutlineSurroundSound } from "react-icons/md";
 import { IoTrophyOutline, IoCompassOutline } from "react-icons/io5";
 
-function getNavItems(t, isAdmin, user) {
+function getNavItems(t, isAdmin) {
   return [
     { to: "/home", icon: HiOutlineViewGrid, label: t("common.homepage") },
     { to: "/explore", icon: IoCompassOutline, label: "Explore" },
@@ -41,13 +51,13 @@ function getNavItems(t, isAdmin, user) {
 export default function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
   const { logout, user } = useAuth();
   const { t } = useLanguage();
-  const navItems = getNavItems(t, Boolean(user?.isAdmin), user);
+  const navItems = getNavItems(t, Boolean(user?.isAdmin));
 
   return (
     <>
       {/* Mobile Overlay */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden"
           onClick={() => setIsSidebarOpen?.(false)}
         />

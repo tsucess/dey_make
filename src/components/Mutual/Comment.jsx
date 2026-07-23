@@ -1,3 +1,11 @@
+/**
+ * Mutual/Comment — comment sheet variant used inside the Mutuals feed.
+ *
+ * Feature: 3.7 Comments, 3.10 Connections (see PROJECT_OVERVIEW.md).
+ * Backend: CommentController.
+ */
+
+
 import { useRef, useState } from "react";
 import { BiDislike, BiLike, BiSolidDislike, BiSolidLike } from "react-icons/bi";
 import { CiFaceSmile } from "react-icons/ci";

@@ -1,3 +1,13 @@
+/**
+ * Messages page — direct messaging screen.
+ *
+ * Conversation list + thread view. Uses the conversation endpoints and
+ * resolves attachments via the backend link service.
+ *
+ * Feature: 3.10 Messaging (see PROJECT_OVERVIEW.md).
+ * Backend: ConversationController.
+ */
+
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { api, firstError } from "../services/api";
@@ -977,7 +987,7 @@ export default function Messages() {
             </div>
 
             <div className="lg:flex lg:flex-1  overflow-y-auto overflow-x-hidden pr-2 space-y-1 relative">
-              
+
               <div className=" h-100 overflow-y-auto overflow-x-hidden w-full z-20 bg-white p-4 dark:bg-black">
               <section>
                 <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">

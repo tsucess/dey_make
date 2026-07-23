@@ -1,3 +1,11 @@
+/**
+ * Connections/Story — story-bubble rail on the Connections page.
+ *
+ * Feature: 3.10 Connections (see PROJECT_OVERVIEW.md).
+ * Backend: StoryController@index.
+ */
+
+
 const FALLBACK_STORIES = [
   { id: "s1", thumbnailUrl: "/story1.jpg", mediaUrl: "/story1.jpg", author: { fullName: "Story 1" } },
   { id: "s2", thumbnailUrl: "/story2.jpg", mediaUrl: "/story2.jpg", author: { fullName: "Story 2" } },

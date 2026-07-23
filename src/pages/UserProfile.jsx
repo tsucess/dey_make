@@ -1,3 +1,13 @@
+/**
+ * UserProfile page — another user's public profile.
+ *
+ * Fetches api.getUser and api.getUserPosts. Hosts the Connect toggle
+ * (api.subscribeToCreator/unsubscribeFromCreator), merch, and plans tabs.
+ *
+ * Feature: 3.8 Profile (see PROJECT_OVERVIEW.md).
+ * Backend: UserController, VideoInteractionController@subscribe.
+ */
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IoMdArrowDropright } from "react-icons/io";
