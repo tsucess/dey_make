@@ -223,6 +223,7 @@ export default function App() {
               element={renderLazyRoute(Notification)}
             />
             <Route path="/lives" element={renderLazyRoute(Live)} />
+            <Route path="/lives/:id" element={renderLazyRoute(Live)} />
             <Route
               path="/live-preview"
               element={renderLazyRoute(LivePreview)}

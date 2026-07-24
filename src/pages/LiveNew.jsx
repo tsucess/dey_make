@@ -4,12 +4,14 @@
  * Reads :id from the URL, polls api.getLiveEngagements every 5s and
  * api.getLiveAudience every 20s, and shows the live timer, viewer count,
  * top-3-gifters rail, and chat feed. End-Live triggers api.stopVideoLive.
+ * The stream is also auto-stopped on unmount / tab-close / navigation
+ * away so leaving the page always ends the live session.
  *
  * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
  * Backend: VideoController@show/liveEngagements/liveAudience/stopLive.
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BsFillBarChartFill } from "react-icons/bs";
 import { FaCrown, FaEye, FaMicrophone, FaRegComment } from "react-icons/fa";
 import { GiStarKey } from "react-icons/gi";
@@ -57,6 +59,8 @@ function LiveNew() {
   const [elapsed, setElapsed] = useState("00:00");
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState("");
+  const stoppedRef = useRef(false);
+  const isLiveRef = useRef(false);
 
   const loadVideo = useCallback(async () => {
     if (!id) return;
@@ -95,6 +99,32 @@ function LiveNew() {
     return () => clearInterval(timer);
   }, [video?.liveStartedAt]);
 
+  useEffect(() => {
+    isLiveRef.current = Boolean(video?.isLive);
+    if (!video?.isLive) return undefined;
+
+    function handlePageHide() {
+      if (stoppedRef.current || !id) return;
+      stoppedRef.current = true;
+      api.stopVideoLiveBeacon(id);
+    }
+
+    window.addEventListener("pagehide", handlePageHide);
+    window.addEventListener("beforeunload", handlePageHide);
+    return () => {
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("beforeunload", handlePageHide);
+    };
+  }, [id, video?.isLive]);
+
+  useEffect(() => {
+    return () => {
+      if (stoppedRef.current || !isLiveRef.current || !id) return;
+      stoppedRef.current = true;
+      api.stopVideoLive(id).catch(() => {});
+    };
+  }, [id]);
+
   function handleToggleEndLive() {
     setEndLive((prev) => !prev);
   }
@@ -107,6 +137,8 @@ function LiveNew() {
     setEnding(true);
     try {
       await api.stopVideoLive(id);
+      stoppedRef.current = true;
+      isLiveRef.current = false;
       navigate("/live", { replace: true });
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || "Unable to end the live stream."));

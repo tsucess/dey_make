@@ -362,6 +362,23 @@ export const api = {
   getLiveAgoraSession: (id, options = {}) => request(`/videos/${id}/live/session${buildQueryString({ role: options.role })}`),
   startVideoLive: (id) => request(`/videos/${id}/live/start`, { method: "POST" }),
   stopVideoLive: (id) => request(`/videos/${id}/live/stop`, { method: "POST" }),
+  stopVideoLiveBeacon: (id) => {
+    const token = getStoredToken();
+    if (!token || !id) return false;
+    try {
+      fetch(`${API_BASE_URL}/videos/${id}/live/stop`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  },
   sendLiveSignal: (id, payload) => request(`/videos/${id}/live/signals`, { method: "POST", body: payload }),
   getLiveSignals: (id, options = {}) => request(`/videos/${id}/live/signals${buildQueryString({ after: options.after })}`),
   getLiveAudience: (id) => request(`/videos/${id}/live/audience`),
