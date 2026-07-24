@@ -213,10 +213,10 @@ function LivePreview() {
         <div className="flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {displayedCategoryTabs.map((tab) => (
             <button
-              key={tab.id ?? tab.name}
-              onClick={() => handleActiveCategoryChange(tab.name, tab.id)}
-              className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 ${
-                activeCategory === tab.name
+              key={tab}
+              onClick={() => handleActiveCategoryChange(tab)}
+              className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 cursor-pointer ${
+                activeCategory === tab
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
               }`}
@@ -250,10 +250,10 @@ function LivePreview() {
                     }</div>
             </div>)
             }</div>
-            <button disabled={submitting} onClick={handleGoLive} className="bg-orange100 py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center disabled:opacity-60 disabled:cursor-not-allowed">{submitting ? "Going Live..." : "Go Live Now"}</button>
+            <button onClick={()=> navigate('/lives')} className="bg-orange100 cursor-pointer py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center hover:bg-orange500 transition-all">Go Live Now</button>
       </div>
 
-
+       
     </section>
   );
 }
