@@ -218,7 +218,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
                     <div className="absolute -left-4 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange100 rounded-r-md"></div>
                   )}
                   <span
-                    className={`flex items-center gap-3 text-sm font-medium ${isActive ? "text-orange100" : "text-white"}`}
+                    className={`flex items-center gap-2 text-xs font-medium ${isActive ? "text-orange100" : "text-white"}`}
                   >
                     <nav.icon className="w-5 h-5" /> {nav.title}
                   </span>
@@ -249,7 +249,7 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
                             <div className="absolute -left-4 top-1/2 -translate-y-1/2 h-8 w-1 bg-orange100 rounded-r-md"></div>
                           )}
                           <span
-                            className={`flex items-center gap-3 text-sm font-medium ${isChildActive ? "text-orange100" : "text-white"}`}
+                            className={`flex items-center gap-2 text-xs font-medium ${isChildActive ? "text-orange100" : "text-white"}`}
                           >
                             <linkItem.icon className="w-5 h-5 shrink-0" />
                             <span>{linkItem.title}</span>
