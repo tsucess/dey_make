@@ -130,7 +130,7 @@ function LivePreview() {
             <button
               key={tab}
               onClick={() => handleActiveCategoryChange(tab)}
-              className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 ${
+              className={`transition-all text-sm py-2 md:py-3 px-3 md:px-5 rounded-xl font-semibold flex items-center gap-3 cursor-pointer ${
                 activeCategory === tab
                   ? "bg-orange100 text-black hover:bg-orange200"
                   : "text-black dark:text-white hover:bg-slate150 hover:dark:bg-black500"
@@ -165,10 +165,10 @@ function LivePreview() {
                     }</div>
             </div>)
             }</div>
-            <button onClick={()=> navigate('/lives')} className="bg-orange100 py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center">Go Live Now</button>
+            <button onClick={()=> navigate('/lives')} className="bg-orange100 cursor-pointer py-3 md:px-30 font-medium rounded-md text-sm text-black md:self-center hover:bg-orange500 transition-all">Go Live Now</button>
       </div>
 
-      
+       
     </section>
   );
 }

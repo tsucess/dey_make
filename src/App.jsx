@@ -44,7 +44,7 @@ const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
 const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
 const Notification = lazy(() => import("./pages/Notifications"));
 const LivePreview = lazy(() => import("./pages/LivePreview"));
-const Live = lazy(() => import("./pages/LiveNew"));
+const Live = lazy(() => import("./pages/LiveNew")); 
 const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
 const VerificationRequest = lazy(
@@ -68,6 +68,7 @@ const MobilePostDetailsForm = lazy(
 );
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
+const LivesShow = lazy(() => import("./pages/LivePage"));
 
 function FullPageLoader() {
   return (
@@ -186,7 +187,7 @@ export default function App() {
           <Route element={renderLazyRoute(AppLayout)}>
             <Route path="/home" element={renderLazyRoute(Homepage)} />
             <Route path="/explore" element={renderLazyRoute(ExplorePage)} />
-            <Route path="/live" element={renderLazyRoute(Live)} />
+            <Route path="/live" element={renderLazyRoute(LivesShow)} />
             {/* <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} /> */}
             <Route path="/watch-live" element={renderLazyRoute(WatchLive)} />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
