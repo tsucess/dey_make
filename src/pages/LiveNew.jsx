@@ -7,13 +7,18 @@
  * The stream is also auto-stopped on unmount / tab-close / navigation
  * away so leaving the page always ends the live session.
  *
+ * The webcam is acquired via getUserMedia and rendered inline so the
+ * creator sees their own feed. A MediaRecorder buffers the session and
+ * on end-live the blob is uploaded and attached to the video (which the
+ * backend flips to draft on stop) so it can be posted later.
+ *
  * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
- * Backend: VideoController@show/liveEngagements/liveAudience/stopLive.
+ * Backend: VideoController@show/liveEngagements/liveAudience/stopLive/update.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BsFillBarChartFill } from "react-icons/bs";
-import { FaCrown, FaEye, FaMicrophone, FaRegComment } from "react-icons/fa";
+import { BsFillBarChartFill, BsFillCameraVideoOffFill } from "react-icons/bs";
+import { FaCrown, FaEye, FaMicrophone, FaMicrophoneSlash, FaRegComment } from "react-icons/fa";
 import { GiStarKey } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { PiCoinFill } from "react-icons/pi";
@@ -23,18 +28,17 @@ import { useNavigate, useParams } from "react-router-dom";
 import EndLiveModal from "../components/Live/EndLiveModal";
 import { api, firstError } from "../services/api";
 import {
+  buildShareUrl,
   formatCompactNumber,
   getProfileAvatar,
   getProfileName,
 } from "../utils/content";
 
-const icons = [
-  FaMicrophone,
-  TiCameraOutline,
-  GiStarKey,
-  BsFillBarChartFill,
-  RiShareForwardLine,
-];
+function pickRecorderMimeType() {
+  if (typeof MediaRecorder === "undefined") return "";
+  const candidates = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm", "video/mp4"];
+  return candidates.find((type) => MediaRecorder.isTypeSupported?.(type)) || "";
+}
 
 function formatElapsed(startedAt) {
   if (!startedAt) return "00:00";
@@ -59,8 +63,14 @@ function LiveNew() {
   const [elapsed, setElapsed] = useState("00:00");
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState("");
+  const [micOn, setMicOn] = useState(true);
+  const [camOn, setCamOn] = useState(true);
   const stoppedRef = useRef(false);
   const isLiveRef = useRef(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const recorderRef = useRef(null);
+  const chunksRef = useRef([]);
 
   const loadVideo = useCallback(async () => {
     if (!id) return;
@@ -125,6 +135,87 @@ function LiveNew() {
     };
   }, [id]);
 
+  useEffect(() => {
+    let cancelled = false;
+    async function acquire() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        if (cancelled) { stream.getTracks().forEach((track) => track.stop()); return; }
+        streamRef.current = stream;
+        if (videoRef.current) videoRef.current.srcObject = stream;
+        const mimeType = pickRecorderMimeType();
+        if (typeof MediaRecorder !== "undefined") {
+          const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+          chunksRef.current = [];
+          recorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) chunksRef.current.push(event.data); };
+          recorder.start(1000);
+          recorderRef.current = recorder;
+        }
+      } catch { /* permission denied — creator sees fallback background */ }
+    }
+    acquire();
+    return () => {
+      cancelled = true;
+      const recorder = recorderRef.current;
+      if (recorder && recorder.state !== "inactive") { try { recorder.stop(); } catch { /* ignored */ } }
+      recorderRef.current = null;
+      const stream = streamRef.current;
+      if (stream) { stream.getTracks().forEach((track) => track.stop()); }
+      streamRef.current = null;
+    };
+  }, []);
+
+  const uploadRecording = useCallback(async () => {
+    const recorder = recorderRef.current;
+    if (!recorder) return;
+    const stopped = new Promise((resolve) => {
+      if (recorder.state === "inactive") { resolve(); return; }
+      recorder.onstop = () => resolve();
+      try { recorder.stop(); } catch { resolve(); }
+    });
+    await stopped;
+    const chunks = chunksRef.current;
+    if (!chunks.length || !id) return;
+    const blob = new Blob(chunks, { type: chunks[0].type || "video/webm" });
+    if (!blob.size) return;
+    try {
+      const ext = (blob.type.includes("mp4") ? "mp4" : "webm");
+      const formData = new FormData();
+      formData.append("file", new File([blob], `live-${id}.${ext}`, { type: blob.type }));
+      const response = await api.uploadFile(formData);
+      const uploadId = response?.data?.upload?.id;
+      if (uploadId) await api.updateVideo(id, { uploadId, isDraft: true });
+    } catch { /* upload/attach best-effort */ }
+  }, [id]);
+
+  function handleToggleMic() {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const nextEnabled = !micOn;
+    stream.getAudioTracks().forEach((track) => { track.enabled = nextEnabled; });
+    setMicOn(nextEnabled);
+  }
+
+  function handleToggleCam() {
+    const stream = streamRef.current;
+    if (!stream) return;
+    const nextEnabled = !camOn;
+    stream.getVideoTracks().forEach((track) => { track.enabled = nextEnabled; });
+    setCamOn(nextEnabled);
+  }
+
+  async function handleShare() {
+    if (!video) return;
+    const shareUrl = buildShareUrl(video);
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: video.title || "Live stream", url: shareUrl });
+      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      }
+    } catch { /* ignored */ }
+  }
+
   function handleToggleEndLive() {
     setEndLive((prev) => !prev);
   }
@@ -136,6 +227,7 @@ function LiveNew() {
     }
     setEnding(true);
     try {
+      await uploadRecording();
       await api.stopVideoLive(id);
       stoppedRef.current = true;
       isLiveRef.current = false;
@@ -162,7 +254,8 @@ function LiveNew() {
   }
 
   const title = video?.title || "Welcome to my Live";
-  const description = video?.description || video?.caption || "I’m Vera Stone, welcome to my live. Can I know you?";
+  const creatorName = getProfileName(video?.author || video?.creator, "your host");
+  const description = video?.description || video?.caption || `I’m ${creatorName}, welcome to my live. Can I know you?`;
   const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? 0);
   const topGifters = useMemo(() => summary?.topGifters?.slice(0, 3) || [], [summary]);
   const chatFeed = engagements.filter((event) => event.type === "comment" || event.type === "tip").slice(0, 4);
@@ -172,6 +265,13 @@ function LiveNew() {
       {endLive && <EndLiveModal handleEndLive={handleConfirmEndLive} video={video} summary={summary} onDismiss={handleToggleEndLive} ending={ending} />}
       <div className="w-full h-full min-h-screen relative font-inter">
         <img src="/Live.png" alt="" className="w-full h-full object-fill" />
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`${camOn ? "block" : "hidden"} absolute inset-0 w-full h-full object-cover`}
+        />
         <div className="flex flex-col gap-4 md:gap-10.5 absolute top-4 left-4 right-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-5.5">
@@ -246,15 +346,36 @@ function LiveNew() {
         </div>
 
         <div className="flex flex-col gap-4 absolute right-4 top-1/2 -translate-y-1/2">
-          {icons.map((Icon, i) => (
-            <div
-              key={i}
-              className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100"
-            >
-              {" "}
-              <Icon className="w-5 h-5 text-white" />
-            </div>
-          ))}
+          <button
+            type="button"
+            onClick={handleToggleMic}
+            aria-label={micOn ? "Mute microphone" : "Unmute microphone"}
+            className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100"
+          >
+            {micOn ? <FaMicrophone className="w-5 h-5 text-white" /> : <FaMicrophoneSlash className="w-5 h-5 text-white" />}
+          </button>
+          <button
+            type="button"
+            onClick={handleToggleCam}
+            aria-label={camOn ? "Turn camera off" : "Turn camera on"}
+            className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100"
+          >
+            {camOn ? <TiCameraOutline className="w-5 h-5 text-white" /> : <BsFillCameraVideoOffFill className="w-5 h-5 text-white" />}
+          </button>
+          <div className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100">
+            <GiStarKey className="w-5 h-5 text-white" />
+          </div>
+          <div className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100">
+            <BsFillBarChartFill className="w-5 h-5 text-white" />
+          </div>
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Share live"
+            className="w-7.5 h-7.5 rounded-md flex items-center justify-center border border-white/20 bg-slate100"
+          >
+            <RiShareForwardLine className="w-5 h-5 text-white" />
+          </button>
         </div>
         <div className="flex flex-col gap-4 bottom-24 left-4 absolute">
           {(chatFeed.length ? chatFeed : [null, null, null, null]).map((event, i) => {

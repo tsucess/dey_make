@@ -217,13 +217,13 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     setSubmitError("");
 
     try {
-      await login({
+      const loggedInUser = await login({
         identifier: form.identifier.trim(),
         password: form.password,
       });
 
       onSuccess?.();
-      navigate("/home", { replace: true });
+      navigate(loggedInUser?.isAdmin ? "/dashboard" : "/home", { replace: true });
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -275,13 +275,13 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
     setSubmitError("");
 
     try {
-      await loginWithPhone({
+      const loggedInUser = await loginWithPhone({
         phone: form.phone.trim(),
         code: form.code.trim(),
       });
 
       onSuccess?.();
-      navigate("/home", { replace: true });
+      navigate(loggedInUser?.isAdmin ? "/dashboard" : "/home", { replace: true });
     } catch (error) {
       handleApiError(error);
     } finally {

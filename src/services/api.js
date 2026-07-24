@@ -402,6 +402,8 @@ export const api = {
   getAdminUsers: (options = {}) => request(`/admin/users${buildQueryString({ q: options.q, accountStatus: options.accountStatus, role: options.role, sort: options.sort, page: options.page, per_page: options.perPage })}`),
   getManagedUser: (id) => request(`/admin/users/${id}`),
   updateManagedUser: (id, payload) => request(`/admin/users/${id}`, { method: "PATCH", body: payload }),
+  getAdminLiveStreams: (options = {}) => request(`/admin/live-streams${buildQueryString({ q: options.q, status: options.status, sort: options.sort, page: options.page, per_page: options.perPage })}`),
+  adminStopLiveStream: (id) => request(`/admin/live-streams/${id}/stop`, { method: "POST" }),
   getDeveloperOverview: () => request("/developer"),
   createDeveloperApiKey: (payload) => request("/developer/api-keys", { method: "POST", body: payload }),
   deleteDeveloperApiKey: (id) => request(`/developer/api-keys/${id}`, { method: "DELETE" }),

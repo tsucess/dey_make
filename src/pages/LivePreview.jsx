@@ -3,7 +3,7 @@
  *
  * Lets the creator title their stream, pick a category, and press
  * "Go Live Now". On submit it calls api.createVideo({ isLive: true, ... })
- * then api.startVideoLive(video.id) and navigates to /lives/:id.
+ * then api.startVideoLive(publicId) and navigates to /lives/:publicId.
  *
  * Feature: 3.5 Live streaming (see PROJECT_OVERVIEW.md).
  * Backend: VideoController@store, VideoController@startLive.
@@ -18,6 +18,7 @@ import { PiBasketballLight } from "react-icons/pi";
 import { TbCamera, TbHearts } from "react-icons/tb";
 import { useNavigate } from "react-router-dom";
 import { api, firstError } from "../services/api";
+import { getVideoRouteId } from "../utils/content";
 
 const FALLBACK_CATEGORY_TABS = [
   "Dance",
@@ -164,14 +165,15 @@ function LivePreview() {
       });
 
       const video = createResponse?.data?.video;
-      if (!video?.id) throw new Error("Unable to start the live stream.");
+      const routeId = getVideoRouteId(video);
+      if (!routeId) throw new Error("Unable to start the live stream.");
 
-      await api.startVideoLive(video.id);
+      await api.startVideoLive(routeId);
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
       }
-      navigate(`/lives/${video.id}`, { replace: true });
+      navigate(`/lives/${routeId}`, { replace: true });
     } catch (nextError) {
       setError(firstError(nextError.errors, nextError.message || "Unable to start the live stream."));
     } finally {
