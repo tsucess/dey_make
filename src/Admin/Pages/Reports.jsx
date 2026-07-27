@@ -1,67 +1,120 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiUpload, FiSearch, FiMoreVertical, FiArrowUp } from "react-icons/fi";
 import { IoIosArrowDown } from "react-icons/io";
 import { MdOutlineCalendarToday } from "react-icons/md";
 import ReportDetailsSidebar from "../components/Reports/ReportDetailsSidebar";
-
-const stats = [
-  { title: "Total Reports", value: "12,842", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
-  { title: "Pending Review", value: "1,248", trend: "+12.5%", trendUp: true, vs: "yesterday" },
-  { title: "Resolved", value: "10,892", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
-  { title: "Dismissed", value: "512", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
-  { title: "Appeals", value: "190", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
-];
-
-const tabs = [
-  { name: "All Reports", id: "all" },
-  { name: "Pending (1,248)", id: "pending" },
-  { name: "Resolved", id: "resolved" },
-  { name: "Dismissed", id: "dismissed" },
-  { name: "Appeals", id: "appeals" },
-];
+import { api } from "../../services/api";
 
 const filterOptions = {
-  "Types": ["All Types", "Video", "Live Stream", "Comment"],
-  "Reasons": ["All Reasons", "Nudity", "Harassment", "Spam", "Violence"],
+  "Types": ["All Types", "Video", "Live Stream"],
+  "Reasons": ["All Reasons", "Nudity", "Harassment", "Spam", "Violence", "Other"],
   "Status": ["All Statuses", "Pending Review", "Resolved", "Dismissed"],
 };
 
-const mockReports = Array(10).fill({
-  id: "RPT-2024-12842",
-  contentTitle: "Weekend Vibe",
-  contentId: "ID: VID-2024-1234511",
-  type: "Video",
-  reason: "Nudity",
-  reporterName: "Aisha Doe",
-  reporterHandle: "@aishadoe",
-  status: "Resolved",
-  reportedAt: "May 26, 2024",
-}).map((report, i) => ({
-  ...report,
-  type: i % 2 === 0 ? "Video" : "Live Stream",
-  reason: i % 2 === 0 ? "Nudity" : "Harassment",
-  status: i % 3 === 0 ? "Pending Review" : "Resolved",
-}));
+function formatDate(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
+function displayStatus(status) {
+  if (status === "pending") return "Pending Review";
+  if (status === "resolved") return "Resolved";
+  if (status === "dismissed") return "Dismissed";
+  return status || "Pending Review";
+}
+
+function normalizeReport(r) {
+  const video = r.video || {};
+  const reporter = r.reporter || {};
+  return {
+    id: `RPT-${r.id}`,
+    rawId: r.id,
+    contentTitle: video.title || video.caption || "Untitled",
+    contentId: `ID: VID-${video.id ?? "—"}`,
+    type: video.isLive ? "Live Stream" : "Video",
+    reason: r.reason || "Other",
+    reporterName: reporter.fullName || reporter.username || "Unknown",
+    reporterHandle: reporter.username ? `@${reporter.username}` : "",
+    status: displayStatus(r.status),
+    reportedAt: formatDate(r.createdAt),
+    details: r.details,
+    resolutionNotes: r.resolutionNotes,
+  };
+}
 
 export default function Reports() {
   const [activeTab, setActiveTab] = useState("all");
   const [selectedReport, setSelectedReport] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdown, setOpenDropdown] = useState(null);
-  
   const [filters, setFilters] = useState({
     "Types": "All Types",
     "Reasons": "All Reasons",
-    "Status": "All Statuses"
+    "Status": "All Statuses",
   });
+  const [reports, setReports] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState({ currentPage: 1, lastPage: 1, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredReports = mockReports.filter(report => {
-    // Tabs filter
-    if (activeTab === "pending" && report.status !== "Pending Review") return false;
-    if (activeTab === "resolved" && report.status !== "Resolved") return false;
-    if (activeTab === "dismissed" && report.status !== "Dismissed") return false;
-    
-    // Search query filter
+  const statusParam = useMemo(() => {
+    if (activeTab === "pending") return "pending";
+    if (activeTab === "resolved") return "resolved";
+    if (activeTab === "dismissed") return "dismissed";
+    if (filters["Status"] === "Pending Review") return "pending";
+    if (filters["Status"] === "Resolved") return "resolved";
+    if (filters["Status"] === "Dismissed") return "dismissed";
+    return "";
+  }, [activeTab, filters]);
+
+  useEffect(() => { setPage(1); }, [activeTab, filters]);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setErrorMessage("");
+    api.getAdminVideoReports({ status: statusParam, page, perPage: 12 })
+      .then((response) => {
+        if (cancelled) return;
+        const raw = response?.data?.reports || [];
+        setReports(raw.map(normalizeReport));
+        setPageMeta(response?.meta?.reports || { currentPage: 1, lastPage: 1, total: raw.length });
+      })
+      .catch((err) => { if (!cancelled) setErrorMessage(err?.message || "Failed to load reports"); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [statusParam, page, refreshKey]);
+
+  async function handleReportAction(id, payload) {
+    await api.updateAdminVideoReport(id, payload);
+    setRefreshKey((k) => k + 1);
+  }
+
+  const totalReports = pageMeta.total || 0;
+  const stats = [
+    { title: "Total Reports", value: `${totalReports}`, trend: "+12.5%", trendUp: true, vs: "last 7 days" },
+    { title: "Pending Review", value: statusParam === "pending" ? `${totalReports}` : "—", trend: "+12.5%", trendUp: true, vs: "yesterday" },
+    { title: "Resolved", value: statusParam === "resolved" ? `${totalReports}` : "—", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
+    { title: "Dismissed", value: statusParam === "dismissed" ? `${totalReports}` : "—", trend: "+12.5%", trendUp: true, vs: "last 7 days" },
+    { title: "Appeals", value: "0", trend: "+0%", trendUp: true, vs: "last 7 days" },
+  ];
+
+  const tabs = [
+    { name: "All Reports", id: "all" },
+    { name: `Pending${statusParam === "pending" ? ` (${totalReports})` : ""}`, id: "pending" },
+    { name: "Resolved", id: "resolved" },
+    { name: "Dismissed", id: "dismissed" },
+    { name: "Appeals", id: "appeals" },
+  ];
+
+  const filteredReports = reports.filter((report) => {
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       if (!report.reporterName.toLowerCase().includes(q) &&
@@ -71,12 +124,8 @@ export default function Reports() {
         return false;
       }
     }
-
-    // Dropdown filters
     if (filters["Types"] !== "All Types" && report.type !== filters["Types"]) return false;
-    if (filters["Reasons"] !== "All Reasons" && report.reason !== filters["Reasons"]) return false;
-    if (filters["Status"] !== "All Statuses" && report.status !== filters["Status"]) return false;
-
+    if (filters["Reasons"] !== "All Reasons" && report.reason?.toLowerCase() !== filters["Reasons"].toLowerCase()) return false;
     return true;
   });
 
@@ -301,13 +350,31 @@ export default function Reports() {
           ))}
         </div>
         
+        {isLoading && (
+          <div className="p-6 text-center text-sm text-slate400">Loading reports…</div>
+        )}
+        {!isLoading && errorMessage && (
+          <div className="p-6 text-center text-sm text-red500">{errorMessage}</div>
+        )}
+        {!isLoading && !errorMessage && filteredReports.length === 0 && (
+          <div className="p-6 text-center text-sm text-slate400">No reports found.</div>
+        )}
+
         {/* Pagination */}
         <div className="p-4 px-6 flex items-center justify-between border-t border-black300 mt-4">
-          <button className="px-6 py-2 bg-transparent border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || isLoading}
+            className="px-6 py-2 bg-transparent border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors disabled:opacity-50"
+          >
             Back
           </button>
-          <span className="text-sm text-slate400">Step 2 of 5</span>
-          <button className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors">
+          <span className="text-sm text-slate400">Page {pageMeta.currentPage || page} of {pageMeta.lastPage || 1}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(pageMeta.lastPage || 1, p + 1))}
+            disabled={(pageMeta.currentPage || page) >= (pageMeta.lastPage || 1) || isLoading}
+            className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors disabled:opacity-50"
+          >
             Next
           </button>
         </div>
@@ -315,7 +382,11 @@ export default function Reports() {
 
       {/* Sidebar */}
       {selectedReport && (
-        <ReportDetailsSidebar report={selectedReport} onClose={() => setSelectedReport(null)} />
+        <ReportDetailsSidebar
+          report={selectedReport}
+          onClose={() => setSelectedReport(null)}
+          onAction={handleReportAction}
+        />
       )}
     </div>
   );

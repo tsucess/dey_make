@@ -68,6 +68,7 @@ const MobilePostDetailsForm = lazy(
 );
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
+const AdminReports = lazy(() => import("./Admin/Pages/Reports"));
 const LivesShow = lazy(() => import("./pages/LivePage"));
 
 function FullPageLoader() {
@@ -254,31 +255,34 @@ export default function App() {
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
 
-        <Route element={renderLazyRoute(AppLayoutAdmin)}>
-          <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
-          <Route
-            path="/verification-request"
-            element={renderLazyRoute(VerificationRequest)}
-          />
-          <Route path="/users" element={renderLazyRoute(Users)} />
-          <Route path="/comments" element={renderLazyRoute(Comments)} />
-          <Route
-            path="/suspended-account"
-            element={renderLazyRoute(SuspendedAccount)}
-          />
-          <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
-          <Route
-            path="/admin-livestream"
-            element={renderLazyRoute(LivestreamAdmin)}
-          />
-          <Route
-            path="/admin-challenges"
-            element={renderLazyRoute(ChallengesAdmin)}
-          />
-          <Route
-            path="/admin-creator-ecosystem"
-            element={renderLazyRoute(CreatorEcosystem)}
-          />
+        <Route element={<AdminRoute />}>
+          <Route element={renderLazyRoute(AppLayoutAdmin)}>
+            <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
+            <Route
+              path="/verification-request"
+              element={renderLazyRoute(VerificationRequest)}
+            />
+            <Route path="/users" element={renderLazyRoute(Users)} />
+            <Route path="/comments" element={renderLazyRoute(Comments)} />
+            <Route
+              path="/suspended-account"
+              element={renderLazyRoute(SuspendedAccount)}
+            />
+            <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
+            <Route
+              path="/admin-livestream"
+              element={renderLazyRoute(LivestreamAdmin)}
+            />
+            <Route
+              path="/admin-challenges"
+              element={renderLazyRoute(ChallengesAdmin)}
+            />
+            <Route
+              path="/admin-creator-ecosystem"
+              element={renderLazyRoute(CreatorEcosystem)}
+            />
+            <Route path="/reports" element={renderLazyRoute(AdminReports)} />
+          </Route>
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />

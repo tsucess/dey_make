@@ -223,7 +223,8 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
       });
 
       onSuccess?.();
-      navigate(loggedInUser?.isAdmin ? "/dashboard" : "/home", { replace: true });
+      const isAdminUser = Boolean(loggedInUser?.isAdmin ?? loggedInUser?.is_admin);
+      navigate(isAdminUser ? "/dashboard" : "/home", { replace: true });
     } catch (error) {
       handleApiError(error);
     } finally {
@@ -281,7 +282,8 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
       });
 
       onSuccess?.();
-      navigate(loggedInUser?.isAdmin ? "/dashboard" : "/home", { replace: true });
+      const isAdminUser = Boolean(loggedInUser?.isAdmin ?? loggedInUser?.is_admin);
+      navigate(isAdminUser ? "/dashboard" : "/home", { replace: true });
     } catch (error) {
       handleApiError(error);
     } finally {

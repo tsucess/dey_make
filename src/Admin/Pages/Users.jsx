@@ -1,49 +1,70 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiUpload, FiSearch, FiCalendar, FiMoreVertical, FiArrowUp } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 import UserDetailsSidebar from "../components/Users/UserDetailsSidebar";
-
-const stats = [
-  { title: "Total Users", value: "125.6M", trend: "+12.5%", trendUp: true },
-  { title: "Active Users", value: "7.23M", trend: "+12.5%", trendUp: true },
-  { title: "New Users (Today)", value: "8.64M", trend: "+12.5%", trendUp: true },
-  { title: "Suspended Users", value: "1,100", trend: "+12.5%", trendUp: true },
-];
-
-const tabs = [
-  { name: "All Users", count: "10.2M", active: true },
-  { name: "Active Users", count: "8.7M", active: false },
-  { name: "Suspended Users", count: "45.3K", active: false },
-  { name: "Banned Users", count: "23.1K", active: false },
-  { name: "Pending Verification", count: "12.5K", active: false },
-  { name: "Appeals", count: "8.7M", active: false },
-];
+import { api } from "../../services/api";
 
 const filterOptions = {
-  "User Type": ["All", "Creator", "Viewer", "Admin"],
-  "Account Status": ["All", "Active", "Suspended", "Banned"],
-  "Country": ["All", "US", "UK", "Canada", "Nigeria"]
+  "User Type": ["All", "Creator", "Admin", "Member"],
+  "Account Status": ["All", "Active", "Suspended"],
 };
 
-const userTypes = ["Creator", "Viewer", "Admin"];
-const countries = ["US", "UK", "Canada", "Nigeria"];
+function formatCount(value) {
+  const num = Number(value) || 0;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  return `${num}`;
+}
 
-const usersData = Array(10).fill({
-  name: "Aisha Doe",
-  username: "@aishadoe",
-  verified: true,
-  id: "1234567890",
-  followers: "2.4M",
-  joinedDate: "May 26, 2026",
-  lastActive: "2 min ago",
-}).map((u, i) => ({
-  ...u,
-  id: u.id.slice(0, -1) + i,
-  status: i % 3 === 0 ? "Active" : i % 3 === 1 ? "Suspended" : "Banned",
-  userType: userTypes[i % 3],
-  country: countries[i % 4],
-}));
+function formatJoinedDate(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
+function formatLastActive(iso, isOnline) {
+  if (isOnline) return "Online";
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "—";
+  const diff = Math.max(0, Date.now() - then);
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins} min ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function displayStatus(accountStatus) {
+  if (accountStatus === "suspended") return "Suspended";
+  return "Active";
+}
+
+function normalizeUser(u) {
+  return {
+    id: u.id,
+    name: u.fullName || u.username,
+    username: u.username ? `@${u.username}` : "",
+    verified: Boolean(u.isVerifiedCreator),
+    followers: formatCount(u.stats?.subscribersCount),
+    joinedDate: formatJoinedDate(u.createdAt),
+    lastActive: formatLastActive(u.lastActiveAt, u.isOnline),
+    status: displayStatus(u.accountStatus),
+    userType: u.isAdmin ? "Admin" : (u.stats?.videosCount ?? 0) > 0 ? "Creator" : "Member",
+    avatarUrl: u.avatarUrl,
+    email: u.email,
+    accountStatus: u.accountStatus,
+    accountStatusNotes: u.accountStatusNotes,
+    isAdmin: u.isAdmin,
+    stats: u.stats,
+  };
+}
 
 export default function Users() {
   const [activeTab, setActiveTab] = useState("All Users");
@@ -51,36 +72,70 @@ export default function Users() {
   const [filters, setFilters] = useState({
     "User Type": "All",
     "Account Status": "All",
-    "Country": "All"
   });
   const [openDropdown, setOpenDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [users, setUsers] = useState([]);
+  const [summary, setSummary] = useState({ totalUsers: 0, adminUsers: 0, suspendedUsers: 0, creatorUsers: 0 });
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState({ currentPage: 1, lastPage: 1, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredUsers = usersData.filter((user) => {
-    // Tab filter
-    if (activeTab === "Active Users" && user.status !== "Active") return false;
-    if (activeTab === "Suspended Users" && user.status !== "Suspended") return false;
-    if (activeTab === "Banned Users" && user.status !== "Banned") return false;
-    if (activeTab === "Pending Verification" && user.status !== "Pending") return false;
-    if (activeTab === "Appeals" && user.status !== "Appealed") return false;
+  const accountStatusParam = useMemo(() => {
+    if (activeTab === "Suspended Users") return "suspended";
+    if (activeTab === "Active Users") return "active";
+    if (filters["Account Status"] === "Suspended") return "suspended";
+    if (filters["Account Status"] === "Active") return "active";
+    return "";
+  }, [activeTab, filters]);
 
-    // Search filter
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!user.name.toLowerCase().includes(q) && 
-          !user.username.toLowerCase().includes(q) && 
-          !user.id.includes(q)) {
-        return false;
-      }
-    }
+  const roleParam = useMemo(() => {
+    const type = filters["User Type"];
+    if (type === "Admin") return "admin";
+    if (type === "Creator") return "creator";
+    if (type === "Member") return "member";
+    return "";
+  }, [filters]);
 
-    // Dropdown filters
-    if (filters["User Type"] !== "All" && user.userType !== filters["User Type"]) return false;
-    if (filters["Account Status"] !== "All" && user.status !== filters["Account Status"]) return false;
-    if (filters["Country"] !== "All" && user.country !== filters["Country"]) return false;
+  useEffect(() => { setPage(1); }, [activeTab, filters, searchQuery]);
 
-    return true;
-  });
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setErrorMessage("");
+    api.getAdminUsers({ q: searchQuery, accountStatus: accountStatusParam, role: roleParam, page, perPage: 12 })
+      .then((response) => {
+        if (cancelled) return;
+        const payload = response?.data || {};
+        const rawUsers = payload.users || [];
+        setUsers(rawUsers.map(normalizeUser));
+        setSummary(response?.meta?.summary || summary);
+        setPageMeta(response?.meta?.users || { currentPage: 1, lastPage: 1, total: rawUsers.length });
+      })
+      .catch((err) => { if (!cancelled) setErrorMessage(err?.message || "Failed to load users"); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, accountStatusParam, roleParam, page]);
+
+  const stats = [
+    { title: "Total Users", value: formatCount(summary.totalUsers), trend: "+12.5%", trendUp: true },
+    { title: "Active Users", value: formatCount((summary.totalUsers || 0) - (summary.suspendedUsers || 0)), trend: "+12.5%", trendUp: true },
+    { title: "Creators", value: formatCount(summary.creatorUsers), trend: "+12.5%", trendUp: true },
+    { title: "Suspended Users", value: formatCount(summary.suspendedUsers), trend: "+12.5%", trendUp: true },
+  ];
+
+  const tabs = [
+    { name: "All Users", count: formatCount(summary.totalUsers) },
+    { name: "Active Users", count: formatCount((summary.totalUsers || 0) - (summary.suspendedUsers || 0)) },
+    { name: "Suspended Users", count: formatCount(summary.suspendedUsers) },
+    { name: "Banned Users", count: "0" },
+    { name: "Pending Verification", count: "0" },
+    { name: "Appeals", count: "0" },
+  ];
+
+  const filteredUsers = users;
 
   return (
     <div className="flex flex-col gap-6 text-white font-inter">
@@ -299,13 +354,31 @@ export default function Users() {
           ))}
         </div>
         
+        {isLoading && (
+          <div className="p-6 text-center text-sm text-slate400">Loading users…</div>
+        )}
+        {!isLoading && errorMessage && (
+          <div className="p-6 text-center text-sm text-red500">{errorMessage}</div>
+        )}
+        {!isLoading && !errorMessage && filteredUsers.length === 0 && (
+          <div className="p-6 text-center text-sm text-slate400">No users found.</div>
+        )}
+
         {/* Pagination */}
         <div className="p-4 px-6 flex items-center justify-between border-t border-black300 bg-blue200">
-          <button className="px-6 py-2 border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || isLoading}
+            className="px-6 py-2 border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors disabled:opacity-50"
+          >
             Back
           </button>
-          <span className="text-sm text-slate400">Step 2 of 5</span>
-          <button className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors">
+          <span className="text-sm text-slate400">Page {pageMeta.currentPage || page} of {pageMeta.lastPage || 1}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(pageMeta.lastPage || 1, p + 1))}
+            disabled={(pageMeta.currentPage || page) >= (pageMeta.lastPage || 1) || isLoading}
+            className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors disabled:opacity-50"
+          >
             Next
           </button>
         </div>

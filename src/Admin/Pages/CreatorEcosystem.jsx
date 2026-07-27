@@ -1,16 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiDownload } from "react-icons/fi";
 import { FaArrowUp } from "react-icons/fa";
 import OverviewTab from "../components/CreatorEcosystem/OverviewTab";
 import CreatorsTab from "../components/CreatorEcosystem/CreatorsTab";
+import { api } from "../../services/api";
 
-const stats = [
-  { title: "Total Creators", value: "12,543", diff: "11.2% vs last 7 days" },
-  { title: "Verified Creators", value: "2,845", diff: "10.1% vs last 7 days" },
-  { title: "Total Views (All)", value: "245.6M", diff: "12.5% vs last 7 days" },
-  { title: "Total engagement", value: "18.6M", diff: "11.2% vs last 7 days" },
-  { title: "Total Earnings", value: "124.8M", diff: "10.5% vs last 7 days" },
-];
+function formatCount(value) {
+  const num = Number(value) || 0;
+  if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
+  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
+  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
+  return `${num}`;
+}
+
+function buildEcosystemStats(summary = {}) {
+  return [
+    { title: "Total Creators", value: formatCount(summary.totalCreators), diff: "all time" },
+    { title: "Active Users (24h)", value: formatCount(summary.activeUsers), diff: "last 24h" },
+    { title: "Total Videos", value: formatCount(summary.totalVideos), diff: "all time" },
+    { title: "Active Memberships", value: formatCount(summary.activeMemberships), diff: "current" },
+    { title: "Total Comments", value: formatCount(summary.totalComments), diff: "all time" },
+  ];
+}
 
 const tabs = [
   { id: "overview", label: "Overview" },
@@ -24,6 +35,25 @@ const tabs = [
 
 function CreatorEcosystem() {
   const [activeTab, setActiveTab] = useState("overview");
+  const [summary, setSummary] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setErrorMessage("");
+    api.getAdminDashboard()
+      .then((response) => {
+        if (cancelled) return;
+        setSummary(response?.data?.summary || {});
+      })
+      .catch((err) => { if (!cancelled) setErrorMessage(err?.message || "Failed to load ecosystem stats"); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  const stats = buildEcosystemStats(summary);
 
   return (
     <div className="flex flex-col gap-6 text-white font-inter">
@@ -41,6 +71,10 @@ function CreatorEcosystem() {
         </button>
       </div>
 
+      {errorMessage && (
+        <div className="p-3 rounded-lg bg-red500/10 text-red500 text-sm">{errorMessage}</div>
+      )}
+
       {/* Top Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         {stats.map((stat, i) => (
@@ -49,7 +83,7 @@ function CreatorEcosystem() {
             className="flex flex-col gap-2 bg-blue200 p-5 rounded-xl border border-transparent hover:border-slate850 transition-colors"
           >
             <h5 className="text-slate400 text-xs font-medium">{stat.title}</h5>
-            <p className="text-2xl font-semibold">{stat.value}</p>
+            <p className="text-2xl font-semibold">{isLoading ? "—" : stat.value}</p>
             <div className="flex items-center gap-1 text-green500 text-[11px] font-medium mt-1">
               <FaArrowUp className="w-3 h-3" />
               <span>{stat.diff}</span>

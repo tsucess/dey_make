@@ -1,40 +1,15 @@
-import { AiOutlineCopyright } from "react-icons/ai";
-import { CgList } from "react-icons/cg";
 import { FaHashtag } from "react-icons/fa";
-import { FiAlertTriangle } from "react-icons/fi";
-import { GiAlliedStar } from "react-icons/gi";
-import { LuOctagonAlert } from "react-icons/lu";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
 
-const alerts = [
-  {
-    title: "#Deymake",
-    value: "1.2B views",
-    isLow: false,
-  },
-  {
-    title: "#AIChallenge",
-    value: "800M views",
-    isLow: false,
-  },
-  {
-    title: "#DanceTrend",
-    value: "650M views",
-    isLow: false,
-  },
-  {
-    title: "#FoodTok",
-    value: "540M views",
-    isLow: true,
-  },
-  {
-    title: "#SummerVibes",
-    value: "420M views",
-    isLow: false,
-  },
-];
+const iconColors = ["text-orange300", "text-red100", "text-orange100", "text-orange300", "text-green300"];
 
-function ChallengeModeration() {
+function ChallengeModeration({ challenges = [] }) {
+  const list = challenges.slice(0, 5).map((c) => ({
+    id: c.id,
+    title: c.title ? `#${String(c.title).replace(/\s+/g, "")}` : `#Challenge-${c.id}`,
+    value: `${c.submissionsCount || 0} submissions`,
+    isLow: c.lifecycleStatus === "ended" || c.status === "closed",
+  }));
   return (
     <section className="bg-blue300 flex flex-col gap-7.5 p-6 rounded-2xl">
       <div className="flex items-center justify-between gap-2 font-roboto">
@@ -42,26 +17,17 @@ function ChallengeModeration() {
         <button className="text-base text-white font-medium">View all</button>
       </div>
       <div className="flex flex-col gap-6">
-        {alerts.map(({ title, value, isLow }, i) => (
+        {list.length === 0 && (
+          <p className="text-white/60 text-sm">No recent challenges.</p>
+        )}
+        {list.map(({ id, title, value, isLow }, i) => (
           <div
-            key={title}
+            key={id}
             className="flex items-center justify-between gap-8 border-b border-b-white px-3.5 py-5"
           >
             <div className="flex items-center gap-4">
               <span className="text-white text-sm">{i + 1}</span>
-              <FaHashtag
-                className={`w-5 h-5 ${
-                  i === 0
-                    ? "text-orange300"
-                    : i === 1
-                      ? "text-red100"
-                      : i === 2
-                        ? "text-orange100"
-                        : i === 3
-                          ? "text-orange300"
-                          : "text-green300"
-                }`}
-              />
+              <FaHashtag className={`w-5 h-5 ${iconColors[i] || "text-green300"}`} />
               <h5 className="text-xs font-medium text-white">{title}</h5>
             </div>
             <div className="flex items-center gap-7.5 font-roboto">
