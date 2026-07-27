@@ -301,7 +301,7 @@ export default function AppLayout() {
         </main>
 
         {/* Bottom nav — mobile only */}
-        {isAuthenticated ? (
+        {!location.pathname.startsWith("/camera") && isAuthenticated ?   (
           <div className="flex md:hidden">
             <BottomNav />
           </div>

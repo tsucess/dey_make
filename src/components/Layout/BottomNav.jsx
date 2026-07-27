@@ -8,7 +8,7 @@
  */
 
 
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useLanguage } from "../../context/LanguageContext";
 import { HiOutlineSquares2X2, HiOutlineTrophy } from "react-icons/hi2";
@@ -48,7 +48,7 @@ function getNavItems(isAdmin) {
       icon: <HiOutlineTrophy />,
     },
     {
-      to: "/create",
+      to: "/camera",
       labelKey: "Create",
       icon: <FaPlus />,
     },
@@ -121,32 +121,32 @@ export default function BottomNav() {
   const { user } = useAuth();
   const { t } = useLanguage();
   const navItems = getNavItems(Boolean(user?.isAdmin));
-  const inputRef = useRef(null);
+  // const inputRef = useRef(null);
 
-  function openCamera() {
-    inputRef.current?.click();
-  }
+  // function openCamera() {
+  //   inputRef.current?.click();
+  // }
 
-  function handleFileChange(e) {
-    const file = e.target.files?.[0];
+  // function handleFileChange(e) {
+  //   const file = e.target.files?.[0];
 
-    if (!file) return;
+  //   if (!file) return;
 
-    console.log(file);
+  //   console.log(file);
 
-    // save to state or navigate
-  }
+  //   // save to state or navigate
+  // }
 
   return (
     <nav className="fixed bottom-0 left-0 z-50 flex h-15 w-full items-start justify-between border-t-[0.33px] border-slate900/10 bg-orange100/5 px-3 py-3 backdrop-blur-xl dark:border-white/10 dark:bg-[#1C2336]/80 lg:hidden">
-      <input
+      {/* <input
         ref={inputRef}
         hidden
         type="file"
         accept="video/*"
         capture="environment"
         onChange={handleFileChange}
-      />
+      /> */}
       {/* {navItems.map(({ to, labelKey, icon }, i) => {
         const label = t(labelKey);
 
@@ -180,17 +180,16 @@ export default function BottomNav() {
       {navItems.map(({ to, labelKey, icon }) => {
         const label = t(labelKey);
 
-        if (to === "/create") {
+        if (to === "/camera") {
           return (
-            <button
+            <Link
               key={to}
-              type="button"
-              onClick={openCamera}
+              to={to}
               className="bg-orange100 text-white -mt-8 w-13 h-13 rounded-full border-4 border-white dark:border-black flex items-center justify-center"
               aria-label={label}
             >
               {icon}
-            </button>
+            </Link>
           );
         }
 

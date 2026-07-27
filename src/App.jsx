@@ -44,7 +44,7 @@ const CreatorDashboard = lazy(() => import("./pages/CreatorDashboard"));
 const CoinsWallet = lazy(() => import("./pages/CoinWallet"));
 const Notification = lazy(() => import("./pages/Notifications"));
 const LivePreview = lazy(() => import("./pages/LivePreview"));
-const Live = lazy(() => import("./pages/LiveNew")); 
+const Live = lazy(() => import("./pages/LiveNew"));
 const AppLayoutAdmin = lazy(() => import("./Admin/Layout/AppLayout"));
 const AdminDashboard = lazy(() => import("./Admin/Pages/Dashboard"));
 const VerificationRequest = lazy(
@@ -69,6 +69,7 @@ const MobilePostDetailsForm = lazy(
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
 const LivesShow = lazy(() => import("./pages/LivePage"));
+const MobileCamera = lazy(() => import("./components/Create/MobileCamera"));
 
 function FullPageLoader() {
   return (
@@ -190,7 +191,10 @@ export default function App() {
             <Route path="/live" element={renderLazyRoute(LivesShow)} />
             {/* <Route path="/live/:id" element={renderLazyRoute(LiveRoom)} /> */}
             <Route path="/watch-live" element={renderLazyRoute(WatchLive)} />
-            <Route path="/watch-live/:id" element={renderLazyRoute(WatchLive)} />
+            <Route
+              path="/watch-live/:id"
+              element={renderLazyRoute(WatchLive)}
+            />
             <Route path="/leaderboard" element={renderLazyRoute(Leaderboard)} />
             <Route path="/challenge" element={renderLazyRoute(Challenges)} />
             <Route path="/messages" element={renderLazyRoute(Messages)} />
@@ -213,6 +217,7 @@ export default function App() {
               element={renderLazyRoute(CreateCampaign)}
             />
             <Route path="/create" element={renderLazyRoute(CreatePost)} />
+            <Route path="/camera" element={renderLazyRoute(MobileCamera)} />
             <Route
               path="/post-details-form"
               element={renderLazyRoute(PostDetailsForm)}
