@@ -109,15 +109,15 @@ function SocialOptionBtn({ provider, icon, label, connectingLabel }) {
       type="button"
       onClick={handleClick}
       disabled={isStarting}
-      className="w-full flex items-center p-1.5 rounded-lg border border-gray-700 bg-[#1c1c1c] hover:bg-[#2c2c2c] transition-colors cursor-pointer text-white disabled:opacity-60 disabled:cursor-not-allowed"
+      className="w-full flex items-center p-1.5 rounded-lg border border-gray-700 dark:bg-[#1c1c1c] hover:bg-white300 dark:hover:bg-[#2c2c2c] transition-colors cursor-pointer text-black dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
     >
       <div className="bg-[#e6e6e6] w-9 h-9 rounded-md flex items-center justify-center shrink-0">
         {icon}
       </div>
-      <span className="flex-1 text-left pl-4 font-medium text-[15px] font-inter">
+      <span className="flex-1 text-left pl-4 font-medium text-xs sm:text-[15px] font-inter">
         {isStarting ? connectingLabel : label}
       </span>
-      <ChevronRight className="shrink-0 text-white mr-3" />
+      <ChevronRight className="shrink-0 dark:text-white mr-3" />
     </button>
   );
 }
@@ -294,7 +294,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
       <AuthLayout>
         <div className="flex flex-col w-full z-10 relative">
           <div className="flex justify-center w-full mb-6">
-            <Logo />
+            <Logo /> 
           </div>
           <h2 className="text-[28px] font-bricolage font-bold text-black200 dark:text-white text-center mb-2">{t("auth.logIn")}</h2>
           <p className="text-slate500 dark:text-slate400 text-sm text-center mb-8">{t("auth.loginWelcomeDetail")}</p>
@@ -330,7 +330,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
               />
             </div>
             {errors.phone && (
-              <p className="text-red-500 text-[0.75rem] mt-[-10px] mb-3 ml-1">{errors.phone}</p>
+              <p className="text-red-500 text-[0.75rem] -mt-2.5 mb-3 ml-1">{errors.phone}</p>
             )}
 
             <div className="flex w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] mb-2">
@@ -350,7 +350,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
                 type="button"
                 onClick={handleSendPhoneCode}
                 disabled={isSendingCode}
-                className="px-4 py-3 border-l border-gray-300 dark:border-gray-700 text-orange100 hover:text-orange200 bg-transparent cursor-pointer font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                className="px-2 sm:px-4 py-3 border-l border-gray-300 dark:border-gray-700 text-orange100 hover:text-orange200 bg-transparent cursor-pointer font-medium text-sm disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {isSendingCode ? t("auth.sending") : t("auth.sendCode")}
               </button>
@@ -372,13 +372,13 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
             <button
               type="submit"
               disabled={isSubmitting || (codeSent && form.code.trim().length !== 4)}
-              className="w-full py-3 bg-orange100 hover:bg-[#e09510] text-black200 font-inter font-bold text-sm rounded-md transition-colors cursor-pointer border-none disabled:opacity-60 disabled:cursor-not-allowed mb-6"
+              className="w-full py-3 bg-orange100 hover:bg-orange500 text-black200 font-inter font-bold text-sm rounded-md transition-colors cursor-pointer border-none disabled:opacity-60 disabled:cursor-not-allowed mb-6"
             >
               {isSubmitting ? t("auth.signingIn") : t("auth.logIn")}
             </button>
 
             <button type="button" onClick={() => setAuthMode("default")} className="w-full text-center text-sm text-black200 dark:text-white hover:text-slate-500 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer flex items-center justify-center gap-2 mb-10">
-              <span className="text-lg leading-none mt-[-2px]">&lsaquo;</span> {t("auth.goBack")}
+              <span className="text-lg leading-none -mt-0.5">&lsaquo;</span> {t("auth.goBack")}
             </button>
           </form>
 
@@ -433,7 +433,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
               />
             </div>
             {errors.identifier && (
-              <p className="text-red-500 text-[0.75rem] mt-[-10px] mb-3 ml-1">{errors.identifier}</p>
+              <p className="text-red-500 text-[0.75rem] -mt-2.5 mb-3 ml-1">{errors.identifier}</p>
             )}
 
             <div className="flex w-full border border-gray-300 dark:border-gray-700 rounded-md bg-white dark:bg-[#1c1c1c] mb-2 relative">
@@ -472,13 +472,13 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-orange100 hover:bg-[#e09510] text-black200 font-inter font-bold text-sm rounded-md transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60 mb-8"
+              className="w-full py-3 bg-orange100 hover:bg-orange500 text-black200 font-inter font-bold text-sm rounded-md transition-colors cursor-pointer border-none disabled:cursor-not-allowed disabled:opacity-60 mb-8"
             >
               {isSubmitting ? t("auth.signingIn") : t("auth.logIn")}
             </button>
 
             <button type="button" onClick={() => setAuthMode("default")} className="w-full text-center text-sm text-black200 dark:text-white hover:text-slate-500 dark:hover:text-gray-300 bg-transparent border-none cursor-pointer flex items-center justify-center gap-2 mb-10">
-              <span className="text-lg leading-none mt-[-2px]">&lsaquo;</span> {t("auth.goBack")}
+              <span className="text-lg leading-none -mt-0.5">&lsaquo;</span> {t("auth.goBack")}
             </button>
           </form>
 
@@ -508,12 +508,12 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
         <button
           type="button"
           onClick={() => setAuthMode("phone")}
-          className="w-full flex items-center bg-orange100 hover:bg-[#e09510] transition-colors rounded-lg p-1.5 mb-2 cursor-pointer border-none"
+          className="w-full flex items-center bg-orange100 hover:bg-orange500 transition-colors rounded-lg p-1.5 mb-2 cursor-pointer border-none"
         >
-          <div className="bg-[#ffd266] w-9 h-9 rounded-md flex items-center justify-center shrink-0">
+          <div className="bg-orange200 w-9 h-9 rounded-md flex items-center justify-center shrink-0">
             <UserIcon />
           </div>
-          <span className="flex-1 text-left pl-4 font-medium text-black200 text-[15px] font-inter">
+          <span className="flex-1 text-left pl-4 font-medium text-black200 text-xs sm:text-[15px] font-inter">
             {t("auth.continueWithPhoneOrEmail")}
           </span>
           <ChevronRight className="shrink-0 text-black200 mr-3" />
@@ -527,7 +527,7 @@ export default function Login({ onNavigateToSignUp, onSuccess }) {
           <div className="bg-[#e6e6e6] w-9 h-9 rounded-md flex items-center justify-center shrink-0">
             <LockIcon />
           </div>
-          <span className="flex-1 text-left pl-4 font-medium text-[15px] font-inter">{t("auth.loginWithPassword")}</span>
+          <span className="flex-1 text-left pl-4 font-medium text-xs sm:text-[15px] font-inter">{t("auth.loginWithPassword")}</span>
           <ChevronRight className="shrink-0 text-black200 dark:text-white mr-3" />
         </button>
 

@@ -23,6 +23,7 @@ function Connections() {
   const [repliesByComment, setRepliesByComment] = useState({});
   const [stories, setStories] = useState([]);
   const [creators, setCreators] = useState([]);
+  const [showComments, setShowComments] = useState(false)
 
   useEffect(() => {
     let cancelled = false;
@@ -208,8 +209,12 @@ function Connections() {
 
   const currentUserAvatar = useMemo(() => (user ? getProfileAvatar(user) : undefined), [user]);
 
+  function handleToggleShowComment(){
+    setShowComments(prev => !prev)
+  }
+
   return (
-    <div className="px-4 md:px-10 py-8 flex flex-col gap-10">
+    <div className="px-4 md:px-10 py-8 flex flex-col gap-6 sm:gap-10">
       <Hero
         stories={stories}
         creators={creators}
@@ -227,8 +232,9 @@ function Connections() {
           onShare={handleShare}
           onToggleRepost={handleToggleRepost}
           isOwner={Boolean(current?.isOwner || current?.currentUserState?.isOwner)}
+          onOpenComments={handleToggleShowComment}
         />
-        <Comment
+       {showComments &&  <Comment
           comments={comments}
           commentsCount={current?.commentsCount ?? 0}
           currentUserAvatar={currentUserAvatar}
@@ -238,7 +244,8 @@ function Connections() {
           onLoadReplies={handleLoadReplies}
           onPostReply={handlePostReply}
           repliesByComment={repliesByComment}
-        />
+          onClose={handleToggleShowComment}
+        />}
       </div>
     </div>
   );

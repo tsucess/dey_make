@@ -917,13 +917,11 @@ export default function Messages() {
               </div>
             </div>
 
-            <div className="lg:hidden  pr-2 space-y-1 relative">
-              <button onClick={handleToggleShowContact}>
+            <div className="lg:flex-1 py-2 space-y-1 h-40 md:h-auto relative">
+              {/* <button onClick={handleToggleShowContact}>
                 Show
-              </button>
-              <div className={`${
-                showContact ? 'absolute top-5 left-0 w-full h-100 overflow-y-auto z-40 bg-white p-4 dark:bg-black' : 'hidden'
-              }   `}>
+              </button> */}
+              <div className={`  overflow-y-auto  h-full `}>
               <section>
                 <h3 className="px-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
                   {t("messages.inbox")}
@@ -986,7 +984,7 @@ export default function Messages() {
             </div>
             </div>
 
-            <div className="lg:flex lg:flex-1  overflow-y-auto overflow-x-hidden pr-2 space-y-1 relative">
+            {/* <div className="lg:flex lg:flex-1  overflow-y-auto overflow-x-hidden pr-2 space-y-1 relative">
 
               <div className=" h-100 overflow-y-auto overflow-x-hidden w-full z-20 bg-white p-4 dark:bg-black">
               <section>
@@ -1049,10 +1047,10 @@ export default function Messages() {
                 )}
               </section>
             </div>
-            </div>
+            </div> */}
           </div>
 
-          <section className="flex flex-col bg-white dark:bg-transparent overflow-hidden px-4 md:px-8 pt-6 pb-4">
+          <section className="flex flex-col bg-white dark:bg-transparent overflow-hidden px-4 md:px-8 pt-6 pb-20 md:pb-4">
             {activeConversation ? (
               <>
                 <div className="flex items-center justify-between border-b border-black/10 dark:border-white/5 pb-5 shrink-0">
@@ -1142,7 +1140,7 @@ export default function Messages() {
                 </div>
 
                 <form onSubmit={handleSendMessage} className="pt-2 shrink-0">
-                  <div className="relative flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] p-3">
+                  <div className="relative flex items-center gap-1.5 md:gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] p-2 md:p-3">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -1154,7 +1152,7 @@ export default function Messages() {
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={uploadingAttachment}
-                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors disabled:opacity-60"
+                      className=" text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors disabled:opacity-60"
                     >
                       <HiOutlinePaperClip className="h-6 w-6 transform -rotate-45" />
                     </button>
@@ -1205,7 +1203,7 @@ export default function Messages() {
                                 onClick={() => {
                                   setDraftMessage((current) => `${current}${emoji}`);
                                 }}
-                                className="rounded-lg px-2 py-1 text-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                className="rounded-lg py-1 text-lg hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
                               >
                                 {emoji}
                               </button>
@@ -1217,9 +1215,9 @@ export default function Messages() {
                     <button
                       type="submit"
                       disabled={sending || !draftMessage.trim()}
-                      className="flex items-center gap-2 rounded-full bg-orange100 px-5 py-2.5 text-[15px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 transition-opacity hover:opacity-90"
+                      className="flex items-center gap-2 rounded-full bg-orange100 px-3 py-2.5 text-[15px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 transition-opacity hover:opacity-90"
                     >
-                      <span>{sending ? t("messages.sending") : t("messages.send")}</span>
+                      <span className="hidden sm:inline-block">{sending ? t("messages.sending") : t("messages.send")}</span>
                       <HiOutlinePaperAirplane className="h-5 w-5 transform rotate-45" />
                     </button>
                   </div>

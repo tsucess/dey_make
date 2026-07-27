@@ -128,7 +128,7 @@ const en = {
     welcomeBack: "Welcome back",
     welcomeBackSubtitle: "Log in to continue",
     loginWelcomeDetail: "Welcome back! Please enter your details to continue.",
-    continueWithPhoneOrEmail: "Continue with phone number / email / username",
+    continueWithPhoneOrEmail: "Login with phone no / email / username",
     orContinueWith: "OR CONTINUE WITH",
     continueWithGoogle: "Continue with Google",
     continueWithFacebook: "Continue with Facebook",

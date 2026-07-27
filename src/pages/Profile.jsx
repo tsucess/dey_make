@@ -66,11 +66,11 @@ function FeedTile({ video, onOpen, showViews = true }) {
   return (
     <article
       onClick={() => onOpen(video)}
-      className="group relative cursor-pointer overflow-hidden rounded-2xl bg-[#1a1a1a] aspect-[9/16]"
+      className="group relative cursor-pointer overflow-hidden rounded-2xl bg-slate100 aspect-9/16"
     >
       <img src={getVideoThumbnail(video)} alt={getVideoTitle(video)} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
       {showViews ? (
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 flex items-end">
+        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/20 to-transparent p-4 flex items-end">
           <div className="flex items-center gap-1.5 text-white">
             <FaPlay className="w-3.5 h-3.5" />
             <span className="text-[13px] font-semibold">{formatCompactNumber(video.views || 0)}</span>
@@ -719,7 +719,7 @@ export default function Profile() {
                 {t("profile.close")}
               </button>
 
-              <div className="relative aspect-[9/16] max-h-[65vh] w-full bg-black">
+              <div className="relative aspect-9/16 max-h-[65vh] w-full bg-black">
                 {draftPreview.type === "video" && getVideoMediaUrl(draftPreview) ? (
                   <video
                     src={getVideoMediaUrl(draftPreview)}
@@ -786,7 +786,7 @@ export default function Profile() {
 
             {confirmDeleteOpen ? (
               <div
-                className="fixed inset-0 z-[55] flex items-center justify-center bg-black/70 px-4"
+                className="fixed inset-0 z-55 flex items-center justify-center bg-black/70 px-4"
                 role="dialog"
                 aria-modal="true"
                 aria-label={t("profile.confirmDeleteTitle")}

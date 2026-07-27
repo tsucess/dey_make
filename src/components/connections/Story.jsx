@@ -19,7 +19,7 @@ function Story({ stories, onViewStory }) {
 
   return (
     <div className="w-full md:w-2/3 md:max-w-2/3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] snap-x" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
-      <div className="flex gap-3">
+      <div className="flex gap-1.5 sm:gap-3">
         {list.map((story) => {
           const key = story.id ?? story.mediaUrl;
           const src = story.thumbnailUrl || story.author?.avatarUrl || story.mediaUrl || "/story1.jpg";
@@ -30,7 +30,7 @@ function Story({ stories, onViewStory }) {
               src={src}
               alt={alt}
               onClick={() => onViewStory && story.id && onViewStory(story.id)}
-              className="border-5 border-orange100 rounded-full w-20  md:w-30 h-20 md:h-30 shrink-0 object-cover"
+              className="border-3 sm:border-5 border-orange100 rounded-full w-17 sm:w-30 h-17 sm:h-30 shrink-0 object-cover"
             />
           );
         })}
