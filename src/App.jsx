@@ -107,8 +107,12 @@ function AdminRoute() {
   return user?.isAdmin ? <Outlet /> : <Navigate to="/home" replace />;
 }
 
+function landingPathFor(user) {
+  return user?.isAdmin ? "/dashboard" : "/home";
+}
+
 function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <FullPageLoader />;
@@ -117,15 +121,15 @@ function PublicOnlyRoute() {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return isAuthenticated ? <Navigate to="/home" replace /> : <Outlet />;
+  return isAuthenticated ? <Navigate to={landingPathFor(user)} replace /> : <Outlet />;
 }
 
 function PendingVerificationRoute() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
 
   if (isLoading) return <FullPageLoader />;
 
-  if (isAuthenticated) return <Navigate to="/home" replace />;
+  if (isAuthenticated) return <Navigate to={landingPathFor(user)} replace />;
 
   return pendingVerification ? <Outlet /> : <Navigate to="/login" replace />;
 }
@@ -144,7 +148,7 @@ function LandingRoute() {
 }
 
 function RootRedirect() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
 
   if (isLoading) return <FullPageLoader />;
 
@@ -152,7 +156,9 @@ function RootRedirect() {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return <Navigate to={isAuthenticated ? "/home" : "/welcome"} replace />;
+  return (
+    <Navigate to={isAuthenticated ? landingPathFor(user) : "/welcome"} replace />
+  );
 }
 
 export default function App() {

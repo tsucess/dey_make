@@ -89,7 +89,7 @@ function getNavItems(isAdmin) {
     ...(isAdmin
       ? [
           {
-            to: "/admin",
+            to: "/dashboard",
             labelKey: "common.admin",
             icon: (
               <svg

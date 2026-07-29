@@ -1,16 +1,18 @@
-import { button } from "motion/react-client";
 import { FaRegComments } from "react-icons/fa";
 import { FiSettings, FiVideo } from "react-icons/fi";
 import { GiEcology } from "react-icons/gi";
-import { HiOutlineSquares2X2, HiOutlineUserGroup } from "react-icons/hi2";
-import { MdArrowForwardIos, MdOndemandVideo, MdOutlineArrowForwardIos, MdOutlineLiveTv, MdVerifiedUser } from "react-icons/md";
+import { HiOutlineUserGroup } from "react-icons/hi2";
+import { MdArrowForwardIos, MdOutlineArrowForwardIos, MdOutlineLiveTv, MdVerifiedUser } from "react-icons/md";
 import {
   RiBookShelfLine,
   RiHeadphoneLine,
-  RiMessage2Line,
 } from "react-icons/ri";
 import { TbCancel, TbTargetArrow } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+
+const FALLBACK_ADMIN_AVATAR =
+  "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
 
 const navLinks = [
   {
@@ -171,6 +173,10 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const displayName = user?.fullName || user?.username || "Admin";
+  const displayEmail = user?.email || "";
+  const avatarUrl = user?.avatarUrl || FALLBACK_ADMIN_AVATAR;
 
   const handleNavigation = (path) => {
     if (path) {
@@ -282,22 +288,28 @@ function Sidebar({ isSidebarOpen, setIsSidebarOpen }) {
             ))}
           </div>
         </div>
-        <div className="border-t border-white mt-auto py-3 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => handleNavigation("/profile")}
+          className="border-t border-white mt-auto py-3 flex items-center gap-3 text-left w-full"
+        >
           <img
-            src="/story3.jpg"
-            alt=""
+            src={avatarUrl}
+            alt={displayName}
             className="w-10 h-10 object-cover rounded-full shrink-0"
           />
-          <div className="flex items-center justify-between flex-1">
-            <div className="flex flex-col gap-1 font-inter">
-              <h4 className="text-white text-sm font-medium">
-                Sophia Williams
+          <div className="flex items-center justify-between flex-1 min-w-0">
+            <div className="flex flex-col gap-1 font-inter min-w-0">
+              <h4 className="text-white text-sm font-medium truncate">
+                {displayName}
               </h4>
-              <p className="text-white text-xs">sophia@gmail.com</p>
+              {displayEmail && (
+                <p className="text-white text-xs truncate">{displayEmail}</p>
+              )}
             </div>
-            <MdArrowForwardIos className="w-3 h-3 text-white" />
+            <MdArrowForwardIos className="w-3 h-3 text-white shrink-0" />
           </div>
-        </div>
+        </button>
       </aside>
     </>
   );
