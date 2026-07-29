@@ -57,7 +57,7 @@ function LiveVideos() {
   const rest = videos.slice(1);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-20">
       <TopVideo video={featured} loading={loading} error={error} />
       <OtherLive videos={rest} loading={loading} />
     </div>

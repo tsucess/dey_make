@@ -53,8 +53,8 @@ function WatchLive() {
     return () => clearInterval(interval);
   }, [id, loadEngagements]);
 
-  return <div className="flex flex-col p-4 h-screen">
-    <div className="grid grid-cols-5 flex-1 gap-5 min-h-150">
+  return <div className="flex md:flex-col md:p-4 h-screen relative overflow-hidden">
+    <div className="md:grid md:grid-cols-5 md:flex-1 gap-5 md:min-h-150">
         <LiveChat video={video} engagements={engagements} onSubmitted={loadEngagements} videoId={id} />
         <WatchLiveVideo video={video} videoId={id} />
     </div>
@@ -63,3 +63,4 @@ function WatchLive() {
 }
 
 export default WatchLive;
+ 

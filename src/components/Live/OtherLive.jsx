@@ -54,7 +54,7 @@ function OtherLive({ videos = [] }) {
           className={` w-full ${placeholder} h-60`}
           style={thumb ? { backgroundImage: `url(${thumb})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
         ></div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 px-4 ">
           <img src={avatar} alt="" className="w-10 h-10 rounded-full border border-black100 dark:border-white object-cover" />
           <div className="flex flex-col gap-1 font-inter">
             <h4 className="text-lg text-black100">{title}</h4>

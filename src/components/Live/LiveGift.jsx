@@ -13,6 +13,8 @@ import { useEffect, useState } from "react";
 import { IoIosArrowDown, IoMdShareAlt } from "react-icons/io";
 import { PiCoinFill } from "react-icons/pi";
 import { api } from "../../services/api";
+import { FaGift } from "react-icons/fa";
+import { MdClose } from "react-icons/md";
 
 const gifts = [
     {
@@ -66,6 +68,7 @@ function formatElapsed(startedAt) {
 
 function LiveGift({ video, videoId, onTipped }) {
   const [elapsed, setElapsed] = useState(() => formatElapsed(video?.liveStartedAt));
+  const [showGift, setShowGift] = useState(false)
 
   useEffect(() => {
     if (!video?.liveStartedAt) return undefined;
@@ -89,8 +92,16 @@ function LiveGift({ video, videoId, onTipped }) {
     }
   }
 
-  return <div className="flex items-center gap-4 bg-white300 rounded-2xl border border-black100/30 dark:border-white/50 dark:bg-white/10 mt-auto font-inter">
-    <div className="flex items-center gap-4 pl-4">
+  function handleShowGift(){
+    setShowGift(prev => !prev)
+  }
+
+  return<>
+  <button type="button" onClick={handleShowGift} className="md:hidden absolute bottom-6 z-10 right-20 cursor-pointer"><FaGift className="w-6 h-6 text-orange100" /></button>
+   <div className={`${ 
+    showGift ? 'absolute bottom-0  left-0 z-10' : 'hidden'
+   } md:static flex items-center gap-4 bg-white300 rounded-2xl border border-black100/30 dark:border-white/50 dark:bg-white/10 mt-auto font-inter`}>
+    <div className="md:flex items-center gap-4 pl-4 hidden">
         <button className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
         <button className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
         <div className="flex items-center gap-1">
@@ -99,7 +110,9 @@ function LiveGift({ video, videoId, onTipped }) {
         </div>
         <span className="text-base text-black100 dark:text-white uppercase">{elapsed}</span>
     </div>
-    <div className="border border-black100/30 rounded-2xl dark:border-white/50 flex items-center justify-between gap-1 p-2 flex-1">
+    <div className="border border-black100/30 rounded-2xl dark:border-white/50 flex flex-col gap-2  p-2 flex-1">
+    <button onClick={handleShowGift} className="self-end cursor-pointer md:hidden"><MdClose className="w-6 h-6 text-black dark:text-white"/></button>
+    <div className="flex flex-wrap md:flex-nowrap items-center justify-between gap-1">
     {
         gifts.map(({title, img, price}, i) => <button key={`${title}-${i}`} onClick={() => handleSendGift({ title, price })} className="flex flex-col gap-1 items-center">
          <img src={img} alt={title} />
@@ -117,7 +130,9 @@ function LiveGift({ video, videoId, onTipped }) {
     <PiCoinFill className="w-12.5 h-12.5 text-orange100" /> <span className="text-base font-semibold text-black500 dark:text-white">Recharge</span>
     </div>
     </div>
-  </div>;
+    </div>
+  </div>
+  </>; 
 }
 
 export default LiveGift;

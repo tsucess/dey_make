@@ -45,8 +45,8 @@ function WatchLiveVideo({ video, videoId }) {
   }
 
   return (
-    <div className="w-full flex items-center gap-6 col-span-3 relative">
-      <img src={thumb} alt="" className="rounded-t-4xl h-full w-100" />
+    <div className="w-full h-full flex items-center gap-6 md:col-span-3 relative">
+      <img src={thumb} alt="" className="md:rounded-t-4xl h-full w-full md:w-xs" />
       <div className="flex items-center gap-3 absolute top-1 right-8">
         <div className="w-10.5 h-5.5 bg-red100 flex items-center gap-1 justify-center rounded-md">
           <span className="w-2 h-2 rounded-full bg-white"></span>
@@ -57,6 +57,9 @@ function WatchLiveVideo({ video, videoId }) {
           <span className="text-[10px] dark:text-white text-black">{viewers ? formatCompactNumber(viewers) : "2.1M"}</span>
         </div>
       </div>
+      <button onClick={handleLike} className="absolute md:hidden bottom-6 right-10 ">
+            <FaRegHeart className={`text-black dark:text-white w-5 md:w-8 h-5 md:h-8`} />
+          </button>
 
       {/* next and prev btn */}
       <div className="hidden md:flex flex-col gap-3 ">
@@ -67,9 +70,9 @@ function WatchLiveVideo({ video, videoId }) {
           <IoMdArrowDropdown className="w-5 h-5 text-black dark:text-white" />
         </button>
       </div>
-      <div className="flex flex-col gap-2  items-center">
+      <div className="md:flex flex-col gap-2  items-center hidden">
         <div className="flex flex-col gap-1 items-center">
-          <button onClick={handleLike}>
+          <button onClick={handleLike} className="absolute md:static ">
             <FaRegHeart className={`text-black dark:text-white w-8 h-8`} />
           </button>
           <span className="font-inter text-xs font-semibold text-black dark:text-white">

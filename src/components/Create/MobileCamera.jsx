@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { FaCameraRotate } from "react-icons/fa6";
 import { IoClose } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 
 export default function MobileCamera({ onClose, className = "" }) {
   const videoRef = useRef(null);
@@ -14,6 +15,7 @@ export default function MobileCamera({ onClose, className = "" }) {
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
+  const navigate = useNavigate();
 
   function openGallery() {
     inputRef.current?.click();
@@ -97,10 +99,11 @@ export default function MobileCamera({ onClose, className = "" }) {
 
   const handleClose = () => {
     setCameraOn(false);
+    navigate("/home");
 
-    if (onClose) {
-      onClose();
-    }
+    // if (onClose) {
+    //   onClose();
+    // }
   };
 
   return (
@@ -168,14 +171,15 @@ export default function MobileCamera({ onClose, className = "" }) {
           accept="image/*,video/*"
           onChange={handleGalleryChange}
         />
-        <div className="flex items-center w-30">
+        <div className="flex items-center w-40">
           <button
-            className={`border-b-2 border-orange100 text-orange100 text-sm font-semibold uppercase flex-1 cursor-pointer`}
+            className={`border-b-2 border-slate150 text-slate150 text-sm font-semibold hover:border-orange100 hover:text-orange100 uppercase flex-1 cursor-pointer`}
           >
             Post
           </button>
           <button
-            className={`border-b-2 border-slate150 text-slate150 text-sm font-semibold uppercase flex-1 cursor-pointer`}
+            onClick={() => navigate("/live-preview")}
+            className={`border-b-2 border-slate150 text-slate150 text-sm font-semibold hover:border-orange100 hover:text-orange100 uppercase flex-1 cursor-pointer`}
           >
             Live
           </button>

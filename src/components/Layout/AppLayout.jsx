@@ -9,7 +9,6 @@
  * §3.22 Notifications).
  */
 
-
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import TopBar from "./TopBar";
@@ -181,7 +180,10 @@ export default function AppLayout() {
       {/* Sidebar — desktop and mobile */}
       {isAuthenticated ? (
         <div className="lg:flex">
-          <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
+          <Sidebar
+            isSidebarOpen={isSidebarOpen}
+            setIsSidebarOpen={setIsSidebarOpen}
+          />
         </div>
       ) : null}
 
@@ -224,7 +226,10 @@ export default function AppLayout() {
           <div className="sticky top-0 z-20 flex items-center font-bricolage justify-between gap-10 bg-white px-4 pb-4 pt-4 dark:bg-[#1A1A1A] lg:hidden">
             {currentConfig.isHomepage || currentConfig.isConnection ? (
               <div className="flex justify-between items-center w-3/5">
-                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 lg:hidden">
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="mr-2 lg:hidden"
+                >
                   <FiMenu className="w-6 h-6 text-black dark:text-white" />
                 </button>
                 <button onClick={() => navigate("/live")}>
@@ -234,13 +239,13 @@ export default function AppLayout() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate("/home")}
-                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ""}`}
+                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
                   >
                     For You
                   </button>
                   <button
                     onClick={() => navigate("/connection")}
-                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black after:dark:bg-white after:left-4" : ""}`}
+                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
                   >
                     Friends
                   </button>
@@ -248,7 +253,10 @@ export default function AppLayout() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <button onClick={() => setIsSidebarOpen(true)} className="mr-2 md:hidden">
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="mr-2 md:hidden"
+                >
                   <FiMenu className="w-6 h-6 text-black dark:text-white" />
                 </button>
                 <h1 className="text-base font-bricolage font-semibold text-slate100 dark:text-white">
@@ -292,7 +300,7 @@ export default function AppLayout() {
         {/* Page content */}
         <main
           className={`${
-            location.pathname === "/home" || location.pathname === "/live"
+            location.pathname === "/home" || location.pathname === "/live" || location.pathname === '/watch-live'
               ? "pb-0"
               : "pb-16"
           } flex-1 overflow-y-auto bg-white dark:bg-slate100 md:pb-0`}
@@ -301,11 +309,13 @@ export default function AppLayout() {
         </main>
 
         {/* Bottom nav — mobile only */}
-        {!location.pathname.startsWith("/camera") && isAuthenticated ?   (
-          <div className="flex md:hidden">
-            <BottomNav />
-          </div>
-        ) : null}
+        {!location.pathname.startsWith("/camera") &&
+          !location.pathname.startsWith("/watch-live") &&
+          isAuthenticated && (
+            <div className="flex md:hidden">
+              <BottomNav />
+            </div>
+          )}
       </div>
     </div>
   );
