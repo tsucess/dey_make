@@ -1,76 +1,144 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { FiUpload, FiSearch, FiMoreVertical, FiArrowUp } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
 import { IoIosArrowDown } from "react-icons/io";
 import CommentDetailsSidebar from "../components/Comments/CommentDetailsSidebar";
-
-const stats = [
-  { title: "Total Comments", value: "356,078", trend: "+12.5%", trendUp: true },
-  { title: "Pending Review", value: "1,248", trend: "-12.5%", trendUp: false },
-  { title: "Reported Comments", value: "842", trend: "+12.5%", trendUp: true },
-  { title: "Approved", value: "342,781", trend: "+12.5%", trendUp: true },
-  { title: "Removed", value: "1,207", trend: "+12.5%", trendUp: true },
-];
-
-const tabs = [
-  { name: "All Comments", count: null },
-  { name: "Pending Review", count: "1,248" },
-  { name: "Reported", count: "842" },
-  { name: "Approved", count: null },
-  { name: "Removed", count: "1,207" },
-];
+import { api } from "../../services/api";
 
 const filterOptions = {
-  "Suspension Type": ["All Type", "Permanent", "Temporary"],
-  "Reason": ["All Reasons", "Hate Speech", "Harassment", "Bullying"],
-  "Date Range": ["Select date range", "Last 7 Days", "Last 30 Days"]
+  "Risk Level": ["All Levels", "Low", "Medium", "High", "Critical"],
+  "Status": ["All Status", "Pending", "Approved", "Removed", "Escalated"],
+  "Date Range": ["Select date range", "Last 7 Days", "Last 30 Days"],
 };
 
-const commentsData = Array(12).fill({
-  id: "CON-2024-200299",
-  user: {
-    name: "Aisha Doe",
-    username: "@aishadoe",
-    avatar: "/story3.jpg",
-    followers: "24M followers",
-    verified: true,
-  },
-  commentText: "You people are dumb",
-  video: {
-    title: "Weekend Vibe",
-    id: "UXX-2224-839423",
-  },
-  reportedBy: "5 users",
-  date: "May 26, 2024",
-}).map((c, i) => ({
-  ...c,
-  id: c.id.slice(0, -1) + i,
-  status: i % 3 === 0 ? "Approved" : i % 3 === 1 ? "Pending Review" : "Removed",
-  reportedBy: i % 2 === 0 ? "5 users" : "",
-}));
+function formatDate(iso) {
+  if (!iso) return "—";
+  try {
+    return new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
+  } catch {
+    return "—";
+  }
+}
+
+function displayStatus(status) {
+  if (status === "pending") return "Pending Review";
+  if (status === "approved") return "Approved";
+  if (status === "removed") return "Removed";
+  if (status === "escalated") return "Escalated";
+  return status || "Pending Review";
+}
+
+function normalizeCase(c) {
+  const subject = c.subject || {};
+  return {
+    id: `CON-${c.id}`,
+    rawId: c.id,
+    user: {
+      name: `User #${subject.ownerId ?? "—"}`,
+      username: subject.ownerId ? `@user${subject.ownerId}` : "",
+      avatar: "/story3.jpg",
+      followers: `${c.reportCount || 0} reports`,
+      verified: false,
+    },
+    commentText: subject.body || subject.caption || subject.title || "—",
+    video: {
+      title: subject.type === "comment" ? `Video #${subject.videoId ?? "—"}` : (subject.title || "—"),
+      id: subject.videoId ? `UXX-${subject.videoId}` : "",
+    },
+    reportedBy: c.reportCount > 0 ? `${c.reportCount} report${c.reportCount === 1 ? "" : "s"}` : "",
+    date: formatDate(c.lastReportedAt || c.createdAt),
+    status: displayStatus(c.status),
+    aiRiskLevel: c.aiRiskLevel,
+    aiSummary: c.aiSummary,
+  };
+}
 
 export default function Comments() {
   const [activeTab, setActiveTab] = useState("All Comments");
   const [selectedComment, setSelectedComment] = useState(null);
   const [filters, setFilters] = useState({
-    "Suspension Type": "All Type",
-    "Reason": "All Reasons",
-    "Date Range": "Select date range"
+    "Risk Level": "All Levels",
+    "Status": "All Status",
+    "Date Range": "Select date range",
   });
   const [openDropdown, setOpenDropdown] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cases, setCases] = useState([]);
+  const [page, setPage] = useState(1);
+  const [pageMeta, setPageMeta] = useState({ currentPage: 1, lastPage: 1, total: 0 });
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const filteredComments = commentsData.filter((comment) => {
-    if (activeTab === "Pending Review" && comment.status !== "Pending Review") return false;
+  const statusParam = useMemo(() => {
+    if (activeTab === "Pending Review") return "pending";
+    if (activeTab === "Approved") return "approved";
+    if (activeTab === "Removed") return "removed";
+    if (filters["Status"] === "Pending") return "pending";
+    if (filters["Status"] === "Approved") return "approved";
+    if (filters["Status"] === "Removed") return "removed";
+    if (filters["Status"] === "Escalated") return "escalated";
+    return "";
+  }, [activeTab, filters]);
+
+  const riskParam = useMemo(() => {
+    const level = filters["Risk Level"];
+    if (level === "Low") return "low";
+    if (level === "Medium") return "medium";
+    if (level === "High") return "high";
+    if (level === "Critical") return "critical";
+    return "";
+  }, [filters]);
+
+  useEffect(() => { setPage(1); }, [activeTab, filters]);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setErrorMessage("");
+    api.getAdminModerationCases({ contentType: "comment", status: statusParam, riskLevel: riskParam, page, perPage: 12 })
+      .then((response) => {
+        if (cancelled) return;
+        const raw = response?.data?.cases || [];
+        setCases(raw.map(normalizeCase));
+        setPageMeta(response?.meta?.cases || { currentPage: 1, lastPage: 1, total: raw.length });
+      })
+      .catch((err) => { if (!cancelled) setErrorMessage(err?.message || "Failed to load moderation cases"); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [statusParam, riskParam, page, refreshKey]);
+
+  async function handleModerationAction(id, payload) {
+    await api.updateAdminModerationCase(id, payload);
+    setRefreshKey((k) => k + 1);
+  }
+
+  const totalCases = pageMeta.total || 0;
+  const stats = [
+    { title: "Total Comments", value: `${totalCases}`, trend: "+0%", trendUp: true },
+    { title: "Pending Review", value: statusParam === "pending" ? `${totalCases}` : "—", trend: "+0%", trendUp: true },
+    { title: "Reported Comments", value: `${cases.filter((c) => c.reportedBy).length}`, trend: "+0%", trendUp: true },
+    { title: "Approved", value: statusParam === "approved" ? `${totalCases}` : "—", trend: "+0%", trendUp: true },
+    { title: "Removed", value: statusParam === "removed" ? `${totalCases}` : "—", trend: "+0%", trendUp: true },
+  ];
+
+  const tabs = [
+    { name: "All Comments", count: null },
+    { name: "Pending Review", count: statusParam === "pending" ? `${totalCases}` : null },
+    { name: "Reported", count: null },
+    { name: "Approved", count: null },
+    { name: "Removed", count: statusParam === "removed" ? `${totalCases}` : null },
+  ];
+
+  const filteredComments = cases.filter((comment) => {
     if (activeTab === "Reported" && !comment.reportedBy) return false;
-    if (activeTab === "Approved" && comment.status !== "Approved") return false;
-    if (activeTab === "Removed" && comment.status !== "Removed") return false;
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      if (!comment.user.name.toLowerCase().includes(q) && 
-          !comment.user.username.toLowerCase().includes(q) && 
-          !comment.id.toLowerCase().includes(q)) {
+      if (!comment.user.name.toLowerCase().includes(q) &&
+          !comment.user.username.toLowerCase().includes(q) &&
+          !comment.id.toLowerCase().includes(q) &&
+          !(comment.commentText || "").toLowerCase().includes(q)) {
         return false;
       }
     }
@@ -305,20 +373,42 @@ export default function Comments() {
           ))}
         </div>
         
+        {isLoading && (
+          <div className="p-6 text-center text-sm text-slate400">Loading moderation cases…</div>
+        )}
+        {!isLoading && errorMessage && (
+          <div className="p-6 text-center text-sm text-red500">{errorMessage}</div>
+        )}
+        {!isLoading && !errorMessage && filteredComments.length === 0 && (
+          <div className="p-6 text-center text-sm text-slate400">No comments found.</div>
+        )}
+
         {/* Pagination */}
         <div className="p-4 px-6 flex items-center justify-between border-t border-black300/50 bg-transparent">
-          <button className="px-6 py-2 border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1 || isLoading}
+            className="px-6 py-2 border border-orange100 rounded-md text-sm font-medium text-white hover:bg-orange100/10 transition-colors disabled:opacity-50"
+          >
             Back
           </button>
-          <span className="text-sm text-slate400">Step 2 of 5</span>
-          <button className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors">
+          <span className="text-sm text-slate400">Page {pageMeta.currentPage || page} of {pageMeta.lastPage || 1}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(pageMeta.lastPage || 1, p + 1))}
+            disabled={(pageMeta.currentPage || page) >= (pageMeta.lastPage || 1) || isLoading}
+            className="px-6 py-2 bg-orange100 rounded-md text-sm font-medium text-black hover:bg-orange400 transition-colors disabled:opacity-50"
+          >
             Next
           </button>
         </div>
       </div>
       
       {/* Sidebar */}
-      <CommentDetailsSidebar comment={selectedComment} onClose={() => setSelectedComment(null)} />
+      <CommentDetailsSidebar
+        comment={selectedComment}
+        onClose={() => setSelectedComment(null)}
+        onAction={handleModerationAction}
+      />
     </div>
   );
 }

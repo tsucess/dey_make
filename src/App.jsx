@@ -68,6 +68,7 @@ const MobilePostDetailsForm = lazy(
 );
 const PostDetail = lazy(() => import("./pages/PostDetail"));
 const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
+const AdminReports = lazy(() => import("./Admin/Pages/Reports"));
 const LivesShow = lazy(() => import("./pages/LivePage"));
 const MobileCamera = lazy(() => import("./components/Create/MobileCamera"));
 
@@ -107,8 +108,12 @@ function AdminRoute() {
   return user?.isAdmin ? <Outlet /> : <Navigate to="/home" replace />;
 }
 
+function landingPathFor(user) {
+  return user?.isAdmin ? "/dashboard" : "/home";
+}
+
 function PublicOnlyRoute() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
   const location = useLocation();
 
   if (isLoading) return <FullPageLoader />;
@@ -117,15 +122,15 @@ function PublicOnlyRoute() {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return isAuthenticated ? <Navigate to="/home" replace /> : <Outlet />;
+  return isAuthenticated ? <Navigate to={landingPathFor(user)} replace /> : <Outlet />;
 }
 
 function PendingVerificationRoute() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
 
   if (isLoading) return <FullPageLoader />;
 
-  if (isAuthenticated) return <Navigate to="/home" replace />;
+  if (isAuthenticated) return <Navigate to={landingPathFor(user)} replace />;
 
   return pendingVerification ? <Outlet /> : <Navigate to="/login" replace />;
 }
@@ -144,7 +149,7 @@ function LandingRoute() {
 }
 
 function RootRedirect() {
-  const { isAuthenticated, isLoading, pendingVerification } = useAuth();
+  const { isAuthenticated, isLoading, pendingVerification, user } = useAuth();
 
   if (isLoading) return <FullPageLoader />;
 
@@ -152,7 +157,9 @@ function RootRedirect() {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return <Navigate to={isAuthenticated ? "/home" : "/welcome"} replace />;
+  return (
+    <Navigate to={isAuthenticated ? landingPathFor(user) : "/welcome"} replace />
+  );
 }
 
 export default function App() {
@@ -259,31 +266,34 @@ export default function App() {
           <Route path="/preview-live" element={renderLazyRoute(PreviewLive)} />
         </Route>
 
-        <Route element={renderLazyRoute(AppLayoutAdmin)}>
-          <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
-          <Route
-            path="/verification-request"
-            element={renderLazyRoute(VerificationRequest)}
-          />
-          <Route path="/users" element={renderLazyRoute(Users)} />
-          <Route path="/comments" element={renderLazyRoute(Comments)} />
-          <Route
-            path="/suspended-account"
-            element={renderLazyRoute(SuspendedAccount)}
-          />
-          <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
-          <Route
-            path="/admin-livestream"
-            element={renderLazyRoute(LivestreamAdmin)}
-          />
-          <Route
-            path="/admin-challenges"
-            element={renderLazyRoute(ChallengesAdmin)}
-          />
-          <Route
-            path="/admin-creator-ecosystem"
-            element={renderLazyRoute(CreatorEcosystem)}
-          />
+        <Route element={<AdminRoute />}>
+          <Route element={renderLazyRoute(AppLayoutAdmin)}>
+            <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
+            <Route
+              path="/verification-request"
+              element={renderLazyRoute(VerificationRequest)}
+            />
+            <Route path="/users" element={renderLazyRoute(Users)} />
+            <Route path="/comments" element={renderLazyRoute(Comments)} />
+            <Route
+              path="/suspended-account"
+              element={renderLazyRoute(SuspendedAccount)}
+            />
+            <Route path="/admin-video" element={renderLazyRoute(VideoAdmin)} />
+            <Route
+              path="/admin-livestream"
+              element={renderLazyRoute(LivestreamAdmin)}
+            />
+            <Route
+              path="/admin-challenges"
+              element={renderLazyRoute(ChallengesAdmin)}
+            />
+            <Route
+              path="/admin-creator-ecosystem"
+              element={renderLazyRoute(CreatorEcosystem)}
+            />
+            <Route path="/reports" element={renderLazyRoute(AdminReports)} />
+          </Route>
         </Route>
 
         <Route path="/video/:id" element={renderLazyRoute(VideoDetails)} />

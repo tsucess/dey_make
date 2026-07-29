@@ -1,10 +1,32 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FiX, FiEye, FiDownload, FiXCircle } from "react-icons/fi";
 import { MdVerified } from "react-icons/md";
-import { IoIosArrowDown } from "react-icons/io";
 
-export default function CommentDetailsSidebar({ comment, onClose }) {
+export default function CommentDetailsSidebar({ comment, onClose, onAction }) {
+  const [notes, setNotes] = useState("");
+  const [busyAction, setBusyAction] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  useEffect(() => {
+    setNotes("");
+    setActionError("");
+  }, [comment?.rawId]);
+
   if (!comment) return null;
+
+  async function handleAction(action) {
+    if (!onAction || busyAction) return;
+    setBusyAction(action);
+    setActionError("");
+    try {
+      await onAction(comment.rawId, { action, notes: notes || undefined });
+      onClose?.();
+    } catch (err) {
+      setActionError(err?.message || "Action failed");
+    } finally {
+      setBusyAction("");
+    }
+  }
 
   return (
     <>
@@ -141,19 +163,43 @@ export default function CommentDetailsSidebar({ comment, onClose }) {
             </div>
           </div>
 
+          {/* Notes */}
+          <div className="bg-blue300 rounded-xl p-5 mb-5 border border-black300/50">
+            <h3 className="text-sm font-medium text-white mb-3">Moderator Notes</h3>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add a note about this decision..."
+              className="w-full p-3 rounded-md bg-transparent border border-black300 text-white text-sm outline-none resize-none h-20"
+            />
+          </div>
+
+          {actionError && (
+            <div className="mb-4 p-3 rounded-lg bg-red500/10 text-red500 text-xs">{actionError}</div>
+          )}
+
           {/* Actions */}
           <div className="flex flex-col gap-3 pb-6">
-            <button className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-slate700 rounded-md text-slate300 text-sm font-medium hover:bg-black300 transition-colors">
-              <FiEye className="w-4 h-4" /> Approve Comment
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("approve")}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-green500/30 rounded-md text-green500 text-sm font-medium hover:bg-green500/10 transition-colors disabled:opacity-50"
+            >
+              <FiEye className="w-4 h-4" /> {busyAction === "approve" ? "Approving…" : "Approve Comment"}
             </button>
-            <button className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-red500/30 rounded-md text-red500 text-sm font-medium hover:bg-red500/10 transition-colors">
-              <FiDownload className="w-4 h-4" /> Remove Comment
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("restrict")}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-slate700 rounded-md text-slate300 text-sm font-medium hover:bg-black300 transition-colors disabled:opacity-50"
+            >
+              <FiDownload className="w-4 h-4 rotate-180" /> {busyAction === "restrict" ? "Restricting…" : "Restrict"}
             </button>
-            <button className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-slate700 rounded-md text-slate300 text-sm font-medium hover:bg-black300 transition-colors">
-              <FiDownload className="w-4 h-4 rotate-180" /> Hide Comment
-            </button>
-            <button className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-slate700 rounded-md text-slate300 text-sm font-medium hover:bg-black300 transition-colors">
-              <FiXCircle className="w-4 h-4" /> Ban User {comment.user.username}
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("remove")}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-transparent border border-red500/30 rounded-md text-red500 text-sm font-medium hover:bg-red500/10 transition-colors disabled:opacity-50"
+            >
+              <FiXCircle className="w-4 h-4" /> {busyAction === "remove" ? "Removing…" : "Remove Comment"}
             </button>
           </div>
 

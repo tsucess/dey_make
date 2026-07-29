@@ -1,8 +1,9 @@
+import { useState } from "react";
 import { FaRegEye } from "react-icons/fa6";
 import { FiCheck } from "react-icons/fi";
 import { MdClose, MdKeyboardArrowDown } from "react-icons/md";
 import { RiVerifiedBadgeFill } from "react-icons/ri";
-import { TbDownload, TbFileDownloadFilled } from "react-icons/tb";
+import { TbDownload } from "react-icons/tb";
 
 const about = [
   { title: "Category", value: "Public Figure" },
@@ -20,7 +21,25 @@ const info = [
   { title: "Bio", value: "Permanent" },
 ];
 
-function VerificationModal({ handleCloseModal }) {
+function VerificationModal({ handleCloseModal, requestId, onAction }) {
+  const [note, setNote] = useState("");
+  const [busyAction, setBusyAction] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  async function handleAction(status) {
+    if (!onAction || !requestId || busyAction) return;
+    setBusyAction(status);
+    setActionError("");
+    try {
+      await onAction(requestId, { status, reviewNotes: note || undefined });
+      handleCloseModal?.();
+    } catch (err) {
+      setActionError(err?.message || "Action failed");
+    } finally {
+      setBusyAction("");
+    }
+  }
+
   return (
     <section className="w-full max-w-150 absolute top-0 right-0 p-7.5 flex flex-col bg-black900 z-100 gap-7.5 h-screen overflow-y-auto">
       <div className="flex flex-col space-y-3 font-roboto">
@@ -84,7 +103,7 @@ function VerificationModal({ handleCloseModal }) {
           <h4 className="text-lg font-roboto text-white">Documents</h4>
           <div className="flex flex-col gap-5">
             {[1, 2].map((i) => (
-              <div className="border border-white/20 rounded-md px-2.5 py-3.75 flex items-center justify-between gap-3">
+              <div key={i} className="border border-white/20 rounded-md px-2.5 py-3.75 flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3.5">
                   <TbDownload className="w-10 h-10 text-white" />
                   <div className="flex flex-col gap-0.5 font-lexend">
@@ -114,22 +133,38 @@ function VerificationModal({ handleCloseModal }) {
         <div className="flex flex-col gap-7.5 p-6 rounded-2xl bg-blue300">
           <h4 className="text-lg font-roboto text-white">Admin Notes</h4>
           <textarea
-            name=""
-            id=""
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
             placeholder="Add a note about this request..."
-            className="p-4 border border-white/57 font-roboto rounded-md h-42 resize-none text-white text-sm"
+            className="p-4 border border-white/57 font-roboto rounded-md h-42 resize-none text-white text-sm bg-transparent outline-none"
           ></textarea>
         </div>
 
+        {actionError && (
+          <div className="p-3 rounded-lg bg-red100/10 text-red100 text-xs">{actionError}</div>
+        )}
+
         <div className="flex flex-col gap-5 p-6 rounded-2xl bg-blue300">
-          <button className="w-full h-12 rounded-md text-red100 text-xs border border-red100 flex items-center justify-center gap-3">
-            <MdClose className="w-4 h-4 text-red100" /> Reject
+          <button
+            disabled={!!busyAction}
+            onClick={() => handleAction("rejected")}
+            className="w-full h-12 rounded-md text-red100 text-xs border border-red100 flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            <MdClose className="w-4 h-4 text-red100" /> {busyAction === "rejected" ? "Rejecting…" : "Reject"}
           </button>
-          <button className="w-full h-12 rounded-md text-green100 text-xs border border-green100 flex items-center justify-center gap-3">
-            <FiCheck className="w-4 h-4 text-green100" /> Approve
+          <button
+            disabled={!!busyAction}
+            onClick={() => handleAction("approved")}
+            className="w-full h-12 rounded-md text-green100 text-xs border border-green100 flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            <FiCheck className="w-4 h-4 text-green100" /> {busyAction === "approved" ? "Approving…" : "Approve"}
           </button>
-          <button className="w-full h-12 rounded-md text-white text-xs border border-white flex items-center justify-center gap-3">
-            Request More Info{" "}
+          <button
+            disabled={!!busyAction}
+            onClick={() => handleAction("needs_more_info")}
+            className="w-full h-12 rounded-md text-white text-xs border border-white flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            {busyAction === "needs_more_info" ? "Sending…" : "Request More Info"}{" "}
             <MdKeyboardArrowDown className="w-4 h-4 text-white" />
           </button>
         </div>

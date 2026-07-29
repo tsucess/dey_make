@@ -1,16 +1,24 @@
 import { IoIosSearch } from "react-icons/io";
 import { RiNotification3Line } from "react-icons/ri";
 import { FiMenu } from "react-icons/fi";
+import { useAuth } from "../../context/AuthContext";
+
+const FALLBACK_AVATAR =
+  "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
 
 function Topbar({ setIsSidebarOpen }) {
+  const { user } = useAuth();
+  const displayName = user?.fullName || user?.username || "Admin";
+  const avatarUrl = user?.avatarUrl || FALLBACK_AVATAR;
+
   return <div className="flex items-center justify-between h-22 bg-blue100 px-4 md:px-8 py-5 w-full">
     <div className="flex gap-3.5 items-center">
         <button className="md:hidden text-white" onClick={() => setIsSidebarOpen(true)}>
           <FiMenu className="w-6 h-6" />
         </button>
-        <img src="/story3.jpg" alt="" className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"/>
+        <img src={avatarUrl} alt={displayName} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"/>
         <div className="flex flex-col gap-1 font-inter">
-            <h5 className="text-base md:text-lg font-medium text-white">Sophia Williams</h5>
+            <h5 className="text-base md:text-lg font-medium text-white">{displayName}</h5>
             <span className="hidden md:block text-sm text-white">Welcome back, Admin! Here’s what’s happening on DeyMake today.</span>
         </div>
     </div>

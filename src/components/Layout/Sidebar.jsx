@@ -43,7 +43,7 @@ function getNavItems(t, isAdmin) {
     { to: "/more", icon: HiOutlineDotsHorizontal, label: "More" },
     { to: "/help", icon: HiOutlineInformationCircle, label: "Help" },
     ...(isAdmin
-      ? [{ to: "/admin", icon: HiOutlineShieldCheck, label: t("common.admin") }]
+      ? [{ to: "/dashboard", icon: HiOutlineShieldCheck, label: t("common.admin") }]
       : []),
   ];
 }

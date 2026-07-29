@@ -1,9 +1,32 @@
-import React from "react";
-import { FiX, FiEye, FiDownload, FiCheck, FiAlertTriangle, FiTrash2, FiUser, FiInfo } from "react-icons/fi";
-import { MdOutlineOndemandVideo } from "react-icons/md";
+import React, { useEffect, useState } from "react";
+import { FiX, FiEye, FiDownload, FiCheck } from "react-icons/fi";
 
-export default function ReportDetailsSidebar({ report, onClose }) {
+export default function ReportDetailsSidebar({ report, onClose, onAction }) {
+  const [note, setNote] = useState("");
+  const [busyAction, setBusyAction] = useState("");
+  const [actionError, setActionError] = useState("");
+
+  useEffect(() => {
+    setNote(report?.resolutionNotes || "");
+    setActionError("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [report?.rawId]);
+
   if (!report) return null;
+
+  async function handleAction(status) {
+    if (!onAction || busyAction) return;
+    setBusyAction(status);
+    setActionError("");
+    try {
+      await onAction(report.rawId, { status, resolutionNotes: note || undefined });
+      onClose?.();
+    } catch (err) {
+      setActionError(err?.message || "Action failed");
+    } finally {
+      setBusyAction("");
+    }
+  }
 
   return (
     <>
@@ -131,28 +154,40 @@ export default function ReportDetailsSidebar({ report, onClose }) {
           {/* Add Note */}
           <div className="flex flex-col gap-3">
             <h3 className="text-sm font-semibold text-white">Add Note</h3>
-            <textarea 
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
               placeholder="Add a note about this report..."
               className="bg-black600 border border-black300 rounded-xl p-4 text-sm text-white placeholder-slate-500 outline-none resize-none h-24 focus:border-slate600 transition-colors"
             />
           </div>
 
+          {actionError && (
+            <div className="p-3 rounded-lg bg-red500/10 text-red500 text-xs">{actionError}</div>
+          )}
+
           {/* Actions */}
           <div className="flex flex-col gap-3 mt-2 pb-6">
-            <button className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-[#0ea759]/30 text-[#0ea759] text-sm font-medium hover:bg-[#0ea759]/10 transition-colors">
-              <FiCheck className="w-4 h-4" /> Approve Content
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("resolved")}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-[#0ea759]/30 text-[#0ea759] text-sm font-medium hover:bg-[#0ea759]/10 transition-colors disabled:opacity-50"
+            >
+              <FiCheck className="w-4 h-4" /> {busyAction === "resolved" ? "Resolving…" : "Resolve Report"}
             </button>
-            <button className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-slate700 text-white text-sm font-medium hover:bg-black300 transition-colors">
-              <FiEye className="w-4 h-4" /> Warn Streamer
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("escalated")}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-red500/30 text-red500 text-sm font-medium hover:bg-red500/10 transition-colors disabled:opacity-50"
+            >
+              <FiDownload className="w-4 h-4 rotate-180" /> {busyAction === "escalated" ? "Escalating…" : "Escalate"}
             </button>
-            <button className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-red500/30 text-red500 text-sm font-medium hover:bg-red500/10 transition-colors">
-              <FiDownload className="w-4 h-4 rotate-180" /> Remove Content
-            </button>
-            <button className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-slate700 text-white text-sm font-medium hover:bg-black300 transition-colors">
-              <FiEye className="w-4 h-4" /> Dismiss Report
-            </button>
-            <button className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-slate700 text-white text-sm font-medium hover:bg-black300 transition-colors">
-              <FiEye className="w-4 h-4" /> View Reporter Profile
+            <button
+              disabled={!!busyAction}
+              onClick={() => handleAction("dismissed")}
+              className="flex items-center justify-center gap-2 w-full py-3.5 rounded-lg border border-slate700 text-white text-sm font-medium hover:bg-black300 transition-colors disabled:opacity-50"
+            >
+              <FiEye className="w-4 h-4" /> {busyAction === "dismissed" ? "Dismissing…" : "Dismiss Report"}
             </button>
           </div>
         </div>
