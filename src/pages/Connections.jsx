@@ -214,7 +214,7 @@ function Connections() {
   }
 
   return (
-    <div className="px-4 md:px-10 py-8 flex flex-col gap-6 sm:gap-10">
+    <div className="px-4 md:px-10 pt-4 md:py-8 flex flex-col gap-6 sm:gap-10">
       <Hero
         stories={stories}
         creators={creators}

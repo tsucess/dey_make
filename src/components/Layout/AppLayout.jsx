@@ -166,6 +166,9 @@ export default function AppLayout() {
     "/challenge": {
       hidden: true,
     },
+    "/watch-live": {
+      hidden: true,
+    },
   };
 
   const currentConfig = topBarConfig[location.pathname] || {
@@ -232,20 +235,20 @@ export default function AppLayout() {
                 >
                   <FiMenu className="w-6 h-6 text-black dark:text-white" />
                 </button>
-                <button onClick={() => navigate("/live")}>
-                  <MdLiveTv className="w-5 h-5 text-black dark:text-white" />
+                <button onClick={() => navigate("/watch-live")} className="cursor-pointer">
+                  <MdLiveTv className="w-5 h-5 text-black dark:text-white hover:text-slate300 transition-all" />
                 </button>
 
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => navigate("/home")}
-                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
+                    className={`text-black dark:text-white text-sm font-semibold relative hover:text-slate300 transition-all cursor-pointer ${currentConfig.isHomepage ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
                   >
                     For You
                   </button>
                   <button
                     onClick={() => navigate("/connection")}
-                    className={`text-black dark:text-white text-sm font-semibold relative ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
+                    className={`text-black dark:text-white text-sm font-semibold relative hover:text-slate300 transition-all cursor-pointer ${currentConfig.isConnection ? "after:content-[''] after:absolute after:-bottom-1 after:w-6 after:h-1 after:rounded-full after:bg-black dark:after:bg-white after:left-4" : ""}`}
                   >
                     Friends
                   </button>
@@ -300,7 +303,7 @@ export default function AppLayout() {
         {/* Page content */}
         <main
           className={`${
-            location.pathname === "/home" || location.pathname === "/live" || location.pathname === '/watch-live'
+            location.pathname === "/home" || location.pathname === "/live" || location.pathname === '/watch-live' || location.pathname === '/connection'
               ? "pb-0"
               : "pb-16"
           } flex-1 overflow-y-auto bg-white dark:bg-slate100 md:pb-0`}
@@ -311,6 +314,7 @@ export default function AppLayout() {
         {/* Bottom nav — mobile only */}
         {!location.pathname.startsWith("/camera") &&
           !location.pathname.startsWith("/watch-live") &&
+          !location.pathname.startsWith("/connection") &&
           isAuthenticated && (
             <div className="flex md:hidden">
               <BottomNav />

@@ -95,7 +95,7 @@ function Video({
     : audioTitle || audioArtist;
 
   return (
-    <section className="w-full md:w-2/3 flex justify-center h-screen md:h-200 relative">
+    <section className="w-full md:w-2/3 flex justify-center h-screen md:h-150 relative">
       <div className="max-w-md w-full  h-full relative">
         <MediaFit src={mediaSrc} poster={thumbnail} type={video?.type} alt={caption} />
         <div className="flex flex-col gap-2 absolute right-4 bottom-24 items-center">

@@ -74,7 +74,8 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
     } 
 
   return <div className="flex flex-col gap-8 font-inter w-full md:col-span-2">
-    <button onClick={()=> navigate('/live')} className="w-6 md:w-7.5 h-6 md:h-7.5 absolute top-2 left-4 z-4 md:static rounded-md flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-4 md:w-5 h-4 md:h-5" /></button>
+    <button onClick={()=> navigate('/live')} className=" hidden w-6 md:w-7.5 h-6 md:h-7.5 absolute top-2 left-4 z-4 md:static rounded-md md:flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-4 md:w-5 h-4 md:h-5" /></button>
+    <button onClick={()=> navigate('/home')} className="w-6 md:w-7.5 h-6 md:h-7.5 absolute md:hidden top-2 left-4 z-4 md:static rounded-md flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-4 md:w-5 h-4 md:h-5" /></button>
     <div className="flex items-center gap-3 absolute top-10 left-3 z-3 md:static">
         <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150 backdrop-blur-md backdrop-brightness-150 backdrop-opacity-60 flex-1">
         <div className="flex items-center gap-2">
