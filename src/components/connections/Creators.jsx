@@ -15,12 +15,12 @@ function Creators({ creators, onToggleConnect }) {
   const list = Array.isArray(creators) && creators.length > 0 ? creators : FALLBACK_CREATORS;
 
   return (
-    <div className="w-full md:w-1/3 md:flex flex-col gap-6 hidden h-full">
+    <div className="w-full md:w-1/3 md:flex flex-col gap-4 hidden h-full">
         <div className="flex items-center justify-between">
             <h3 className="font-inter text-sm font-semibold text-black dark:text-white">Creators you may know</h3>
             <button className="font-inter text-sm font-semibold text-orange100">See All</button>
         </div>
-        <div className="flex flex-col gap-5 h-25 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div className="flex flex-col gap-4 h-20 overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             {
                 list.map((creator, i) => {
                     const name = creator.fullName || creator.name || 'Name Name';

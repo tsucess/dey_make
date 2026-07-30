@@ -96,7 +96,7 @@ function Video({
 
   return (
     <section className="w-full md:w-2/3 flex justify-center relative">
-      <div className="max-w-md w-full max-h-215 h-full relative">
+      <div className="max-w-md w-full max-h-180 h-full relative">
         <MediaFit src={mediaSrc} poster={thumbnail} type={video?.type} alt={caption} />
         <div className="flex flex-col gap-2 absolute right-4 bottom-4 items-center">
           <img
