@@ -23,12 +23,9 @@ const tools = [
   { title: "Sponsor Hub", icon: FaHandHoldingUsd },
 ];
 
-function CreatorTool() {
+function CreatorTool({ analytics }) {
   const [activeTool, setActiveTool] = useState("Academy");
 
-  function handleActiveToolChange(value) {
-    setActiveTool(value);
-  }
   return (
     <div className="flex flex-col gap-8">
       <div
@@ -36,9 +33,9 @@ function CreatorTool() {
         style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
       >
         <div className="flex items-center gap-3 min-w-200 w-full">
-          {tools.map(({ title, icon: Icon }, i) => (
+          {tools.map(({ title, icon: Icon }) => (
             <button
-              onClick={() => handleActiveToolChange(title)}
+              onClick={() => setActiveTool(title)}
               key={title}
               className={`transition-all text-sm py-2 md:py-3 px-4 md:px-5 rounded-xl font-semibold flex items-center gap-3 ${
                 activeTool === title
@@ -55,8 +52,8 @@ function CreatorTool() {
       {activeTool === "Academy" && <AcademyTool />}
       {activeTool === "Wallet" && <WalletTool />}
       {activeTool === "AI Studio" && <AiStudioTool />}
-      {activeTool === "Verify" && <VerificationTool />}
-      {activeTool === "Revenue" && <RevenueTool />}
+      {activeTool === "Verify" && <VerificationTool analytics={analytics} />}
+      {activeTool === "Revenue" && <RevenueTool analytics={analytics} />}
       {activeTool === "Merch" && <MerchTool />}
       {activeTool === "Sponsor Hub" && <SponsorHub />}
     </div>

@@ -110,6 +110,7 @@ export default function Profile() {
   const [draftAction, setDraftAction] = useState(null);
   const [draftError, setDraftError] = useState("");
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
 
   const activeConfig = useMemo(
     () => profileTabs.find((tab) => tab.feed === activeTab) || profileTabs[0],
@@ -440,6 +441,32 @@ export default function Profile() {
     navigate(`/post-details-form?id=${id}`);
   }
 
+  const isSubscribed = Boolean(profile?.currentUserState?.subscribed);
+
+  async function handleToggleSubscribe() {
+    if (isOwnProfile || !profile?.id || subscribing) return;
+    setSubscribing(true);
+    setError("");
+
+    try {
+      const response = isSubscribed
+        ? await api.unsubscribeFromCreator(profile.id)
+        : await api.subscribeToCreator(profile.id);
+      const nextSubscribed = Boolean(response?.data?.subscribed);
+      const nextCount = response?.data?.subscriberCount;
+      setProfile((current) => current ? {
+        ...current,
+        subscriberCount: typeof nextCount === "number" ? nextCount : current.subscriberCount,
+        currentUserState: { ...(current.currentUserState || {}), subscribed: nextSubscribed },
+      } : current);
+      setFeedback(response?.message || (nextSubscribed ? t("profile.subscribe") : t("profile.unsubscribe")));
+    } catch (nextError) {
+      setError(firstError(nextError?.errors, nextError?.message || t("profile.unableToUpdate")));
+    } finally {
+      setSubscribing(false);
+    }
+  }
+
   const videosCount = formatCompactNumber(profile?.videosCount ?? 0);
   const followersCount = formatCompactNumber(profile?.subscriberCount ?? 0);
   const followingCount = formatCompactNumber(profile?.followingCount ?? 0);
@@ -590,7 +617,7 @@ export default function Profile() {
                       {t("profile.cancel")}
                     </button>
                   </>
-                ) : (
+                ) : isOwnProfile ? (
                   <>
                     <button
                       type="button"
@@ -616,6 +643,33 @@ export default function Profile() {
                         Share
                       </button>
                     </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleToggleSubscribe}
+                      disabled={subscribing}
+                      className={`w-full rounded-md py-2.75 text-[14px] font-semibold font-inter transition-colors disabled:opacity-60 ${
+                        isSubscribed
+                          ? "bg-black100 text-white hover:bg-[#404040]"
+                          : "bg-orange100 text-black hover:bg-orange200"
+                      }`}
+                    >
+                      {subscribing
+                        ? t("profile.saving")
+                        : isSubscribed
+                          ? t("profile.unsubscribe")
+                          : t("profile.subscribe")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleShareProfile}
+                      className="flex w-full items-center justify-center gap-2 rounded-md bg-black100 py-2.75 text-[13px] font-medium font-inter text-white transition-colors hover:bg-[#404040]"
+                    >
+                      <FiShare className="w-4 h-4" />
+                      Share
+                    </button>
                   </>
                 )}
               </div>

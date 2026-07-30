@@ -1,10 +1,15 @@
 import { BsDot } from "react-icons/bs";
 import { FiPlay } from "react-icons/fi";
-import { MdArrowForwardIos } from "react-icons/md";
+import { MdArrowBackIos } from "react-icons/md";
 
-function Campaign({ campaign }) {
+function Campaign({ campaign, onBack }) {
   return (
     <div className="flex flex-col gap-6">
+      {onBack ? (
+        <button onClick={onBack} className="self-start flex items-center gap-1 text-sm font-semibold text-orange100">
+          <MdArrowBackIos className="w-4 h-4" /> Back to campaigns
+        </button>
+      ) : null}
       <div className="flex gap-5 py-5 px-7.5 items-center border border-black/30 dark:border-white/30 rounded-2xl hover:bg-slate150/50 dark:hover:bg-slate350/20 transition-all">
         <div className="w-50 h-50 rounded-md bg-slate150 dark:bg-white shrink-0"></div>
         <div className="flex flex-col gap-6 flex-1">

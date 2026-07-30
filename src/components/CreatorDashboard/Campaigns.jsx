@@ -7,7 +7,7 @@ const filterTab = ["All", "Active", "Draft", "Review", "Completed"];
 
 
 
-function Campaigns({handleSelectedCampaignChange, campaings}) {
+function Campaigns({handleSelectedCampaignChange, campaings, loading = false}) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("All");
 
@@ -48,6 +48,11 @@ function Campaigns({handleSelectedCampaignChange, campaings}) {
 
         {/* Campaigns */}
         <div className="flex flex-col gap-4">
+          {loading && filteredData.length === 0 ? (
+            <div className="text-sm text-slate700 font-inter">Loading campaigns…</div>
+          ) : filteredData.length === 0 ? (
+            <div className="text-sm text-slate700 font-inter">No campaigns yet.</div>
+          ) : null}
           {filteredData.map((campaign) => (
             <div
               key={campaign.id}
