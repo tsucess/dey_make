@@ -139,6 +139,7 @@ export function useNotifications({ enabled = true } = {}) {
 
     if (data.conversationId) return "/messages";
     if (data.videoId) return buildVideoLink({ id: data.videoId, isLive: notification?.type === "live" });
+    if (data.actorId) return `/users/${data.actorId}`;
     if (data.creatorId) return `/users/${data.creatorId}`;
     if (data.membershipId || data.planId) return "/profile";
 
