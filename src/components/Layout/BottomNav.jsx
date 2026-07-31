@@ -42,11 +42,11 @@ function getNavItems(isAdmin) {
       labelKey: "common.home",
       icon: <HiOutlineSquares2X2 />,
     },
-    {
-      to: "/challenge",
-      labelKey: "Challenge",
-      icon: <HiOutlineTrophy />,
-    },
+    // {
+    //   to: "/challenge",
+    //   labelKey: "Challenge",
+    //   icon: <HiOutlineTrophy />,
+    // },
     {
       to: "/camera",
       labelKey: "Create",
