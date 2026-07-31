@@ -193,13 +193,13 @@ function LivePreview() {
             autoPlay
             playsInline
             muted
-            className="w-full h-full min-h-50 object-cover bg-black"
+            className="w-full h-full min-h-50 max-h-100 object-cover bg-black"
           />
         ) : (
           <img
             src="/preview-img.png"
             alt=""
-            className="w-full h-full min-h-50 object-fill"
+            className="w-full h-full min-h-50 max-h-100 object-fill"
           />
         )}
         {cameraError ? (
@@ -237,7 +237,7 @@ function LivePreview() {
           value={title}
           onChange={(event) => setTitle(event.target.value.slice(0, 80))}
           maxLength={80}
-          className="px-6 py-3 rounded-full bg-white300 dark:bg-black100 outline-none"
+          className="px-6 py-3 rounded-full bg-white300 text-black dark:bg-black100 dark:text-white outline-none"
           placeholder="What’s your stream about? (e.g. Late night dance)"
         />
         <span className="text-orange100 text-sm self-end font-semibold">

@@ -169,6 +169,9 @@ export default function AppLayout() {
     "/watch-live": {
       hidden: true,
     },
+    "/live": {
+      hidden: true,
+    },
   };
 
   const currentConfig = topBarConfig[location.pathname] || {
@@ -315,6 +318,7 @@ export default function AppLayout() {
         {!location.pathname.startsWith("/camera") &&
           !location.pathname.startsWith("/watch-live") &&
           !location.pathname.startsWith("/connection") &&
+          !location.pathname.startsWith("/live") &&
           isAuthenticated && (
             <div className="flex md:hidden">
               <BottomNav />
