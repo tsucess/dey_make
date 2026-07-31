@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { BiTransferAlt } from "react-icons/bi";
 import { BsScissors } from "react-icons/bs";
 import { FaRegClosedCaptioning } from "react-icons/fa";
@@ -7,6 +8,8 @@ import { IoIosInfinite, IoMdArrowDroprightCircle } from "react-icons/io";
 import { LuLockKeyhole, LuScissorsLineDashed } from "react-icons/lu";
 import { MdCyclone } from "react-icons/md";
 import { PiImagesSquareFill } from "react-icons/pi";
+import { useNavigate } from "react-router-dom";
+import { api } from "../../services/api";
 
 const toolKits = [
   {
@@ -76,16 +79,37 @@ const toolKits = [
 ];
 
 function AiStudioTool() {
+  const navigate = useNavigate();
+  const [projectCount, setProjectCount] = useState(null);
+
+  useEffect(() => {
+    let ignore = false;
+    api.getAiStudioProjects()
+      .then((response) => {
+        if (ignore) return;
+        setProjectCount((response?.data?.projects ?? []).length);
+      })
+      .catch(() => {});
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  function handleToolClick(tool) {
+    if (tool?.isLocked) return;
+    navigate("/create");
+  }
+
   return (
     <section className="flex flex-col gap-8 ">
       <div className="studio-bg py-10 rounded-2xl px-4 md:px-8 h-44 flex items-center justify-between">
         <div className="flex flex-col gap-3 font-inter">
           <h2 className="text-white text-2xl font-bold">AI Studio Pro</h2>
           <span className="text-white text-xs">
-            Unlock all tools · 200 AI credits/mo
+            {projectCount != null ? `${projectCount} project${projectCount === 1 ? "" : "s"} · ` : ""}Unlock all tools · 200 AI credits/mo
           </span>
         </div>
-        <button className="bg-orange100 text-slate100 text-base px-4 md:px-6 py-2 md:py-3 rounded-md">
+        <button onClick={() => navigate("/coins-wallet")} className="bg-orange100 text-slate100 text-base px-4 md:px-6 py-2 md:py-3 rounded-md">
           Upgrade
         </button>
       </div>
@@ -96,9 +120,11 @@ function AiStudioTool() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {toolKits.map(
             ({ name, desc, icon: Icon, level, price, isLocked }, i) => (
-              <div
-                key={name - i}
-                className="flex flex-col gap-7 md:gap-12.5 px-5 md:px-7.5 py-8 md:py-12.5 rounded-2xl border border-black/20 dark:border-white/20 bg-white300 dark:bg-black400"
+              <button
+                key={name}
+                onClick={() => handleToolClick({ isLocked })}
+                disabled={isLocked}
+                className="text-left flex flex-col gap-7 md:gap-12.5 px-5 md:px-7.5 py-8 md:py-12.5 rounded-2xl border border-black/20 dark:border-white/20 bg-white300 dark:bg-black400 disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex flex-col gap-3 md:gap-6">
@@ -162,7 +188,7 @@ function AiStudioTool() {
                     )}
                   </div>
                 </div>
-              </div>
+              </button>
             ),
           )}
         </div>

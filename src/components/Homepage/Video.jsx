@@ -16,6 +16,7 @@ import { FaHeart, FaRegCommentDots, FaRegHeart } from "react-icons/fa";
 import { FaEllipsis } from "react-icons/fa6";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { IoLanguage, IoLocationOutline, IoMusicalNotes } from "react-icons/io5";
+import { useNavigate } from "react-router-dom";
 import {
   FALLBACK_AVATAR,
   formatCompactNumber,
@@ -196,6 +197,7 @@ function Video({
   onToggleRepost,
   isOwner = false,
 }) {
+  const navigate = useNavigate();
   const creator = video?.creator || video?.author || null;
   const state = video?.currentUserState || {};
 
@@ -204,6 +206,14 @@ function Video({
   const thumbnail = video ? getVideoThumbnail(video) : "/home_img.jpg";
   const avatarUrl = creator ? getProfileAvatar(creator) : "/user1.jpg";
   const displayName = creator ? getProfileName(creator) : "Name and Last name";
+  const creatorProfilePath = isOwner
+    ? "/profile"
+    : creator?.id != null
+      ? `/users/${creator.id}`
+      : null;
+  const goToCreatorProfile = () => {
+    if (creatorProfilePath) navigate(creatorProfilePath);
+  };
   const location = video?.location || "Location";
   const caption =
     video?.caption || video?.title || "Caption of the post 😉 #fyp";
@@ -267,11 +277,19 @@ function Video({
           alt={caption}
         />
         <div className="flex flex-col gap-1 md:gap-2 absolute right-4 bottom-15 md:bottom-20 items-center">
-          <img
-            src={avatarUrl || FALLBACK_AVATAR}
-            alt=""
-            className="w-10 md:w-12 h-10 md:h-12 rounded-full border-2 border-white object-cover"
-          />
+          <button
+            type="button"
+            onClick={goToCreatorProfile}
+            disabled={!creatorProfilePath}
+            aria-label={displayName}
+            className="rounded-full focus:outline-none disabled:cursor-default"
+          >
+            <img
+              src={avatarUrl || FALLBACK_AVATAR}
+              alt=""
+              className="w-10 md:w-12 h-10 md:h-12 rounded-full border-2 border-white object-cover"
+            />
+          </button>
           <div className="flex flex-col gap-1 items-center">
             <button onClick={onToggleLike}>
               <FaHeart
@@ -327,7 +345,14 @@ function Video({
             <IoLocationOutline className="text-white w-4 h-4" />
             <span className="text-xs font-inter text-white">{location}</span>
           </div>
-          <p className="text-base font-inter text-white">{displayName}</p>
+          <button
+            type="button"
+            onClick={goToCreatorProfile}
+            disabled={!creatorProfilePath}
+            className="text-base font-inter text-white text-left focus:outline-none disabled:cursor-default"
+          >
+            {displayName}
+          </button>
           <span className="text-sm font-inter text-white max-w-[20ch]">
             {caption}
           </span>

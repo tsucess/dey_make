@@ -8,8 +8,10 @@ import {
   Filler,
 } from "chart.js";
 
+import { useMemo } from "react";
 import { Line } from "react-chartjs-2";
 import { useTheme } from "../../context/ThemeContext";
+import { formatCompactNumber } from "../../utils/content";
 
 ChartJS.register(
   CategoryScale,
@@ -20,15 +22,44 @@ ChartJS.register(
   Filler,
 );
 
-export default function MonthlyRevenueChart() {
+function bucketByMonth(trend) {
+  if (!Array.isArray(trend) || trend.length === 0) return { labels: [], data: [] };
+  const buckets = new Map();
+  trend.forEach((entry) => {
+    if (!entry?.date) return;
+    const date = new Date(entry.date);
+    if (Number.isNaN(date.getTime())) return;
+    const label = date.toLocaleDateString(undefined, { month: "short" });
+    buckets.set(label, (buckets.get(label) ?? 0) + Number(entry.membershipRevenue ?? 0));
+  });
+  return {
+    labels: Array.from(buckets.keys()),
+    data: Array.from(buckets.values()),
+  };
+}
+
+export default function MonthlyRevenueChart({ analytics, summary }) {
   const { isDark } = useTheme();
+  const currency = summary?.currency ?? "NGN";
+
+  const { labels, data: seriesData } = useMemo(() => bucketByMonth(analytics?.trends ?? []), [analytics]);
+  const totalRevenue = seriesData.reduce((acc, value) => acc + value, 0);
+  const mid = Math.floor(seriesData.length / 2);
+  const recentHalf = seriesData.slice(mid).reduce((acc, value) => acc + value, 0);
+  const priorHalf = seriesData.slice(0, mid).reduce((acc, value) => acc + value, 0);
+  const percentChange = priorHalf === 0
+    ? (recentHalf > 0 ? 100 : 0)
+    : Math.round(((recentHalf - priorHalf) / priorHalf) * 100);
+
+  const suggestedMax = Math.max(10, Math.ceil(Math.max(...seriesData, 0) * 1.2));
+
   const data = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+    labels,
 
     datasets: [
       {
         label: "Revenue",
-        data: [56, 11, 37, 54, 87, 15],
+        data: seriesData,
 
         borderColor: "#00b8d9",
         backgroundColor: "rgba(0, 184, 217, 0.15)",
@@ -78,10 +109,9 @@ export default function MonthlyRevenueChart() {
 
       y: {
         min: 0,
-        max: 100,
+        suggestedMax,
 
         ticks: {
-          stepSize: 20,
           color: isDark ? "#ddd" : "#333",
           font: {
             size: 11,
@@ -105,19 +135,27 @@ export default function MonthlyRevenueChart() {
             Monthly Revenue
           </h2>
 
-          <p className="text-black dark:text-white text-xs">Last 6 months</p>
+          <p className="text-black dark:text-white text-xs">Analytics period</p>
         </div>
 
         <div className="text-right">
-          <h2 className="text-yellow-400 text-xl font-bold">$4,280</h2>
+          <h2 className="text-yellow-400 text-xl font-bold">
+            {currency} {formatCompactNumber(totalRevenue)}
+          </h2>
 
-          <p className="text-green-400 text-xs">+18.2% vs last month</p>
+          <p className={`text-xs ${percentChange >= 0 ? "text-green-400" : "text-red-400"}`}>
+            {percentChange >= 0 ? "+" : ""}{percentChange}% vs previous half
+          </p>
         </div>
       </div>
 
       {/* Chart */}
       <div className="h-70">
-        <Line data={data} options={options} />
+        {seriesData.length === 0 ? (
+          <div className="flex items-center justify-center h-full text-sm text-slate700">No membership revenue yet.</div>
+        ) : (
+          <Line data={data} options={options} />
+        )}
       </div>
     </div>
   );

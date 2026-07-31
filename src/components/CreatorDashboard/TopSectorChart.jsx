@@ -44,7 +44,7 @@ const centerTextPlugin = {
 
     ctx.font = "bold 28px Arial";
 
-    ctx.fillText("324", x, y - 10);
+    ctx.fillText(options.mainLabel ?? "0", x, y - 10);
 
     // subtitle
 
@@ -52,54 +52,33 @@ const centerTextPlugin = {
 
     ctx.font = "14px Arial";
 
-    ctx.fillText("Mentions", x, y + 20);
+    ctx.fillText(options.subLabel ?? "Sources", x, y + 20);
 
     ctx.restore();
   },
 };
 
-export default function TopSectorsChart() {
+export default function TopSectorsChart({ sectors: sectorsProp }) {
   const { isDark } = useTheme();
-  const sectors = [
-    {
-      name: "Creator Fund",
-      value: 42,
-      color: "#ff4757",
-    },
-
-    {
-      name: "Brand Deals",
-      value: 21,
-      color: "#ffd000",
-    },
-
-    {
-      name: "Live Gifts",
-      value: 15,
-      color: "#ff5fa2",
-    },
-
-    {
-      name: "Merch",
-      value: 12,
-      color: "#4aa3ff",
-    },
-
-    {
-      name: "Subscriptions",
-      value: 10,
-      color: "#32e875",
-    },
-  ];
+  const sectors = (sectorsProp ?? []).map((sector) => ({
+    name: sector.title ?? sector.name,
+    value: Number(sector.value ?? 0),
+    color: sector.color,
+  }));
+  const total = sectors.reduce((acc, sector) => acc + sector.value, 0);
+  const percentages = sectors.map((sector) => (total > 0 ? Math.round((sector.value / total) * 100) : 0));
+  const chartSectors = sectors.length > 0
+    ? sectors
+    : [{ name: "No revenue", value: 1, color: "#4a4a4a" }];
 
   const data = {
-    labels: sectors.map((item) => item.name),
+    labels: chartSectors.map((item) => item.name),
 
     datasets: [
       {
-        data: sectors.map((item) => item.value),
+        data: chartSectors.map((item) => item.value),
 
-        backgroundColor: sectors.map((item) => item.color),
+        backgroundColor: chartSectors.map((item) => item.color),
 
         borderWidth: 0,
 
@@ -137,7 +116,7 @@ export default function TopSectorsChart() {
     "
     >
       <h2 className="text-black dark:text-white text-base font-medium">
-        TOP SECTORS MENTIONED
+        REVENUE BY SOURCE
       </h2>
 
       <div
@@ -168,6 +147,10 @@ export default function TopSectorsChart() {
                   textColor: isDark ? "#ffffff" : "#000000",
 
                   subTextColor: isDark ? "#dddddd" : "#555555",
+
+                  mainLabel: total > 0 ? new Intl.NumberFormat().format(total) : "0",
+
+                  subLabel: total > 0 ? "Total" : "No data",
                 },
               },
             }}
@@ -186,46 +169,50 @@ export default function TopSectorsChart() {
           flex-1
         "
         >
-          {sectors.map((item) => (
-            <div
-              key={item.name}
-              className="
-                flex
-                font-light
-                items-center
-                justify-between
-                text-lg
-              "
-            >
+          {sectors.length === 0 ? (
+            <span className="text-sm text-slate700 text-center">No revenue sources yet.</span>
+          ) : (
+            sectors.map((item, index) => (
               <div
+                key={item.name}
                 className="
-                flex
-                items-center
-                gap-1
-              "
+                  flex
+                  font-light
+                  items-center
+                  justify-between
+                  text-lg
+                "
               >
-                <span
+                <div
                   className="
-                    w-4
-                    h-4
-                    rounded-full
-                    
-                  "
-                  style={{
-                    background: item.color,
-                  }}
-                />
+                  flex
+                  items-center
+                  gap-1
+                "
+                >
+                  <span
+                    className="
+                      w-4
+                      h-4
+                      rounded-full
+
+                    "
+                    style={{
+                      background: item.color,
+                    }}
+                  />
+
+                  <span className="text-black dark:text-white text-sm font-medium">
+                    {item.name}
+                  </span>
+                </div>
 
                 <span className="text-black dark:text-white text-sm font-medium">
-                  {item.name}
+                  {percentages[index]}%
                 </span>
               </div>
-
-              <span className="text-black dark:text-white text-sm font-medium">
-                {item.value}%
-              </span>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>

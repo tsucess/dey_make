@@ -475,6 +475,8 @@ export const api = {
   deleteCreatorPlan: (id) => request(`/memberships/plans/${id}`, { method: "DELETE" }),
   subscribeToPlan: (id) => request(`/memberships/plans/${id}/subscribe`, { method: "POST" }),
   cancelMembership: (id) => request(`/memberships/${id}/cancel`, { method: "POST" }),
+  getCreatorAnalytics: (options = {}) => request(`/me/analytics${buildQueryString({ period: options.period, limit: options.limit })}`),
+  getCreatorVideoAnalytics: (id, options = {}) => request(`/me/analytics/videos/${id}${buildQueryString({ period: options.period })}`),
   getCreatorVerification: () => request("/creator-verification"),
   submitCreatorVerification: (payload) => request("/creator-verification", { method: "POST", body: payload }),
   getMonetizationSummary: () => request("/monetization/summary"),

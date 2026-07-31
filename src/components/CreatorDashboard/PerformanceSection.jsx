@@ -1,22 +1,46 @@
+import { useMemo } from "react";
 import { BsDot } from "react-icons/bs";
+import { formatCompactNumber } from "../../utils/content";
 import WeeklyPerformance from "./WeeklyPerformance";
 
-const stats = [
-  { title: "IMPRESSIONS", value: "9.1M" },
-  { title: "ENGAGEMENT", value: "672.0K" },
-  { title: "CLICKS", value: "268.0K" },
-  { title: "CONVERSIONS", value: "18,600" },
-  { title: "ACTIVE CAMPAIGNS", value: "3" },
-  { title: "TOTAL SPENT", value: "₦900,000" },
-];
+function formatCurrencyAmount(amount, currency) {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency || "NGN",
+      maximumFractionDigits: 0,
+    }).format(Number(amount ?? 0));
+  } catch {
+    return `${currency || "NGN"} ${Number(amount ?? 0)}`;
+  }
+}
 
-const topPerformance = [
-  {title : 'Maya Beauty', impression : '1.4M', engagement : '95.0K', conversations : '2800'},
-  {title : 'Luna Chill', impression : '1.4M', engagement : '95.0K', conversations : '2800'},
-  {title : 'Alex Fit', impression : '1.4M', engagement : '95.0K', conversations : '2800'},
-]
+function PerformanceSection({ campaigns = [] }) {
+  const stats = useMemo(() => {
+    const activeCampaigns = campaigns.filter((campaign) => campaign?.tab === "Active");
+    const totalBudget = campaigns.reduce(
+      (acc, campaign) => acc + Number(String(campaign?.budget ?? "0").replace(/,/g, "")),
+      0,
+    );
+    const currency = campaigns[0]?.currency || "NGN";
 
-function PerformanceSection() {
+    return [
+      { title: "IMPRESSIONS", value: formatCompactNumber(campaigns.length * 0) || "0" },
+      { title: "ENGAGEMENT", value: "0" },
+      { title: "CLICKS", value: "0" },
+      { title: "CONVERSIONS", value: "0" },
+      { title: "ACTIVE CAMPAIGNS", value: String(activeCampaigns.length) },
+      { title: "TOTAL BUDGET", value: formatCurrencyAmount(totalBudget, currency) },
+    ];
+  }, [campaigns]);
+
+  const topPerformance = useMemo(() => campaigns.slice(0, 3).map((campaign) => ({
+    title: campaign.title,
+    impression: "0",
+    engagement: "0",
+    conversations: "0",
+  })), [campaigns]);
+
   return (
     <section className="flex flex-col gap-8 font-inter">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-3 gap-y-3.5">

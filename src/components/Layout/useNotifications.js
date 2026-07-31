@@ -136,15 +136,22 @@ export function useNotifications({ enabled = true } = {}) {
 
   const resolveNotificationDestination = useCallback((notification) => {
     const data = notification?.data || {};
+    const currentUserId = user?.id != null ? String(user.id) : null;
+    const otherUserRoute = (candidateId) => {
+      if (candidateId == null) return null;
+      const candidate = String(candidateId);
+      if (currentUserId && candidate === currentUserId) return null;
+      return `/users/${candidate}`;
+    };
 
     if (data.conversationId) return "/messages";
     if (data.videoId) return buildVideoLink({ id: data.videoId, isLive: notification?.type === "live" });
-    if (data.actorId) return `/users/${data.actorId}`;
-    if (data.creatorId) return `/users/${data.creatorId}`;
+    const actorRoute = otherUserRoute(data.actorId) || otherUserRoute(data.creatorId);
+    if (actorRoute) return actorRoute;
     if (data.membershipId || data.planId) return "/profile";
 
     return null;
-  }, []);
+  }, [user?.id]);
 
   const handleMarkNotificationRead = useCallback(async (notificationId) => {
     setBusyNotificationId(notificationId);
