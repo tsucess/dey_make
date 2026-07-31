@@ -135,7 +135,7 @@ function Comment({
         </button>
       </div>
       <div className="h-full flex flex-col gap-8">
-        <div className="flex flex-col gap-6 overflow-y-auto max-h-120">
+        <div className="flex flex-col gap-6 overflow-y-auto max-h-120" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
           {list.map(
             ({ id, img, name, time, desc, likes, dislikes, replies, liked, disliked }, i) => {
               const isStatic = !id;
@@ -154,11 +154,11 @@ function Comment({
                     <span className="text-black dark:text-white text-sm font-inter">
                       {name}
                     </span>
-                    <span className="text-black dark:text-white text-sm font-inter">
+                    <span className="text-black dark:text-white text-xs font-inter">
                       {time}
                     </span>
                   </div>
-                  <p className="text-black dark:text-white text-lg font-inter">
+                  <p className="text-black dark:text-white text-base font-inter">
                     {desc}
                   </p>
                   <div className="flex items-center gap-4">
@@ -205,7 +205,7 @@ function Comment({
                   {isReplyOpen && (
                     <form
                       onSubmit={(event) => submitReply(event, id)}
-                      className="flex items-center py-2 px-3 rounded-full w-full gap-2 bg-slate150 dark:bg-black100"
+                      className="flex items-center py-2 px-2 rounded-full w-full gap-1.5 bg-slate150 dark:bg-black100"
                     >
                       <img src={composerAvatar} alt="" className="w-6 h-6 rounded-full shrink-0" />
                       <input
@@ -213,7 +213,7 @@ function Comment({
                         value={replyDrafts[id] || ""}
                         onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [id]: event.target.value }))}
                         placeholder={`Reply to ${name}`}
-                        className="text-sm font-inter text-black dark:text-white flex-1 bg-transparent outline-none"
+                        className="text-sm font-inter text-black dark:text-white max-50 w-full bg-transparent outline-none"
                       />
                       <button type="submit" className="bg-orange100 py-1.5 px-2 rounded-full flex items-center justify-center shrink-0">
                         <TbSend2 className="w-4 h-4 text-black" />
@@ -257,7 +257,7 @@ function Comment({
             },
           )}
         </div>
-        <div className="mt-auto relative">
+        <div className="mt-auto relative w-full">
           {emojiOpen && (
             <div className="absolute bottom-full mb-2 left-0 right-0 bg-white dark:bg-black100 rounded-2xl border border-slate150 p-3 grid grid-cols-8 gap-2 z-10">
               {EMOJI_SET.map((emoji) => (
@@ -283,7 +283,7 @@ function Comment({
               type="text"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              className="text-sm font-inter text-black dark:text-white flex-1 bg-transparent outline-none"
+              className="text-sm font-inter text-black dark:text-white max-w-60 w-full bg-transparent outline-none"
               placeholder={placeholder}
             />
             <button type="button" onClick={() => setEmojiOpen((prev) => !prev)}><CiFaceSmile className="text-black dark:text-white w-6 h-6" /></button>

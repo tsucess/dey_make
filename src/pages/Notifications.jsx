@@ -131,7 +131,7 @@ export default function Notifications() {
             </button>
           </div>
         ) : notifications.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] bg-black100 min-h-[65vh] text-center px-4 w-full">
+          <div className="flex flex-col items-center justify-center gap-4 rounded-[20px] bg-white300 dark:bg-black100 min-h-[65vh] text-center px-4 w-full">
             <IoNotificationsOffOutline className="h-28 w-28 text-white mb-2" strokeWidth={1} />
             <div className="space-y-3">
               <h2 className="text-[22px] font-semibold font-inter text-white">

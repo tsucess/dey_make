@@ -903,7 +903,7 @@ export default function Messages() {
         {feedback ? <div className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700 m-4 shrink-0">{feedback}</div> : null}
 
         <div className="grid grid-cols-1 md:grid-cols-[340px_1fr] flex-1 lg:overflow-hidden">
-          <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 lg:overflow-hidden">
+          <div className="flex flex-col border-r border-black/10 dark:border-white/5 pt-6 pl-4 pr-2 lg:overflow-y-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
             <div className="mb-3 lg:mb-6 px-2 shrink-0">
               <div className="flex items-center gap-3 rounded-2xl bg-[#F5F5F5] dark:bg-[#2A2A2A] px-4 py-3">
                 <HiOutlineSearch className="h-5 w-5 text-slate-500 dark:text-slate-400" />
