@@ -36,7 +36,7 @@ function getNavItems(t, isAdmin) {
     { to: "/connection", icon: "AVATAR", label: "Connections" },
     { to: "/mutual", icon: IoCompassOutline, label: "Mutuals" },
     { to: "/messages", icon: HiOutlineMail, label: t("common.messages") },
-    { to: "/challenge", icon: IoTrophyOutline, label: "Challenge" },
+    // { to: "/challenge", icon: IoTrophyOutline, label: "Challenge" },
     { to: "/live", icon: HiOutlineStatusOnline, label: t("common.live") },
     { to: "/notification", icon: HiOutlineBell, label: "Notifications" },
     { to: "/profile", icon: HiOutlineUser, label: t("common.profile") },
