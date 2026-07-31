@@ -17,7 +17,6 @@
  * Backend: VideoController@show/liveEngagements/liveAudience/stopLive/update.
  */
 
-import AgoraRTC from "agora-rtc-sdk-ng";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BsFillBarChartFill, BsFillCameraVideoOffFill } from "react-icons/bs";
 import { FaCrown, FaEye, FaHeart, FaMicrophone, FaMicrophoneSlash, FaRegComment } from "react-icons/fa";
@@ -36,6 +35,7 @@ import {
   getProfileAvatar,
   getProfileName,
 } from "../utils/content";
+import { loadAgoraRtc } from "../utils/loadAgoraRtc";
 
 function pickRecorderMimeType() {
   if (typeof MediaRecorder === "undefined") return "";
@@ -176,6 +176,7 @@ function LiveNew() {
     async function acquire() {
       if (!id) return;
       try {
+        const AgoraRTC = await loadAgoraRtc();
         const [micTrack, camTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
         if (cancelled) {
           micTrack.close();

@@ -10,7 +10,6 @@
  * FanTipController@storeLive.
  */
 
-import AgoraRTC from "agora-rtc-sdk-ng";
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
@@ -30,6 +29,7 @@ import {
   // getVideoThumbnail,
   getVideoTitle,
 } from "../../utils/content";
+import { loadAgoraRtc } from "../../utils/loadAgoraRtc";
 
 const HEART_COLORS = ["#de1b1b", "#ff4655", "#ff6b9d", "#fdb300", "#ffae4c"];
 const HEART_LIFETIME_MS = 1600;
@@ -99,7 +99,7 @@ function WatchLiveVideo({
         setTimeout(() => spawnHeart(), index * 65);
       }
     }
-    
+
     const likeEntries = engagements.filter((entry) => entry?.type === "like");
     if (!initialLikeScanRef.current) {
       likeEntries.forEach((entry) => {
@@ -127,8 +127,9 @@ function WatchLiveVideo({
       return undefined;
     }
     let cancelled = false;
+    let AgoraRTC = null;
+    let client = null;
     setStreamStatus("connecting");
-    const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
     async function handleUserPublished(user, mediaType) {
       console.info("[LiveViewer] user-published", {
@@ -175,6 +176,8 @@ function WatchLiveVideo({
 
     async function connect() {
       try {
+        AgoraRTC = await loadAgoraRtc();
+        client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
         const response = await api.getLiveAgoraSession(videoId, {
           role: "audience",
         });
