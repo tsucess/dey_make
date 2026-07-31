@@ -26,6 +26,7 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
   const [shareDelta, setShareDelta] = useState(0);
   const [burstCount, setBurstCount] = useState(0);
   const [remoteReady, setRemoteReady] = useState(false);
+  const [streamStatus, setStreamStatus] = useState("idle");
   const burstTimerRef = useRef(null);
   const remoteContainerRef = useRef(null);
   const agoraClientRef = useRef(null);
@@ -47,8 +48,12 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
   }, []);
 
   useEffect(() => {
-    if (!videoId || !isLive) return undefined;
+    if (!videoId || !isLive) {
+      setStreamStatus("idle");
+      return undefined;
+    }
     let cancelled = false;
+    setStreamStatus("connecting");
     const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
     async function handleUserPublished(user, mediaType) {
@@ -61,6 +66,7 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
         if (remoteContainerRef.current && user.videoTrack) {
           user.videoTrack.play(remoteContainerRef.current);
           setRemoteReady(true);
+          setStreamStatus("live");
         }
       } else if (mediaType === "audio") {
         remoteAudioTrackRef.current = user.audioTrack;
@@ -72,6 +78,7 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
       if (mediaType === "video") {
         remoteVideoTrackRef.current = null;
         setRemoteReady(false);
+        setStreamStatus("waiting");
       } else if (mediaType === "audio") {
         remoteAudioTrackRef.current = null;
       }
@@ -87,7 +94,12 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
         await client.setClientRole("audience");
         await client.join(session.appId, session.channelName, session.token, session.uid);
         agoraClientRef.current = client;
-      } catch { /* stream unavailable — falls back to thumbnail */ }
+        if (!cancelled) setStreamStatus("waiting");
+      } catch (error) {
+        if (cancelled) return;
+        const status = error?.status || error?.response?.status;
+        setStreamStatus(status === 503 ? "unavailable" : "error");
+      }
     }
     connect();
 
@@ -158,6 +170,16 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
         ref={remoteContainerRef}
         className={`absolute inset-0 md:rounded-t-4xl overflow-hidden bg-black ${remoteReady ? "block" : "hidden"}`}
       />
+      {!remoteReady && isLive && streamStatus !== "idle" ? (
+        <div className="absolute inset-0 flex items-center justify-center md:rounded-t-4xl bg-black/40 pointer-events-none">
+          <div className="px-4 py-2 rounded-full bg-black/70 text-white text-xs md:text-sm text-center max-w-xs">
+            {streamStatus === "connecting" && "Connecting to the live stream…"}
+            {streamStatus === "waiting" && "Waiting for the host's camera…"}
+            {streamStatus === "unavailable" && "Live streaming isn't configured on this server yet."}
+            {streamStatus === "error" && "Couldn't reach the live stream. Retrying shortly…"}
+          </div>
+        </div>
+      ) : null}
       <div className="flex items-center gap-3 absolute top-1 right-8">
         <div className="w-10.5 h-5.5 bg-red100 flex items-center gap-1 justify-center rounded-md">
           <span className="w-2 h-2 rounded-full bg-white"></span>

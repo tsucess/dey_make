@@ -71,6 +71,7 @@ function LiveNew() {
   const [error, setError] = useState("");
   const [micOn, setMicOn] = useState(true);
   const [camOn, setCamOn] = useState(true);
+  const [publishStatus, setPublishStatus] = useState("idle");
   const stoppedRef = useRef(false);
   const isLiveRef = useRef(false);
   const videoRef = useRef(null);
@@ -199,6 +200,7 @@ function LiveNew() {
         }
 
         try {
+          setPublishStatus("connecting");
           const response = await api.getLiveAgoraSession(id, { role: "host" });
           const session = response?.data?.session;
           if (session && !cancelled) {
@@ -207,8 +209,13 @@ function LiveNew() {
             await client.join(session.appId, session.channelName, session.token, session.uid);
             await client.publish([micTrack, camTrack]);
             agoraClientRef.current = client;
+            if (!cancelled) setPublishStatus("publishing");
           }
-        } catch { /* publishing failed — host still sees local preview */ }
+        } catch (publishError) {
+          if (cancelled) return;
+          const status = publishError?.status || publishError?.response?.status;
+          setPublishStatus(status === 503 ? "unavailable" : "error");
+        }
       } catch { /* permission denied — creator sees fallback background */ }
     }
     acquire();
@@ -380,6 +387,12 @@ function LiveNew() {
               {description}
             </p>
             {error ? <p className="text-xs text-red100">{error}</p> : null}
+            {publishStatus === "unavailable" ? (
+              <p className="text-xs text-red100">Live streaming isn't configured on this server yet. Your camera isn't reaching the audience.</p>
+            ) : null}
+            {publishStatus === "error" ? (
+              <p className="text-xs text-red100">Couldn't publish to the live channel. Your camera isn't reaching the audience.</p>
+            ) : null}
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
