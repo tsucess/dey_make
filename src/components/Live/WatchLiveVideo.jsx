@@ -27,7 +27,7 @@ import {
   buildShareUrl,
   formatCompactNumber,
   getProfileName,
-  getVideoThumbnail,
+  // getVideoThumbnail,
   getVideoTitle,
 } from "../../utils/content";
 
@@ -55,7 +55,7 @@ function WatchLiveVideo({
   const heartIdRef = useRef(0);
   const seenLikeIdsRef = useRef(new Set());
   const initialLikeScanRef = useRef(false);
-  const thumb = video ? getVideoThumbnail(video) : "/live-img.jpg";
+  // const thumb = video ? getVideoThumbnail(video) : "/live-img.jpg";
   const isLive = Boolean(video?.isLive);
   const viewers = Number(
     video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? 0,
@@ -92,13 +92,14 @@ function WatchLiveVideo({
     );
   }
 
-  function spawnHeartBurst(count = 3) {
-    for (let index = 0; index < count; index += 1) {
-      setTimeout(() => spawnHeart(), index * 65);
-    }
-  }
-
+  
   useEffect(() => {
+    function spawnHeartBurst(count = 3) {
+      for (let index = 0; index < count; index += 1) {
+        setTimeout(() => spawnHeart(), index * 65);
+      }
+    }
+    
     const likeEntries = engagements.filter((entry) => entry?.type === "like");
     if (!initialLikeScanRef.current) {
       likeEntries.forEach((entry) => {
