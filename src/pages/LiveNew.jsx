@@ -16,13 +16,15 @@
  * Backend: VideoController@show/liveEngagements/liveAudience/stopLive/update.
  */
 
+import AgoraRTC from "agora-rtc-sdk-ng";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BsFillBarChartFill, BsFillCameraVideoOffFill } from "react-icons/bs";
-import { FaCrown, FaEye, FaMicrophone, FaMicrophoneSlash, FaRegComment } from "react-icons/fa";
+import { FaCrown, FaEye, FaHeart, FaMicrophone, FaMicrophoneSlash, FaRegComment } from "react-icons/fa";
 import { GiStarKey } from "react-icons/gi";
 import { IoMdClose } from "react-icons/io";
 import { PiCoinFill } from "react-icons/pi";
 import { RiShareForwardLine } from "react-icons/ri";
+import { TbSend2 } from "react-icons/tb";
 import { TiCameraOutline } from "react-icons/ti";
 import { useNavigate, useParams } from "react-router-dom";
 import EndLiveModal from "../components/Live/EndLiveModal";
@@ -59,7 +61,10 @@ function LiveNew() {
   const [video, setVideo] = useState(null);
   const [engagements, setEngagements] = useState([]);
   const [summary, setSummary] = useState(null);
+  const [audience, setAudience] = useState([]);
+  const [joinEvents, setJoinEvents] = useState([]);
   const [comment, setComment] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
   const [elapsed, setElapsed] = useState("00:00");
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState("");
@@ -71,6 +76,10 @@ function LiveNew() {
   const streamRef = useRef(null);
   const recorderRef = useRef(null);
   const chunksRef = useRef([]);
+  const knownAudienceRef = useRef(new Set());
+  const audienceInitializedRef = useRef(false);
+  const agoraClientRef = useRef(null);
+  const agoraTracksRef = useRef({ audio: null, video: null });
 
   const loadVideo = useCallback(async () => {
     if (!id) return;
@@ -85,11 +94,47 @@ function LiveNew() {
   const loadEngagements = useCallback(async () => {
     if (!id) return;
     try {
-      const response = await api.getLiveEngagements(id, { limit: 12, includeSummary: true });
+      const response = await api.getLiveEngagements(id, { limit: 20, includeSummary: true });
       setEngagements(response?.data?.engagements || []);
       setSummary(response?.data?.summary || null);
     } catch {
       // Silently ignore — the mock feed keeps rendering.
+    }
+  }, [id]);
+
+  const loadAudience = useCallback(async () => {
+    if (!id) return;
+    try {
+      const response = await api.getLiveAudience(id);
+      const next = response?.data?.audience || [];
+      setAudience(next);
+
+      const nextIds = new Set(next.map((member) => member?.actor?.id).filter(Boolean));
+      if (!audienceInitializedRef.current) {
+        knownAudienceRef.current = nextIds;
+        audienceInitializedRef.current = true;
+        return;
+      }
+
+      const freshJoiners = next.filter((member) => {
+        const actorId = member?.actor?.id;
+        return actorId && !knownAudienceRef.current.has(actorId);
+      });
+
+      if (freshJoiners.length) {
+        const timestamp = new Date().toISOString();
+        const newEvents = freshJoiners.map((member) => ({
+          id: `join-${member.actor.id}-${Date.now()}`,
+          type: "join",
+          body: null,
+          createdAt: member.joinedAt || member.lastSeenAt || timestamp,
+          actor: member.actor,
+        }));
+        setJoinEvents((current) => [...current, ...newEvents].slice(-10));
+      }
+      knownAudienceRef.current = nextIds;
+    } catch {
+      /* audience endpoint might 409 if stream ended */
     }
   }, [id]);
 
@@ -101,6 +146,17 @@ function LiveNew() {
     const interval = setInterval(loadEngagements, 5000);
     return () => clearInterval(interval);
   }, [id, loadEngagements]);
+
+  useEffect(() => {
+    if (!id) return undefined;
+    loadAudience();
+    const audienceInterval = setInterval(loadAudience, 5000);
+    const videoInterval = setInterval(loadVideo, 5000);
+    return () => {
+      clearInterval(audienceInterval);
+      clearInterval(videoInterval);
+    };
+  }, [id, loadAudience, loadVideo]);
 
   useEffect(() => {
     if (!video?.liveStartedAt) return undefined;
@@ -138,19 +194,42 @@ function LiveNew() {
   useEffect(() => {
     let cancelled = false;
     async function acquire() {
+      if (!id) return;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        if (cancelled) { stream.getTracks().forEach((track) => track.stop()); return; }
+        const [micTrack, camTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        if (cancelled) {
+          micTrack.close();
+          camTrack.close();
+          return;
+        }
+        agoraTracksRef.current = { audio: micTrack, video: camTrack };
+
+        const stream = new MediaStream([camTrack.getMediaStreamTrack(), micTrack.getMediaStreamTrack()]);
         streamRef.current = stream;
         if (videoRef.current) videoRef.current.srcObject = stream;
+
         const mimeType = pickRecorderMimeType();
         if (typeof MediaRecorder !== "undefined") {
-          const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
-          chunksRef.current = [];
-          recorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) chunksRef.current.push(event.data); };
-          recorder.start(1000);
-          recorderRef.current = recorder;
+          try {
+            const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+            chunksRef.current = [];
+            recorder.ondataavailable = (event) => { if (event.data && event.data.size > 0) chunksRef.current.push(event.data); };
+            recorder.start(1000);
+            recorderRef.current = recorder;
+          } catch { /* recorder optional */ }
         }
+
+        try {
+          const response = await api.getLiveAgoraSession(id, { role: "host" });
+          const session = response?.data?.session;
+          if (session && !cancelled) {
+            const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+            await client.setClientRole("host");
+            await client.join(session.appId, session.channelName, session.token, session.uid);
+            await client.publish([micTrack, camTrack]);
+            agoraClientRef.current = client;
+          }
+        } catch { /* publishing failed — host still sees local preview */ }
       } catch { /* permission denied — creator sees fallback background */ }
     }
     acquire();
@@ -159,11 +238,19 @@ function LiveNew() {
       const recorder = recorderRef.current;
       if (recorder && recorder.state !== "inactive") { try { recorder.stop(); } catch { /* ignored */ } }
       recorderRef.current = null;
-      const stream = streamRef.current;
-      if (stream) { stream.getTracks().forEach((track) => track.stop()); }
+      const client = agoraClientRef.current;
+      if (client) {
+        try { client.unpublish(); } catch { /* ignored */ }
+        try { client.leave(); } catch { /* ignored */ }
+      }
+      agoraClientRef.current = null;
+      const { audio, video: cam } = agoraTracksRef.current;
+      if (audio) { try { audio.close(); } catch { /* ignored */ } }
+      if (cam) { try { cam.close(); } catch { /* ignored */ } }
+      agoraTracksRef.current = { audio: null, video: null };
       streamRef.current = null;
     };
-  }, []);
+  }, [id]);
 
   const uploadRecording = useCallback(async () => {
     const recorder = recorderRef.current;
@@ -189,18 +276,20 @@ function LiveNew() {
   }, [id]);
 
   function handleToggleMic() {
+    const micTrack = agoraTracksRef.current.audio;
     const stream = streamRef.current;
-    if (!stream) return;
     const nextEnabled = !micOn;
-    stream.getAudioTracks().forEach((track) => { track.enabled = nextEnabled; });
+    if (micTrack) { try { micTrack.setEnabled(nextEnabled); } catch { /* ignored */ } }
+    if (stream) stream.getAudioTracks().forEach((track) => { track.enabled = nextEnabled; });
     setMicOn(nextEnabled);
   }
 
   function handleToggleCam() {
+    const camTrack = agoraTracksRef.current.video;
     const stream = streamRef.current;
-    if (!stream) return;
     const nextEnabled = !camOn;
-    stream.getVideoTracks().forEach((track) => { track.enabled = nextEnabled; });
+    if (camTrack) { try { camTrack.setEnabled(nextEnabled); } catch { /* ignored */ } }
+    if (stream) stream.getVideoTracks().forEach((track) => { track.enabled = nextEnabled; });
     setCamOn(nextEnabled);
   }
 
@@ -243,22 +332,31 @@ function LiveNew() {
   async function handleSubmitComment(event) {
     event?.preventDefault?.();
     const body = comment.trim();
-    if (!id || !body) return;
+    if (!id || !body || submittingComment) return;
+    setSubmittingComment(true);
     setComment("");
     try {
       await api.postComment(id, body);
       loadEngagements();
     } catch {
       setComment(body);
+    } finally {
+      setSubmittingComment(false);
     }
   }
 
   const title = video?.title || "Welcome to my Live";
   const creatorName = getProfileName(video?.author || video?.creator, "your host");
   const description = video?.description || video?.caption || `I’m ${creatorName}, welcome to my live. Can I know you?`;
-  const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? 0);
+  const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? audience.length ?? 0);
   const topGifters = useMemo(() => summary?.topGifters?.slice(0, 3) || [], [summary]);
-  const chatFeed = engagements.filter((event) => event.type === "comment" || event.type === "tip").slice(0, 4);
+  const chatFeed = useMemo(() => {
+    const merged = [...engagements, ...joinEvents]
+      .filter((event) => event && ["comment", "tip", "like", "join"].includes(event.type))
+      .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
+      .slice(0, 5);
+    return merged;
+  }, [engagements, joinEvents]);
 
   return (
     <>
@@ -306,12 +404,13 @@ function LiveNew() {
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              {(topGifters.length ? topGifters : [1, 2, 3]).map((entry, i) => {
-                const isReal = typeof entry === "object" && entry !== null;
-                const actor = isReal ? entry.actor : null;
+              {topGifters.length === 0 ? (
+                <span className="text-[10px] md:text-xs text-white/60 italic">No gifts yet — the top-3 rail lights up when your fans start tipping.</span>
+              ) : topGifters.map((entry, i) => {
+                const actor = entry?.actor || null;
                 const avatar = actor ? getProfileAvatar(actor) : "/story3.jpg";
-                const username = actor?.username ? `@${actor.username}` : "@jayden_x";
-                const tipsAmount = isReal ? formatCompactNumber(entry.tipsAmount || 0) : "12.4K";
+                const username = actor?.username ? `@${actor.username}` : getProfileName(actor, "supporter");
+                const tipsAmount = formatCompactNumber(Math.round((entry?.tipsAmount || 0) / 100));
                 const rank = i + 1;
                 return (
                 <div key={actor?.id || i} className="flex flex-col md:flex-row md:items-center gap-2">
@@ -378,16 +477,20 @@ function LiveNew() {
           </button>
         </div>
         <div className="flex flex-col gap-4 bottom-24 left-4 absolute">
-          {(chatFeed.length ? chatFeed : [null, null, null, null]).map((event, i) => {
+          {chatFeed.length === 0 ? (
+            <div className="px-2 flex items-center gap-3">
+              <span className="text-[10px] text-white/70 italic">Waiting for your first fan to jump in…</span>
+            </div>
+          ) : chatFeed.map((event, i) => {
             const actor = event?.actor || null;
             const avatar = actor ? getProfileAvatar(actor) : "/user1.jpg";
-            const displayName = actor?.username || getProfileName(actor, "lila.movess");
+            const displayName = actor?.username || getProfileName(actor, "someone");
             if (event?.type === "tip") {
-              const giftName = event?.metadata?.giftName || "Crown";
-              const giftCount = event?.metadata?.giftCount || 500;
+              const giftName = event?.metadata?.giftName || "a gift";
+              const giftCount = event?.metadata?.giftCount || 1;
               return (
                 <div key={event.id || i} className="px-2 flex items-center gap-3">
-                  <img src={avatar} alt="" className="w-5 h-5 rounded-full" />
+                  <img src={avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
                   <div className="bg-orange100/10 border border-orange100/50 p-2 flex items-center gap-2 rounded-full">
                     <span className="text-[10px] text-orange800">
                       {displayName} sent
@@ -404,26 +507,39 @@ function LiveNew() {
             if (event?.type === "comment") {
               return (
                 <div key={event.id || i} className="px-2 flex items-center gap-3">
-                  <img src={avatar} alt="" className="w-5 h-5 rounded-full" />
+                  <img src={avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
                   <span className="text-[10px] text-white">
                     {displayName}: {event.body}
                   </span>
                 </div>
               );
             }
-            return (
-              <div key={`placeholder-${i}`} className="px-2 flex items-center gap-3">
-                <img src="/user1.jpg" alt="" className="w-5 h-5 rounded-full" />
-                <span className="text-[10px] text-white">
-                  boby_kkai joined the stream
-                </span>
-              </div>
-            );
+            if (event?.type === "like") {
+              return (
+                <div key={event.id || i} className="px-2 flex items-center gap-3">
+                  <img src={avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  <span className="text-[10px] text-white flex items-center gap-1">
+                    {displayName} liked your stream <FaHeart className="w-3 h-3 text-red100" />
+                  </span>
+                </div>
+              );
+            }
+            if (event?.type === "join") {
+              return (
+                <div key={event.id || i} className="px-2 flex items-center gap-3">
+                  <img src={avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
+                  <span className="text-[10px] text-white/80 italic">
+                    {displayName} joined the stream
+                  </span>
+                </div>
+              );
+            }
+            return null;
           })}
           <div className="p-2 border-red100/10 bg-red100/50 flex items-center gap-2 rounded-full">
             <FaCrown className="w-4 h-4 text-orange600" />
             <span className="text-[10px] font-semibold text-white">
-              {viewers ? `${formatCompactNumber(viewers)} viewers watching right now!` : "500 viewers watching right now!"}
+              {viewers ? `${formatCompactNumber(viewers)} viewers watching right now!` : "You're live — waiting for viewers to tap in."}
             </span>
           </div>
         </div>
@@ -438,6 +554,7 @@ function LiveNew() {
             placeholder="Say something..."
             className="text-xs text-white font-medium flex-1 bg-transparent outline-none"
           />
+          <button type="submit" disabled={submittingComment || !comment.trim()} className="bg-orange100 rounded-full w-8 h-8 flex items-center justify-center shrink-0 disabled:opacity-40"><TbSend2 className="w-4 h-4 text-black" /></button>
         </form>
       </div>
     </>

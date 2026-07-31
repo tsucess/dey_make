@@ -12,6 +12,7 @@ import { useState } from "react";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { IoVideocamOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../context/LanguageContext";
 import {
   FALLBACK_AVATAR,
   formatCompactNumber,
@@ -22,8 +23,9 @@ import {
   getVideoTitle,
 } from "../../utils/content";
 
-function TopVideo({ video }) {
+function TopVideo({ video, loading = false, error = "", isEmpty = false }) {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isHovered, setIsHovered] = useState(false);
 
   function handleToggleHovered() {
@@ -54,6 +56,44 @@ function TopVideo({ video }) {
     } else {
       navigate("/watch-live");
     }
+  }
+
+  if (loading && !video) {
+    return (
+      <div className="w-full flex items-center justify-center">
+        <div className="max-w-80 w-full h-100 bg-slate150 dark:bg-slate700 animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error && !video) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center gap-3 py-16 text-center">
+        <p className="text-sm text-red100">{error}</p>
+      </div>
+    );
+  }
+
+  if (isEmpty || !video) {
+    return (
+      <div className="w-full flex flex-col items-center justify-center gap-4 py-20 text-center px-6">
+        <div className="w-14 h-14 rounded-full bg-orange100/20 flex items-center justify-center">
+          <IoVideocamOutline className="w-7 h-7 text-orange100" />
+        </div>
+        <h2 className="text-lg md:text-2xl font-semibold text-black100 dark:text-white">
+          {t("livePage.noLiveTitle")}
+        </h2>
+        <p className="text-sm text-black100/70 dark:text-white/70 max-w-md">
+          {t("livePage.noLiveBody")}
+        </p>
+        <button
+          onClick={() => navigate("/live-preview")}
+          className="mt-2 px-5 py-2.5 rounded-full flex gap-2 items-center justify-center bg-orange100 hover:bg-orange200 transition-all cursor-pointer text-black text-sm font-semibold"
+        >
+          <IoVideocamOutline className="w-5 h-5" /> Go Live Yourself
+        </button>
+      </div>
+    );
   }
 
   return (

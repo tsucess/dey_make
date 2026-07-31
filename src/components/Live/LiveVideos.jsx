@@ -24,42 +24,49 @@ function LiveVideos() {
 
   useEffect(() => {
     let ignore = false;
+    let initial = true;
 
     async function load() {
-      setLoading(true);
-      setError("");
+      if (initial) setLoading(true);
 
       try {
         const response = await api.getLiveVideos();
-        if (!ignore)
-          setVideos(filterActiveLiveVideos(response?.data?.videos || []));
+        if (ignore) return;
+        setVideos(filterActiveLiveVideos(response?.data?.videos || []));
+        setError("");
       } catch (nextError) {
-        if (!ignore)
-          setError(
-            firstError(
-              nextError.errors,
-              nextError.message || t("livePage.unableToLoad"),
-            ),
-          );
+        if (ignore) return;
+        setError(
+          firstError(
+            nextError.errors,
+            nextError.message || t("livePage.unableToLoad"),
+          ),
+        );
       } finally {
-        if (!ignore) setLoading(false);
+        if (!ignore && initial) {
+          setLoading(false);
+          initial = false;
+        }
       }
     }
 
     load();
+    const interval = setInterval(load, 15000);
 
     return () => {
       ignore = true;
+      clearInterval(interval);
     };
   }, [t]);
 
   const featured = videos[0] || null;
   const rest = videos.slice(1);
+  const isEmpty = !loading && !error && videos.length === 0;
 
   return (
     <div className="flex flex-col gap-5 pb-20">
-      <TopVideo video={featured} loading={loading} error={error} />
-      <OtherLive videos={rest} loading={loading} />
+      <TopVideo video={featured} loading={loading} error={error} isEmpty={isEmpty} />
+      <OtherLive videos={rest} loading={loading} isEmpty={isEmpty} />
     </div>
   );
 }

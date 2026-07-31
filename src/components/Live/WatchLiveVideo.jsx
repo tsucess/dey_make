@@ -11,6 +11,7 @@
  */
 
 
+import AgoraRTC from "agora-rtc-sdk-ng";
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
@@ -24,8 +25,14 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
   const [likeDelta, setLikeDelta] = useState(0);
   const [shareDelta, setShareDelta] = useState(0);
   const [burstCount, setBurstCount] = useState(0);
+  const [remoteReady, setRemoteReady] = useState(false);
   const burstTimerRef = useRef(null);
+  const remoteContainerRef = useRef(null);
+  const agoraClientRef = useRef(null);
+  const remoteVideoTrackRef = useRef(null);
+  const remoteAudioTrackRef = useRef(null);
   const thumb = video ? getVideoThumbnail(video) : "/live-img.jpg";
+  const isLive = Boolean(video?.isLive);
   const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? 0);
   const baseLikes = Number(video?.likes ?? video?.liveAnalytics?.liveLikes ?? 0);
   const totalLikes = baseLikes + likeDelta;
@@ -38,6 +45,62 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
       if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!videoId || !isLive) return undefined;
+    let cancelled = false;
+    const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
+
+    async function handleUserPublished(user, mediaType) {
+      try {
+        await client.subscribe(user, mediaType);
+      } catch { return; }
+      if (cancelled) return;
+      if (mediaType === "video") {
+        remoteVideoTrackRef.current = user.videoTrack;
+        if (remoteContainerRef.current && user.videoTrack) {
+          user.videoTrack.play(remoteContainerRef.current);
+          setRemoteReady(true);
+        }
+      } else if (mediaType === "audio") {
+        remoteAudioTrackRef.current = user.audioTrack;
+        try { user.audioTrack?.play(); } catch { /* ignored */ }
+      }
+    }
+
+    function handleUserUnpublished(_user, mediaType) {
+      if (mediaType === "video") {
+        remoteVideoTrackRef.current = null;
+        setRemoteReady(false);
+      } else if (mediaType === "audio") {
+        remoteAudioTrackRef.current = null;
+      }
+    }
+
+    async function connect() {
+      try {
+        const response = await api.getLiveAgoraSession(videoId, { role: "audience" });
+        const session = response?.data?.session;
+        if (!session || cancelled) return;
+        client.on("user-published", handleUserPublished);
+        client.on("user-unpublished", handleUserUnpublished);
+        await client.setClientRole("audience");
+        await client.join(session.appId, session.channelName, session.token, session.uid);
+        agoraClientRef.current = client;
+      } catch { /* stream unavailable — falls back to thumbnail */ }
+    }
+    connect();
+
+    return () => {
+      cancelled = true;
+      try { client.removeAllListeners(); } catch { /* ignored */ }
+      try { client.leave(); } catch { /* ignored */ }
+      agoraClientRef.current = null;
+      remoteVideoTrackRef.current = null;
+      remoteAudioTrackRef.current = null;
+      setRemoteReady(false);
+    };
+  }, [videoId, isLive]);
 
   function handleLike() {
     if (!videoId) return;
@@ -86,7 +149,15 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
 
   return (
     <div className="w-full h-full flex items-center gap-6 md:col-span-3 relative">
-      <img src={thumb} alt="" className="md:rounded-t-4xl h-full w-full md:w-xs" />
+      <img
+        src={thumb}
+        alt=""
+        className={`md:rounded-t-4xl h-full w-full md:w-xs ${remoteReady ? "invisible" : ""}`}
+      />
+      <div
+        ref={remoteContainerRef}
+        className={`absolute inset-0 md:rounded-t-4xl overflow-hidden bg-black ${remoteReady ? "block" : "hidden"}`}
+      />
       <div className="flex items-center gap-3 absolute top-1 right-8">
         <div className="w-10.5 h-5.5 bg-red100 flex items-center gap-1 justify-center rounded-md">
           <span className="w-2 h-2 rounded-full bg-white"></span>
