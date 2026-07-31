@@ -62,7 +62,7 @@ function LiveVideos() {
   const featured = videos[0] || null;
   const rest = videos.slice(1);
   const isEmpty = !loading && !error && videos.length === 0;
-
+ 
   return (
     <div className="flex flex-col gap-5 pb-20">
       <TopVideo video={featured} loading={loading} error={error} isEmpty={isEmpty} />

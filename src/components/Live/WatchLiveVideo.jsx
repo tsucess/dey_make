@@ -57,14 +57,20 @@ function WatchLiveVideo({ video, videoId, engagements = [], onEngaged, onVideoRe
   function spawnHeart() {
     heartIdRef.current += 1;
     const id = heartIdRef.current;
-    const drift = Math.round((Math.random() - 0.5) * 40);
-    const size = 14 + Math.round(Math.random() * 14);
+    const drift = Math.round((Math.random() - 0.5) * 46);
+    const size = 12 + Math.round(Math.random() * 14);
     const color = HEART_COLORS[Math.floor(Math.random() * HEART_COLORS.length)];
     const delay = Math.round(Math.random() * 120);
     setHearts((current) => [...current, { id, drift, size, color, delay }]);
     setTimeout(() => {
       setHearts((current) => current.filter((h) => h.id !== id));
     }, HEART_LIFETIME_MS + delay + 80);
+  }
+
+  function spawnHeartBurst(count = 3) {
+    for (let index = 0; index < count; index += 1) {
+      setTimeout(() => spawnHeart(), index * 65);
+    }
   }
 
   useEffect(() => {
@@ -78,7 +84,9 @@ function WatchLiveVideo({ video, videoId, engagements = [], onEngaged, onVideoRe
     if (fresh.length === 0) return;
     fresh.forEach((entry) => { seenLikeIdsRef.current.add(entry.id); });
     const capped = fresh.slice(-6);
-    capped.forEach((_, index) => { setTimeout(spawnHeart, index * 80); });
+    capped.forEach((_, index) => {
+      setTimeout(() => spawnHeartBurst(3 + (index % 2)), index * 90);
+    });
   }, [engagements]);
 
   useEffect(() => {
@@ -216,11 +224,11 @@ function WatchLiveVideo({ video, videoId, engagements = [], onEngaged, onVideoRe
       />
       <div
         ref={remoteContainerRef}
-        className={`absolute inset-0 md:rounded-t-4xl overflow-hidden bg-black ${remoteReady ? "block" : "hidden"}`}
+        className={`absolute z-0 inset-0 md:w-full md:rounded-t-4xl overflow-hidden bg-black ${remoteReady ? "block" : "hidden"}`}
       />
       {!remoteReady && isLive && streamStatus !== "idle" ? (
-        <div className="absolute inset-0 flex items-center justify-center md:rounded-t-4xl bg-black/40 pointer-events-none">
-          <div className="px-4 py-2 rounded-full bg-black/70 text-white text-xs md:text-sm text-center max-w-xs">
+        <div className="absolute z-1 inset-0 md:static md:w-full flex items-center justify-center md:rounded-t-4xl bg-black/40 pointer-events-none">
+          <div className="px-4 py-2 rounded-full bg-black/70 text-white text-xs md:text-sm text-center max-w-100">
             {streamStatus === "connecting" && "Connecting to the live stream…"}
             {streamStatus === "waiting" && "Waiting for the host's camera…"}
             {streamStatus === "unavailable" && "Live streaming isn't configured on this server yet."}
@@ -257,14 +265,14 @@ function WatchLiveVideo({ video, videoId, engagements = [], onEngaged, onVideoRe
 
       {/* next and prev btn */}
       <div className="hidden md:flex flex-col gap-3 ">
-        <button className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full">
-          <IoMdArrowDropup className="w-5 h-5 text-black dark:text-white" />
+        <button className="border-2 border-slate150 bg-black dark:bg-white  flex items-center justify-center w-8 h-8 rounded-full">
+          <IoMdArrowDropup className="w-5 h-5 text-black dark:text-black" />
         </button>
-        <button className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full">
-          <IoMdArrowDropdown className="w-5 h-5 text-black dark:text-white" />
+        <button className="border-2 border-slate150 bg-white bg-black dark:bg-white justify-center w-8 h-8 rounded-full">
+          <IoMdArrowDropdown className="w-5 h-5 text-black dark:text-black" />
         </button>
       </div>
-      <div className="md:flex flex-col gap-2  items-center hidden">
+      <div className="md:flex flex-col gap-2 z-2 items-center hidden">
         <div className="flex flex-col gap-1 items-center relative">
           <button onClick={handleLike} type="button" className="absolute md:static ">
             <FaRegHeart className={`w-8 h-8 transition-transform ${burstCount > 0 ? "text-red100 scale-110" : "text-black dark:text-white"}`} />

@@ -149,7 +149,7 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
     <button onClick={()=> navigate('/live')} className=" hidden w-6 md:w-7.5 h-6 md:h-7.5 absolute top-2 left-4 z-4 md:static rounded-md md:flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-4 md:w-5 h-4 md:h-5" /></button>
     <button onClick={()=> navigate('/home')} className="w-6 md:w-7.5 h-6 md:h-7.5 absolute md:hidden top-2 left-4 z-4 md:static rounded-md flex items-center justify-center border border-black/20 dark:border-white/30 cursor-pointer hover:bg-slate150 hover:dark:bg-slate150 transition-all"><FaArrowLeftLong className="text-black dark:text-white w-4 md:w-5 h-4 md:h-5" /></button>
     <div className="flex items-center gap-3 absolute top-10 left-3 z-3 md:static">
-        <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate150 backdrop-blur-md backdrop-brightness-150 backdrop-opacity-60 flex-1">
+        <div className="border border-black/10 dark:border-white/10 rounded-2xl flex items-center gap-2 justify-between p-2 bg-white300 dark:bg-slate100 backdrop-blur-md backdrop-brightness-150 backdrop-opacity-60 flex-1">
         <div className="flex items-center gap-2">
             <img src={creatorAvatar} alt="" className="w-6 md:w-7.5 h-6 md:h-7.5 rounded-full object-cover"/>
         <div className="flex flex-col gap-1">
@@ -159,7 +159,7 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
         </div>
         <button onClick={handleConnect} type="button" disabled={connecting} className="w-16 md:w-25 h-8 rounded-full bg-orange100 text-black font-semibold text-[10px] md:text-xs disabled:opacity-60">{isSubscribed ? "Connected" : "Connect"}</button>
         </div>
-        <button onClick={handleShareStream} type="button" className="border hidden border-black/10 dark:border-white/10 rounded-2xl w-13 h-15 md:flex items-center justify-center bg-white300 dark:bg-slate150 shrink-0"><RiShareForwardLine className="text-black dark:text-white w-7 h-7" /></button>
+        <button onClick={handleShareStream} type="button" className="border hidden border-black/10 dark:border-white/10 rounded-2xl w-13 h-15 md:flex items-center justify-center bg-white300 dark:bg-slate100 shrink-0"><RiShareForwardLine className="text-black dark:text-white w-7 h-7" /></button>
     </div>
 
     <div className="absolute bottom-4 left-2 md:static z-4 flex flex-col w-full md:bg-white300 md:p-6 gap-6 md:gap-10 rounded-2xl dark:md:bg-slate100">
@@ -182,8 +182,7 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
                     let body = entry?.body || "";
                     let accent = "text-black dark:text-white";
                     if (entry?.type === "like") {
-                      const count = Number(entry?.likeCount || 1);
-                      body = count > 1 ? `tapped a heart ❤️ ×${count}` : "tapped a heart ❤️";
+                      body = "tapped a heart ❤️";
                       accent = "text-red100 dark:text-red100 italic";
                     } else if (entry?.type === "tip") {
                       const meta = entry?.metadata || {};
@@ -205,8 +204,8 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
                   })
                 )}
             </div>
-            <form onSubmit={handleSubmit} className="py-2 md:py-6 px-4 flex gap-1 md:gap-2 w-60 md:w-full items-center bg-slate150 dark:bg-slate300 rounded-full">
-                <input type="text" name="" id="" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment..." className="text-sm md:text-base font-medium outline-none w-full md:w-50 bg-transparent"/>
+            <form onSubmit={handleSubmit} className="py-2 md:py-4 px-4 flex gap-1 md:gap-2 w-60 md:w-full items-center bg-slate150 dark:bg-slate300 rounded-full">
+                <input type="text" name="" id="" value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment..." className="text-sm md:text-base font-medium outline-none w-full md:w-auto flex-1 bg-transparent"/>
                 <button type="button"><CiFaceSmile className="text-black dark:text-white w-5 md:w-6 h-5 md:h-6" /></button>
                 <button type="submit" disabled={submitting} className="bg-orange100 py-1 md:py-3 px-1 md:px-3 rounded-full flex items-center justify-center shrink-0 disabled:opacity-60"><TbSend2 className="w-6 h-6 text-black" /></button>
             </form>

@@ -102,7 +102,13 @@ function WatchLive() {
           onSubmitted={loadEngagements}
           videoId={id}
         />
-        <WatchLiveVideo video={video} videoId={id} />
+        <WatchLiveVideo
+          video={video}
+          videoId={id}
+          engagements={engagements}
+          onEngaged={loadEngagements}
+          onVideoRefresh={loadVideo}
+        />
       </div>
       <LiveGift video={video} videoId={id} onTipped={loadEngagements} />
 
