@@ -15,23 +15,30 @@ import AgoraRTC from "agora-rtc-sdk-ng";
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
-import { FaRegCommentDots, FaRegEye, FaRegHeart } from "react-icons/fa";
+import { FaHeart, FaRegCommentDots, FaRegEye, FaRegHeart } from "react-icons/fa";
 import { FaEllipsis } from "react-icons/fa6";
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { api } from "../../services/api";
 import { buildShareUrl, formatCompactNumber, getProfileName, getVideoThumbnail, getVideoTitle } from "../../utils/content";
 
-function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
+const HEART_COLORS = ["#de1b1b", "#ff4655", "#ff6b9d", "#fdb300", "#ffae4c"];
+const HEART_LIFETIME_MS = 1600;
+
+function WatchLiveVideo({ video, videoId, engagements = [], onEngaged, onVideoRefresh }) {
   const [likeDelta, setLikeDelta] = useState(0);
   const [shareDelta, setShareDelta] = useState(0);
   const [burstCount, setBurstCount] = useState(0);
   const [remoteReady, setRemoteReady] = useState(false);
   const [streamStatus, setStreamStatus] = useState("idle");
+  const [hearts, setHearts] = useState([]);
   const burstTimerRef = useRef(null);
   const remoteContainerRef = useRef(null);
   const agoraClientRef = useRef(null);
   const remoteVideoTrackRef = useRef(null);
   const remoteAudioTrackRef = useRef(null);
+  const heartIdRef = useRef(0);
+  const seenLikeIdsRef = useRef(new Set());
+  const initialLikeScanRef = useRef(false);
   const thumb = video ? getVideoThumbnail(video) : "/live-img.jpg";
   const isLive = Boolean(video?.isLive);
   const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? 0);
@@ -47,6 +54,33 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
     };
   }, []);
 
+  function spawnHeart() {
+    heartIdRef.current += 1;
+    const id = heartIdRef.current;
+    const drift = Math.round((Math.random() - 0.5) * 40);
+    const size = 14 + Math.round(Math.random() * 14);
+    const color = HEART_COLORS[Math.floor(Math.random() * HEART_COLORS.length)];
+    const delay = Math.round(Math.random() * 120);
+    setHearts((current) => [...current, { id, drift, size, color, delay }]);
+    setTimeout(() => {
+      setHearts((current) => current.filter((h) => h.id !== id));
+    }, HEART_LIFETIME_MS + delay + 80);
+  }
+
+  useEffect(() => {
+    const likeEntries = engagements.filter((entry) => entry?.type === "like");
+    if (!initialLikeScanRef.current) {
+      likeEntries.forEach((entry) => { if (entry?.id) seenLikeIdsRef.current.add(entry.id); });
+      initialLikeScanRef.current = true;
+      return;
+    }
+    const fresh = likeEntries.filter((entry) => entry?.id && !seenLikeIdsRef.current.has(entry.id));
+    if (fresh.length === 0) return;
+    fresh.forEach((entry) => { seenLikeIdsRef.current.add(entry.id); });
+    const capped = fresh.slice(-6);
+    capped.forEach((_, index) => { setTimeout(spawnHeart, index * 80); });
+  }, [engagements]);
+
   useEffect(() => {
     if (!videoId || !isLive) {
       setStreamStatus("idle");
@@ -57,9 +91,13 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
     const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
 
     async function handleUserPublished(user, mediaType) {
+      console.info("[LiveViewer] user-published", { uid: user?.uid, mediaType });
       try {
         await client.subscribe(user, mediaType);
-      } catch { return; }
+      } catch (subscribeError) {
+        console.error("[LiveViewer] subscribe failed", subscribeError);
+        return;
+      }
       if (cancelled) return;
       if (mediaType === "video") {
         remoteVideoTrackRef.current = user.videoTrack;
@@ -74,7 +112,8 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
       }
     }
 
-    function handleUserUnpublished(_user, mediaType) {
+    function handleUserUnpublished(user, mediaType) {
+      console.info("[LiveViewer] user-unpublished", { uid: user?.uid, mediaType });
       if (mediaType === "video") {
         remoteVideoTrackRef.current = null;
         setRemoteReady(false);
@@ -89,14 +128,22 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
         const response = await api.getLiveAgoraSession(videoId, { role: "audience" });
         const session = response?.data?.session;
         if (!session || cancelled) return;
+        console.info("[LiveViewer] joining channel", { channel: session.channelName, uid: session.uid });
         client.on("user-published", handleUserPublished);
         client.on("user-unpublished", handleUserUnpublished);
         await client.setClientRole("audience");
         await client.join(session.appId, session.channelName, session.token, session.uid);
         agoraClientRef.current = client;
-        if (!cancelled) setStreamStatus("waiting");
+        const remoteUsers = client.remoteUsers || [];
+        console.info("[LiveViewer] joined; remote users at join", remoteUsers.map((u) => ({ uid: u.uid, hasVideo: u.hasVideo, hasAudio: u.hasAudio })));
+        for (const user of remoteUsers) {
+          if (user.hasVideo) { await handleUserPublished(user, "video"); }
+          if (user.hasAudio) { await handleUserPublished(user, "audio"); }
+        }
+        if (!cancelled && !remoteUsers.some((u) => u.hasVideo)) setStreamStatus("waiting");
       } catch (error) {
         if (cancelled) return;
+        console.error("[LiveViewer] join failed", error);
         const status = error?.status || error?.response?.status;
         setStreamStatus(status === 503 ? "unavailable" : "error");
       }
@@ -118,6 +165,7 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
     if (!videoId) return;
     setLikeDelta((current) => current + 1);
     setBurstCount((current) => current + 1);
+    spawnHeart();
     if (burstTimerRef.current) clearTimeout(burstTimerRef.current);
     burstTimerRef.current = setTimeout(() => setBurstCount(0), 1200);
     api.likeLiveVideo(videoId)
@@ -180,6 +228,15 @@ function WatchLiveVideo({ video, videoId, onEngaged, onVideoRefresh }) {
           </div>
         </div>
       ) : null}
+      <div className="pointer-events-none absolute bottom-16 right-6 md:bottom-24 md:right-8 h-40 w-24 overflow-visible z-10">
+        {hearts.map((heart) => (
+          <FaHeart
+            key={heart.id}
+            className="floating-heart absolute bottom-0 right-0 drop-shadow-md"
+            style={{ color: heart.color, width: heart.size, height: heart.size, marginRight: heart.drift, animationDelay: `${heart.delay}ms` }}
+          />
+        ))}
+      </div>
       <div className="flex items-center gap-3 absolute top-1 right-8">
         <div className="w-10.5 h-5.5 bg-red100 flex items-center gap-1 justify-center rounded-md">
           <span className="w-2 h-2 rounded-full bg-white"></span>

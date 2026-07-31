@@ -97,7 +97,7 @@ function WatchLive() {
   return <div className="flex md:flex-col md:p-4 h-screen relative overflow-hidden">
     <div className="md:grid md:grid-cols-5 md:flex-1 gap-5 md:min-h-150">
         <LiveChat video={video} engagements={engagements} onSubmitted={loadEngagements} videoId={id} />
-        <WatchLiveVideo video={video} videoId={id} onEngaged={loadEngagements} onVideoRefresh={loadVideo} />
+        <WatchLiveVideo video={video} videoId={id} engagements={engagements} onEngaged={loadEngagements} onVideoRefresh={loadVideo} />
     </div>
     <LiveGift video={video} videoId={id} onTipped={loadEngagements} />
   </div>;

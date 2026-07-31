@@ -201,22 +201,29 @@ function LiveNew() {
 
         try {
           setPublishStatus("connecting");
+          console.info("[LiveHost] requesting Agora session", { id });
           const response = await api.getLiveAgoraSession(id, { role: "host" });
           const session = response?.data?.session;
           if (session && !cancelled) {
+            console.info("[LiveHost] joining channel", { channel: session.channelName, uid: session.uid });
             const client = AgoraRTC.createClient({ mode: "live", codec: "vp8" });
             await client.setClientRole("host");
             await client.join(session.appId, session.channelName, session.token, session.uid);
+            console.info("[LiveHost] joined; publishing tracks");
             await client.publish([micTrack, camTrack]);
             agoraClientRef.current = client;
+            console.info("[LiveHost] publish complete");
             if (!cancelled) setPublishStatus("publishing");
           }
         } catch (publishError) {
           if (cancelled) return;
+          console.error("[LiveHost] publish failed", publishError);
           const status = publishError?.status || publishError?.response?.status;
           setPublishStatus(status === 503 ? "unavailable" : "error");
         }
-      } catch { /* permission denied — creator sees fallback background */ }
+      } catch (mediaError) {
+        console.error("[LiveHost] getUserMedia failed", mediaError);
+      }
     }
     acquire();
     return () => {
@@ -337,11 +344,23 @@ function LiveNew() {
   const viewers = Number(video?.currentViewers ?? video?.liveAnalytics?.currentViewers ?? audience.length ?? 0);
   const topGifters = useMemo(() => summary?.topGifters?.slice(0, 3) || [], [summary]);
   const chatFeed = useMemo(() => {
-    const merged = [...engagements, ...joinEvents]
+    const sortedAsc = [...engagements, ...joinEvents]
       .filter((event) => event && ["comment", "tip", "like", "join"].includes(event.type))
-      .sort((a, b) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
-      .slice(0, 5);
-    return merged;
+      .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime());
+    const collapsed = [];
+    for (const entry of sortedAsc) {
+      const last = collapsed[collapsed.length - 1];
+      const actorKey = entry?.actor?.id ?? entry?.actor?.username ?? null;
+      const lastActorKey = last?.actor?.id ?? last?.actor?.username ?? null;
+      if (entry.type === "like" && last?.type === "like" && actorKey && actorKey === lastActorKey) {
+        last.likeCount = (last.likeCount || 1) + 1;
+        last.createdAt = entry.createdAt || last.createdAt;
+        last.id = entry.id || last.id;
+        continue;
+      }
+      collapsed.push(entry.type === "like" ? { ...entry, likeCount: 1 } : entry);
+    }
+    return collapsed.reverse().slice(0, 5);
   }, [engagements, joinEvents]);
 
   return (
@@ -507,11 +526,13 @@ function LiveNew() {
               );
             }
             if (event?.type === "like") {
+              const likeCount = Number(event?.likeCount || 1);
               return (
                 <div key={event.id || i} className="px-2 flex items-center gap-3">
                   <img src={avatar} alt="" className="w-5 h-5 rounded-full object-cover" />
                   <span className="text-[10px] text-white flex items-center gap-1">
                     {displayName} liked your stream <FaHeart className="w-3 h-3 text-red100" />
+                    {likeCount > 1 && <span className="text-[10px] font-semibold text-red100">×{likeCount}</span>}
                   </span>
                 </div>
               );

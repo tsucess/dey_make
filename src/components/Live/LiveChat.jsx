@@ -65,13 +65,25 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
       setLocalSubscribed(null);
     }, [serverSubscribed]);
 
-    const chatItems = useMemo(
-      () =>
-        [...engagements]
-          .sort((a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime())
-          .slice(-20),
-      [engagements],
-    );
+    const chatItems = useMemo(() => {
+      const sorted = [...engagements].sort(
+        (a, b) => new Date(a?.createdAt || 0).getTime() - new Date(b?.createdAt || 0).getTime(),
+      );
+      const collapsed = [];
+      for (const entry of sorted) {
+        const last = collapsed[collapsed.length - 1];
+        const actorKey = entry?.actor?.id ?? entry?.actor?.username ?? null;
+        const lastActorKey = last?.actor?.id ?? last?.actor?.username ?? null;
+        if (entry?.type === "like" && last?.type === "like" && actorKey && actorKey === lastActorKey) {
+          last.likeCount = (last.likeCount || 1) + 1;
+          last.createdAt = entry.createdAt || last.createdAt;
+          last.id = entry.id || last.id;
+          continue;
+        }
+        collapsed.push(entry?.type === "like" ? { ...entry, likeCount: 1 } : entry);
+      }
+      return collapsed.slice(-20);
+    }, [engagements]);
 
     useEffect(() => {
       if (feedRef.current) {
@@ -170,7 +182,8 @@ function LiveChat({ video, engagements = [], onSubmitted, videoId }) {
                     let body = entry?.body || "";
                     let accent = "text-black dark:text-white";
                     if (entry?.type === "like") {
-                      body = "tapped a heart ❤️";
+                      const count = Number(entry?.likeCount || 1);
+                      body = count > 1 ? `tapped a heart ❤️ ×${count}` : "tapped a heart ❤️";
                       accent = "text-red100 dark:text-red100 italic";
                     } else if (entry?.type === "tip") {
                       const meta = entry?.metadata || {};
