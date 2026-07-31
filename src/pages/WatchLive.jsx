@@ -103,7 +103,7 @@ function WatchLive() {
           videoId={id}
         />
         <WatchLiveVideo
-          video={video}
+          video={video} 
           videoId={id}
           engagements={engagements}
           onEngaged={loadEngagements}

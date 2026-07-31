@@ -125,8 +125,8 @@ function LiveGift({ video, videoId, onTipped }) {
   return<>
   <button type="button" onClick={handleShowGift} className="md:hidden absolute bottom-6 z-10 right-20 cursor-pointer"><FaGift className="w-6 h-6 text-orange100" /></button>
    <div className={`${ 
-    showGift ? 'absolute bottom-0  left-0 z-10' : 'hidden'
-   } md:static bg-red100 flex items-center gap-4 bg-white300 md:rounded-2xl border border-black100/30 dark:border-white/50 dark:bg-white/10 mt-auto font-inter`}>
+    showGift ? 'absolute bottom-0 left-0 z-10' : 'hidden md:flex'
+   } md:static flex items-center gap-4 bg-white300 md:rounded-2xl border border-black100/30 dark:border-white/50 dark:bg-white/10 mt-auto font-inter`}>
     <div className="md:flex items-center gap-4 pl-4 hidden">
         <button type="button" onClick={handleShare} title="Share this live" className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30 hover:bg-slate150 transition-colors"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
         <button type="button" onClick={handleShare} title="Reshare to your feed" className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30 hover:bg-slate150 transition-colors"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
