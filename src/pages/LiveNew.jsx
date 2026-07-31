@@ -4,8 +4,9 @@
  * Reads :id from the URL, polls api.getLiveEngagements every 5s and
  * api.getLiveAudience every 20s, and shows the live timer, viewer count,
  * top-3-gifters rail, and chat feed. End-Live triggers api.stopVideoLive.
- * The stream is also auto-stopped on unmount / tab-close / navigation
- * away so leaving the page always ends the live session.
+ * The stream is only ended by the explicit End-Live action so a host
+ * refresh, tab-close, or navigation away leaves the session running and
+ * still visible to the audience.
  *
  * The webcam is acquired via getUserMedia and rendered inline so the
  * creator sees their own feed. A MediaRecorder buffers the session and
@@ -167,29 +168,7 @@ function LiveNew() {
 
   useEffect(() => {
     isLiveRef.current = Boolean(video?.isLive);
-    if (!video?.isLive) return undefined;
-
-    function handlePageHide() {
-      if (stoppedRef.current || !id) return;
-      stoppedRef.current = true;
-      api.stopVideoLiveBeacon(id);
-    }
-
-    window.addEventListener("pagehide", handlePageHide);
-    window.addEventListener("beforeunload", handlePageHide);
-    return () => {
-      window.removeEventListener("pagehide", handlePageHide);
-      window.removeEventListener("beforeunload", handlePageHide);
-    };
-  }, [id, video?.isLive]);
-
-  useEffect(() => {
-    return () => {
-      if (stoppedRef.current || !isLiveRef.current || !id) return;
-      stoppedRef.current = true;
-      api.stopVideoLive(id).catch(() => {});
-    };
-  }, [id]);
+  }, [video?.isLive]);
 
   useEffect(() => {
     let cancelled = false;
