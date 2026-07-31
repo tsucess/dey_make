@@ -94,7 +94,7 @@ function WatchLive() {
     };
   }, [id, loadEngagements, loadVideo]);
   return (
-    <div className="flex md:flex-col md:p-4 h-screen relative overflow-hidden">
+    <div className="flex md:flex-col md:p-4 h-screen relative">
       <div className="md:grid md:grid-cols-5 md:flex-1 gap-5">
         <LiveChat
           video={video}
