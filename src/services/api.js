@@ -454,6 +454,25 @@ export const api = {
   recordView: (id) => request(`/videos/${id}/view`, { method: "POST" }),
   recordLivePresence: (id, payload) => request(`/videos/${id}/live/presence`, { method: "POST", body: payload }),
   leaveLivePresence: (id, payload) => request(`/videos/${id}/live/presence/leave`, { method: "POST", body: payload }),
+  leaveLivePresenceBeacon: (id, payload) => {
+    const token = getStoredToken();
+    if (!token || !id) return false;
+    try {
+      fetch(`${API_BASE_URL}/videos/${id}/live/presence/leave`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload ?? {}),
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  },
   likeLiveVideo: (id) => request(`/videos/${id}/live/like`, { method: "POST" }),
   likeVideo: (id) => request(`/videos/${id}/like`, { method: "POST" }),
   unlikeVideo: (id) => request(`/videos/${id}/like`, { method: "DELETE" }),

@@ -15,6 +15,7 @@ import { PiCoinFill } from "react-icons/pi";
 import { api } from "../../services/api";
 import { FaGift } from "react-icons/fa";
 import { MdClose } from "react-icons/md";
+import { buildShareUrl, getProfileName, getVideoTitle } from "../../utils/content";
 
 const gifts = [
     {
@@ -96,14 +97,39 @@ function LiveGift({ video, videoId, onTipped }) {
     setShowGift(prev => !prev)
   }
 
+  async function handleShare() {
+    if (!videoId) return;
+    const shareUrl = buildShareUrl(video || videoId);
+    const shareTitle = video ? getVideoTitle(video) : "Watch this live stream";
+    const creator = video?.author || video?.creator;
+    const shareText = creator
+      ? `${getProfileName(creator)} is live on DeyMake — tap in!`
+      : "Catch this live stream on DeyMake!";
+
+    let sharedNatively = false;
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        sharedNatively = true;
+      } catch {
+        /* dismissed */
+      }
+    }
+    if (!sharedNatively && typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+      try { await navigator.clipboard.writeText(shareUrl); } catch { /* ignore */ }
+    }
+    try { await api.shareVideo(videoId); } catch { /* ignore */ }
+    onTipped?.();
+  }
+
   return<>
   <button type="button" onClick={handleShowGift} className="md:hidden absolute bottom-6 z-10 right-20 cursor-pointer"><FaGift className="w-6 h-6 text-orange100" /></button>
    <div className={`${ 
     showGift ? 'absolute bottom-0  left-0 z-10' : 'hidden'
    } md:static flex items-center gap-4 bg-white300 md:rounded-2xl border border-black100/30 dark:border-white/50 dark:bg-white/10 mt-auto font-inter`}>
     <div className="md:flex items-center gap-4 pl-4 hidden">
-        <button className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
-        <button className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
+        <button type="button" onClick={handleShare} title="Share this live" className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30 hover:bg-slate150 transition-colors"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
+        <button type="button" onClick={handleShare} title="Reshare to your feed" className="w-13 h-13 rounded-xl flex items-center justify-center border border-black100/30 hover:bg-slate150 transition-colors"><IoMdShareAlt className="text-black100 w-6 h-6" /></button>
         <div className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-red100"></span>
             <span className="text-base text-black100 dark:text-white uppercase">LIVE</span>

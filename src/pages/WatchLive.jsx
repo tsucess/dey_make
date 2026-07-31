@@ -10,22 +10,39 @@
  * Backend: VideoController@show/liveEngagements/livePresence.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import LiveChat from "../components/Live/LiveChat";
 import LiveGift from "../components/Live/LiveGift";
 import WatchLiveVideo from "../components/Live/WatchLiveVideo";
 import { api } from "../services/api";
 
+function generateSessionKey() {
+  const rand = Math.random().toString(36).slice(2, 10);
+  return `watch-${Date.now()}-${rand}`;
+}
+
 function WatchLive() {
   const { id } = useParams();
   const [video, setVideo] = useState(null);
   const [engagements, setEngagements] = useState([]);
+  const sessionKey = useMemo(() => generateSessionKey(), []);
+  const presenceRegisteredRef = useRef(false);
+
+  const loadVideo = useCallback(async () => {
+    if (!id) return;
+    try {
+      const response = await api.getVideo(id);
+      setVideo(response?.data?.video || null);
+    } catch {
+      /* leave placeholder styles */
+    }
+  }, [id]);
 
   const loadEngagements = useCallback(async () => {
     if (!id) return;
     try {
-      const response = await api.getLiveEngagements(id, { limit: 12 });
+      const response = await api.getLiveEngagements(id, { limit: 20 });
       setEngagements(response?.data?.engagements || []);
     } catch {
       /* keep previous feed */
@@ -33,30 +50,54 @@ function WatchLive() {
   }, [id]);
 
   useEffect(() => {
-    let ignore = false;
+    if (!id) return undefined;
+    loadVideo();
+    return undefined;
+  }, [id, loadVideo]);
+
+  useEffect(() => {
     if (!id) return undefined;
     (async () => {
       try {
-        const response = await api.getVideo(id);
-        if (!ignore) setVideo(response?.data?.video || null);
+        await api.recordLivePresence(id, { sessionKey, role: "audience" });
+        presenceRegisteredRef.current = true;
       } catch {
-        /* leave placeholder styles */
+        /* presence registration failed — likely stream ended */
       }
     })();
-    return () => { ignore = true; };
-  }, [id]);
+
+    function handleUnload() {
+      if (!presenceRegisteredRef.current) return;
+      api.leaveLivePresenceBeacon(id, { sessionKey });
+    }
+
+    window.addEventListener("pagehide", handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
+
+    return () => {
+      window.removeEventListener("pagehide", handleUnload);
+      window.removeEventListener("beforeunload", handleUnload);
+      if (presenceRegisteredRef.current) {
+        api.leaveLivePresence(id, { sessionKey }).catch(() => {});
+      }
+    };
+  }, [id, sessionKey]);
 
   useEffect(() => {
     if (!id) return undefined;
     loadEngagements();
-    const interval = setInterval(loadEngagements, 5000);
-    return () => clearInterval(interval);
-  }, [id, loadEngagements]);
+    const engagementInterval = setInterval(loadEngagements, 4000);
+    const videoInterval = setInterval(loadVideo, 8000);
+    return () => {
+      clearInterval(engagementInterval);
+      clearInterval(videoInterval);
+    };
+  }, [id, loadEngagements, loadVideo]);
 
   return <div className="flex md:flex-col md:p-4 h-screen relative overflow-hidden">
     <div className="md:grid md:grid-cols-5 md:flex-1 gap-5 md:min-h-150">
         <LiveChat video={video} engagements={engagements} onSubmitted={loadEngagements} videoId={id} />
-        <WatchLiveVideo video={video} videoId={id} />
+        <WatchLiveVideo video={video} videoId={id} onEngaged={loadEngagements} onVideoRefresh={loadVideo} />
     </div>
     <LiveGift video={video} videoId={id} onTipped={loadEngagements} />
   </div>;
