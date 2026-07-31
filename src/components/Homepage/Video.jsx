@@ -9,7 +9,6 @@
  * Backend: VideoInteractionController, CommentController, FanTipController.
  */
 
-
 import { useEffect, useRef, useState } from "react";
 import { AiOutlineRetweet } from "react-icons/ai";
 import { CiShare2 } from "react-icons/ci";
@@ -44,9 +43,11 @@ function MediaFit({ streamUrl, mediaUrl, poster, type, alt }) {
   const preferredSrc = streamUrl || mediaUrl || "";
   const fallbackSrc = mediaUrl || "";
   const looksLikeImage =
-    typeof preferredSrc === "string" && /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(preferredSrc);
+    typeof preferredSrc === "string" &&
+    /\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(preferredSrc);
   const hasVideoExt =
-    typeof preferredSrc === "string" && /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(preferredSrc);
+    typeof preferredSrc === "string" &&
+    /\.(mp4|webm|mov|m3u8)(\?|$)/i.test(preferredSrc);
   // Trust the backend `type` first (VideoResource sets this reliably to
   // "video" | "image" | "gif"); fall back to extension sniffing only when
   // `type` is missing. Cloudinary URLs frequently omit a filename extension.
@@ -84,7 +85,10 @@ function MediaFit({ streamUrl, mediaUrl, poster, type, alt }) {
         return;
       }
 
-      if (typeof el.canPlayType === "function" && el.canPlayType("application/vnd.apple.mpegurl")) {
+      if (
+        typeof el.canPlayType === "function" &&
+        el.canPlayType("application/vnd.apple.mpegurl")
+      ) {
         setSrc(preferredSrc);
         return;
       }
@@ -140,11 +144,21 @@ function MediaFit({ streamUrl, mediaUrl, poster, type, alt }) {
           className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-opacity hover:bg-black/70"
         >
           {muted ? (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-5 w-5"
+            >
               <path d="M3.63 3.63a1 1 0 0 0 0 1.41L7.29 8.7 7 9H4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h3l3.29 3.29A1 1 0 0 0 12 17.59V13.41l3.59 3.59a5.4 5.4 0 0 1-1.09.61 1 1 0 1 0 .78 1.84 7.4 7.4 0 0 0 1.72-1.02l1.59 1.59a1 1 0 0 0 1.41-1.41L5.05 3.63a1 1 0 0 0-1.42 0ZM19 12a7 7 0 0 0-3.36-6 1 1 0 1 0-.96 1.75A5 5 0 0 1 17 12a5 5 0 0 1-.31 1.72 1 1 0 0 0 .62 1.27 1 1 0 0 0 1.27-.61A7 7 0 0 0 19 12Zm-7-5.59V4.41a1 1 0 0 0-1.71-.7l-2 2 3.71 3.7Z" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="h-5 w-5"
+            >
               <path d="M3 10v4a1 1 0 0 0 1 1h3l3.29 3.29A1 1 0 0 0 12 17.59V6.41a1 1 0 0 0-1.71-.7L7 9H4a1 1 0 0 0-1 1Zm13.5 2A4.5 4.5 0 0 0 14 7.97v8.05A4.5 4.5 0 0 0 16.5 12ZM14 3.23v2.06A6.99 6.99 0 0 1 19 12a6.99 6.99 0 0 1-5 6.71v2.06A9 9 0 0 0 21 12a9 9 0 0 0-7-8.77Z" />
             </svg>
           )}
@@ -210,38 +224,29 @@ function Video({
       ? `${audioTitle} - ${audioArtist}`
       : audioTitle || audioArtist;
 
+  const isMobile = window.innerWidth <= 768; // adjust breakpoint if needed
+
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
   const wheelCooldown = useRef(0);
 
   const handleTouchStart = (e) => {
+    if (!isMobile) return;
+
     touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = (e) => {
+    if (!isMobile) return;
+
     touchEndY.current = e.changedTouches[0].clientY;
 
     const distance = touchStartY.current - touchEndY.current;
-    const threshold = 50; // minimum swipe distance
+    const threshold = 50;
 
     if (distance > threshold && canNext) {
-      // Swiped up
       onNext();
     } else if (distance < -threshold && canPrev) {
-      // Swiped down
-      onPrev();
-    }
-  };
-
-  const handleWheel = (e) => {
-    const now = Date.now();
-    if (now - wheelCooldown.current < 600) return;
-    const threshold = 20;
-    if (e.deltaY > threshold && canNext) {
-      wheelCooldown.current = now;
-      onNext();
-    } else if (e.deltaY < -threshold && canPrev) {
-      wheelCooldown.current = now;
       onPrev();
     }
   };
@@ -250,7 +255,7 @@ function Video({
     <section
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      onWheel={handleWheel}
+      // onWheel={handleWheel}
       className="fixed inset-0 md:relative w-full h-screen lg:w-2/3 md:h-215 flex justify-center "
     >
       <div className="lg:max-w-md w-full h-full relative">
@@ -348,14 +353,14 @@ function Video({
           disabled={!canPrev}
           className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full disabled:opacity-40"
         >
-          <IoMdArrowDropup className="w-6 h-6 text-white dark:text-black" />
+          <IoMdArrowDropup className="w-6 h-6 text-black dark:text-white" />
         </button>
         <button
           onClick={onNext}
           disabled={!canNext}
           className="border-2 border-slate150 bg-white flex items-center justify-center w-8 h-8 rounded-full disabled:opacity-40"
         >
-          <IoMdArrowDropdown className="w-6 h-6 text-white dark:text-black" />
+          <IoMdArrowDropdown className="w-6 h-6 text-black dark:text-white" />
         </button>
       </div>
     </section>

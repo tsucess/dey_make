@@ -140,9 +140,9 @@ function Comment({
                             <div className="flex flex-col gap-2">
                                 <div className="flex items-center gap-2">
                                     <span className="text-black dark:text-white text-sm font-inter">{name}</span>
-                                    <span className="text-black dark:text-white text-sm font-inter">{time}</span>
+                                    <span className="text-black dark:text-white text-xs font-inter">{time}</span>
                                 </div>
-                                <p className="text-black dark:text-white text-lg font-inter">{desc}</p>
+                                <p className="text-black dark:text-white text-base font-inter">{desc}</p>
                                 <div className="flex items-center gap-4">
                                     <button type="button" onClick={() => !isStatic && onToggleLike && onToggleLike(id, liked)} className="flex items-center gap-2">
                                         {liked
@@ -161,7 +161,7 @@ function Comment({
                                 {isReplyOpen && (
                                   <form onSubmit={(event) => submitReply(event, id)} className="flex items-center py-2 px-3 rounded-full w-full gap-2 bg-slate150 dark:bg-black100">
                                     <img src={composerAvatar} alt="" className="w-6 h-6 rounded-full shrink-0" />
-                                    <input type="text" value={replyDrafts[id] || ""} onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [id]: event.target.value }))} placeholder={`Reply to ${name}`} className="text-sm font-inter text-black dark:text-white flex-1 bg-transparent outline-none" />
+                                    <input type="text" value={replyDrafts[id] || ""} onChange={(event) => setReplyDrafts((prev) => ({ ...prev, [id]: event.target.value }))} placeholder={`Reply to ${name}`} className="text-sm font-inter text-black dark:text-white max-w-50 w-full bg-transparent outline-none" />
                                     <button type="submit" className="bg-orange100 py-1.5 px-2 rounded-full flex items-center justify-center shrink-0"><TbSend2 className="w-4 h-4 text-black" /></button>
                                   </form>
                                 )}

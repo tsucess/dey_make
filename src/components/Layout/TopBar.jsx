@@ -330,7 +330,7 @@ export default function TopBar({ notificationState = null }) {
             {/* Bell */}
             <div className="relative flex items-center justify-center ml-2 mr-2">
               <NotificationButton
-                onClick={openNotification}
+                onClick={() => navigate('/notification')}
                 ariaLabel={t("common.notifications")}
                 unreadCount={0}
                 className="flex h-9 w-9 items-center justify-center rounded-full border-none bg-transparent cursor-pointer transition-colors hover:bg-white/10 text-slate300 hover:text-black100 dark:text-slate150 hover:dark:text-white"
