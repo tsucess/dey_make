@@ -169,9 +169,6 @@ export default function AppLayout() {
     "/watch-live": {
       hidden: true,
     },
-    "/live": {
-      hidden: true,
-    },
   };
 
   const currentConfig = topBarConfig[location.pathname] || {

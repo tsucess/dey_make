@@ -37,6 +37,7 @@ const manualChunkNames = {
   'framer-motion': 'vendor-motion-framer',
   'motion-dom': 'vendor-motion-dom',
   'motion-utils': 'vendor-motion-utils',
+  'agora-rtc-sdk-ng': 'vendor-agora-rtc-sdk-ng',
 };
 
 export default defineConfig(({ mode }) => {
@@ -45,7 +46,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), tailwindcss()],
     build: {
-      chunkSizeWarningLimit: 400,
+      chunkSizeWarningLimit: 1600,
       rollupOptions: {
         output: {
           manualChunks(id) {
