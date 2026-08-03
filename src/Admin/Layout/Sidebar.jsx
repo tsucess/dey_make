@@ -12,6 +12,7 @@ import { RiBookShelfLine, RiHeadphoneLine } from "react-icons/ri";
 import { TbCancel, TbTargetArrow } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { BsBullseye } from "react-icons/bs";
 
 const FALLBACK_ADMIN_AVATAR =
   "https://images.unsplash.com/photo-1521119989659-a83eee488004?w=80&q=80";
@@ -62,7 +63,7 @@ const navLinks = [
       {
         link: "/create-challenge",
         title: "Create Challenge",
-        icon: GiEcology,
+        icon: BsBullseye,
       },
     ],
   },

@@ -70,6 +70,7 @@
   --color-zinc300: #868C98;
   --color-zinc400 : #A29F9B;
   --color-zinc500: #71727A;
+  --color-zinc600 : #6A6A6A;
   --color-red200: #b61616;
   --color-red300: #9f1414;
   --color-red400: #e31c1c;
@@ -86,6 +87,7 @@
   --color-blue200: #0d141e;
   --color-blue300: #0c131d;
   --color-blue400: #010710;
+  --color-blue500: #0D141E;
   --color-black300: #1e1e1e;
   --color-black400: #111111;
   --color-black500: #271617;
@@ -93,6 +95,7 @@
   --color-black700: #0b1011;
   --color-black800: #0f1721;
   --color-black900: #010710;
+  --color-black10: #1E2532;
   --shadow-toggle: 0 4px 10px 0 #0000000d;
   --shadow-waitlist: 0 4px 40px 0 #00000005;
   --shadow-waitlist-dark: 0 4px 40px 0 #ffffff1a;
