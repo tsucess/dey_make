@@ -2,11 +2,13 @@ import { FaRegComments } from "react-icons/fa";
 import { FiSettings, FiVideo } from "react-icons/fi";
 import { GiEcology } from "react-icons/gi";
 import { HiOutlineUserGroup } from "react-icons/hi2";
-import { MdArrowForwardIos, MdOutlineArrowForwardIos, MdOutlineLiveTv, MdVerifiedUser } from "react-icons/md";
 import {
-  RiBookShelfLine,
-  RiHeadphoneLine,
-} from "react-icons/ri";
+  MdArrowForwardIos,
+  MdOutlineArrowForwardIos,
+  MdOutlineLiveTv,
+  MdVerifiedUser,
+} from "react-icons/md";
+import { RiBookShelfLine, RiHeadphoneLine } from "react-icons/ri";
 import { TbCancel, TbTargetArrow } from "react-icons/tb";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
@@ -55,6 +57,11 @@ const navLinks = [
       {
         link: "/admin-creator-ecosystem",
         title: "Creator Ecosystem",
+        icon: GiEcology,
+      },
+      {
+        link: "/create-challenge",
+        title: "Create Challenge",
         icon: GiEcology,
       },
     ],

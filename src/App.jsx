@@ -71,6 +71,7 @@ const CreatorEcosystem = lazy(() => import("./Admin/Pages/CreatorEcosystem"));
 const AdminReports = lazy(() => import("./Admin/Pages/Reports"));
 const LivesShow = lazy(() => import("./pages/LivePage"));
 const MobileCamera = lazy(() => import("./components/Create/MobileCamera"));
+const CreateChallenge = lazy(() => import("./Admin/Pages/CreateChallenge"));
 
 function FullPageLoader() {
   return (
@@ -122,7 +123,11 @@ function PublicOnlyRoute() {
     return <Navigate to="/verify-email" replace />;
   }
 
-  return isAuthenticated ? <Navigate to={landingPathFor(user)} replace /> : <Outlet />;
+  return isAuthenticated ? (
+    <Navigate to={landingPathFor(user)} replace />
+  ) : (
+    <Outlet />
+  );
 }
 
 function PendingVerificationRoute() {
@@ -158,7 +163,10 @@ function RootRedirect() {
   }
 
   return (
-    <Navigate to={isAuthenticated ? landingPathFor(user) : "/welcome"} replace />
+    <Navigate
+      to={isAuthenticated ? landingPathFor(user) : "/welcome"}
+      replace
+    />
   );
 }
 
@@ -268,7 +276,10 @@ export default function App() {
 
         <Route element={<AdminRoute />}>
           <Route element={renderLazyRoute(AppLayoutAdmin)}>
-            <Route path="/dashboard" element={renderLazyRoute(AdminDashboard)} />
+            <Route
+              path="/dashboard"
+              element={renderLazyRoute(AdminDashboard)}
+            />
             <Route
               path="/verification-request"
               element={renderLazyRoute(VerificationRequest)}
@@ -293,6 +304,10 @@ export default function App() {
               element={renderLazyRoute(CreatorEcosystem)}
             />
             <Route path="/reports" element={renderLazyRoute(AdminReports)} />
+            <Route
+              path="/create-challenge"
+              element={renderLazyRoute(CreateChallenge)}
+            />
           </Route>
         </Route>
 
