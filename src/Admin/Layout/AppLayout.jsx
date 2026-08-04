@@ -9,7 +9,7 @@ function AppLayout() {
   return (
     <div className="flex w-full">
       <Sidebar isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen} />
-      <div className="flex flex-col flex-1 w-full max-h-screen min-h-0">
+      <div className="flex flex-col flex-1 min-w-0 max-h-screen min-h-0">
         <TopBar setIsSidebarOpen={setIsSidebarOpen} />
         <main className="overflow-y-auto flex-1 bg-black p-5 w-full">
             <Outlet/>

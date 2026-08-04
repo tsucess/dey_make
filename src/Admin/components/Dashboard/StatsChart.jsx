@@ -15,10 +15,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   Tooltip,
-  Filler
+  Filler,
 );
-
-
 
 const options = {
   responsive: true,
@@ -62,28 +60,23 @@ const options = {
   },
 };
 
-export default function AnalyticsChart({borderColor = "#C23BFF"}) {
+export default function AnalyticsChart({ borderColor = "#C23BFF" }) {
   const data = {
-  labels: Array.from({ length: 14 }, (_, i) => i + 1),
-  datasets: [
-    {
-      data: [18, 22, 38, 27, 42, 33, 30, 40, 65, 25, 25, 25, 42, 27, 18],
-      borderColor,
-      borderWidth: 2,
-      pointRadius: 0,
-      pointHoverRadius: 4,
-      tension: 0.2,
-      fill: false,
-    },
-  ],
-};
+    labels: Array.from({ length: 14 }, (_, i) => i + 1),
+    datasets: [
+      {
+        data: [18, 22, 38, 27, 42, 33, 30, 40, 65, 25, 25, 25, 42, 27, 18],
+        borderColor,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        tension: 0.2,
+        fill: false,
+      },
+    ],
+  };
   return (
-    <div
-      style={{
-        width: "100%",
-        height: "50px",
-      }}
-    >
+    <div className="w-full h-10">
       <Line data={data} options={options} />
     </div>
   );

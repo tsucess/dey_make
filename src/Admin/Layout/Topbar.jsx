@@ -13,7 +13,7 @@ function Topbar({ setIsSidebarOpen }) {
 
   return <div className="flex items-center justify-between h-22 bg-blue100 px-4 md:px-8 py-5 w-full">
     <div className="flex gap-3.5 items-center">
-        <button className="md:hidden text-white" onClick={() => setIsSidebarOpen(true)}>
+        <button className="xl:hidden text-white" onClick={() => setIsSidebarOpen(true)}>
           <FiMenu className="w-6 h-6" />
         </button>
         <img src={avatarUrl} alt={displayName} className="w-10 h-10 md:w-12 md:h-12 rounded-full object-cover"/>

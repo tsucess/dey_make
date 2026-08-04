@@ -18,7 +18,7 @@ function LivestreamTable({ modalId, handleOpenModal, filteredData }) {
               <th className="p-4 text-sm text-white">Started At</th>
               <th className="p-4 text-sm text-white">Actions</th>
             </tr>
-          </thead> 
+          </thead>  
           <tbody>
             {filteredData.map((data) => (
               <tr

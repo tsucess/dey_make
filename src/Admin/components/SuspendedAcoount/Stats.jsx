@@ -4,7 +4,7 @@ import { IoMdArrowRoundUp } from "react-icons/io"
 
 function Stats({stats}) {
   return (
-    <div className="flex gap-3 items-center">{
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">{
         stats.map(stat => <Stat key={stat.title} {...stat}/>)
     }</div>
   )

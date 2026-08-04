@@ -154,9 +154,7 @@ export default function PlatformOverviewChart() {
       </div>
 
       {/* Tabs */}
-      <div
-        className="flex items-center gap-4"
-      >
+      <div className="flex items-center gap-4">
         <button className="text-white text-sm pb-2 border-b-2 border-red100 font-medium">
           DAU
         </button>
@@ -169,7 +167,7 @@ export default function PlatformOverviewChart() {
       </div>
 
       {/* Chart */}
-      <div className="h-80 w-full">
+      <div className="h-80 w-full ">
         <Line data={data} options={options} />
       </div>
     </div>

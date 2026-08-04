@@ -15,7 +15,8 @@ function Menu({
   searchQuery,
 }) {
   return (
-    <div className="flex flex-col gap-5  w-full">
+    <div className=" overflow-x-auto">
+    <div className="flex flex-col gap-5  w-full min-w-160">
       <menu className="flex items-center font-roboto w-full">
         {tabs.map((tab) => (
           <button
@@ -95,6 +96,7 @@ function Menu({
           />
         </div>
       </div>
+    </div>
     </div>
   );
 }

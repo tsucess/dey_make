@@ -65,17 +65,17 @@ function Dashboard() {
     <section className="space-y-7">
       {errorMessage && (
         <div className="p-3 rounded-lg bg-red100/10 text-red100 text-sm">{errorMessage}</div>
-      )}
+      )} 
       <Stats stats={stats} />
       <PlatformOverviewChart />
-      <div className="grid gap-4 grid-cols-11">
-        <div className="col-span-5 w-full flex flex-col gap-4">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-11">
+        <div className="md:col-span-5 w-full flex flex-col gap-4">
           <ContentModeration />
           <ModerationAlert />
           <CreatorGrowth />
           <SystemStatus />
         </div>
-        <div className="col-span-6 w-full flex flex-col gap-4">
+        <div className="md:col-span-6 w-full flex flex-col gap-4">
           <ChallengeModeration challenges={recentChallenges} />
           <TopChallenge />
           <TopChallenger users={recentUsers} />

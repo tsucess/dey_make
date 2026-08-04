@@ -5,7 +5,7 @@ import AnalyticsChart from "./StatsChart";
 
 function Stats( {stats, large}) {
   return (
-    <div className={`grid grid-cols-3 gap-3 ${large ? ' md:grid-cols-5' : 'md:grid-cols-4'}`}>
+    <div className={`grid grid-cols-2 gap-3 w-auto ${large ? ' md:grid-cols-5' : 'md:grid-cols-4'}`}>
       {stats.map((stat, i) => (
         <Stat key={i} {...stat} />
       ))}
@@ -15,7 +15,7 @@ function Stats( {stats, large}) {
 
 function Stat({ title, value, date, color }) {
   return (
-    <div className="flex flex-col gap-3 bg-blue200 p-5 rounded-2xl">
+    <div className="flex flex-col gap-3 bg-blue200 p-5 rounded-2xl w-full">
       <div className="flex flex-col gap-1 font-roboto">
         <h5 className="text-white text-xs ">{title}</h5>
         <p className="text-white text-2xl">{value}</p>

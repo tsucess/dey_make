@@ -10,12 +10,12 @@ function TrendingVideo({ videos = [] }) {
         <h3 className="text-white text-[22px]">Trending Videos</h3>
         <button className="text-base text-white font-medium">View all</button>
       </div>
-      <div className='flex items-center gap-4'>
+      <div className='flex items-center gap-4 overflow-x-auto'>
         {list.length === 0 && (
           <p className="text-white/60 text-sm">No recent videos.</p>
         )}
         {list.map((video, i) => (
-          <div key={video.id} className="flex-1 w-full flex flex-col gap-3.5 font-roboto">
+          <div key={video.id} className="flex-1 w-full flex flex-col gap-3.5 font-roboto min-w-40">
             <div className="w-full h-45 relative">
               <img src={video.thumbnailUrl || "/forest.png"} alt="" className="w-full h-full object-fill"/>
               <div className="flex items-center gap-2 text-xs text-white absolute bottom-3 left-2">

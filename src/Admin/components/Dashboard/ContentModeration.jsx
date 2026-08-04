@@ -22,8 +22,8 @@ function ContentModeration() {
 
 function Stat({ title, value }) {
   return (
-    <div className="p-5 rounded-2xl border border-white/30 flex items-start gap-5 bg-black800">
-      <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white shrink-0">
+    <div className="p-5 rounded-2xl border border-white/30 flex flex-col sm:flex-row sm:items-start gap-5 bg-black800">
+      <div className="w-10 sm:w-12 h-10 sm:h-12 flex items-center justify-center rounded-full bg-white shrink-0">
         <FaFlag className="w-6 h-6 text-black" />
       </div>
       <div className="flex flex-col gap-1 font-roboto">
