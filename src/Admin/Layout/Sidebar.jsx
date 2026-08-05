@@ -65,6 +65,16 @@ const navLinks = [
         title: "Create Challenge",
         icon: BsBullseye,
       },
+      {
+        link: "/products",
+        title: "Products",
+        icon: BsBullseye,
+      },
+      {
+        link: "/orders",
+        title: "Orders",
+        icon: BsBullseye,
+      },
     ],
   },
   // {

@@ -72,6 +72,8 @@ const AdminReports = lazy(() => import("./Admin/Pages/Reports"));
 const LivesShow = lazy(() => import("./pages/LivePage"));
 const MobileCamera = lazy(() => import("./components/Create/MobileCamera"));
 const CreateChallenge = lazy(() => import("./Admin/Pages/CreateChallenge"));
+const Products = lazy(() => import("./Admin/Pages/Product"));
+const Orders = lazy(() => import("./Admin/Pages/Order"));
 
 function FullPageLoader() {
   return (
@@ -308,6 +310,8 @@ export default function App() {
               path="/create-challenge"
               element={renderLazyRoute(CreateChallenge)}
             />
+            <Route path="/products" element={renderLazyRoute(Products)} />
+            <Route path="/orders" element={renderLazyRoute(Orders)} />
           </Route>
         </Route>
 
