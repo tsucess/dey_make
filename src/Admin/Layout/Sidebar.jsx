@@ -75,6 +75,16 @@ const navLinks = [
         title: "Orders",
         icon: BsBullseye,
       },
+      {
+        link: "/discounts",
+        title: "Discounts",
+        icon: BsBullseye,
+      },
+      {
+        link: "/payments",
+        title: "Payments",
+        icon: BsBullseye,
+      },
     ],
   },
   // {
